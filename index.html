@@ -1100,7 +1100,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '176';
+const APP_VERSION = '177';
 const APP_UPDATED = '2026-11-06';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3003,7 +3003,8 @@ $('#bulkPt').addEventListener('click', () => bulkAdd());
 document.addEventListener('click', e => { if(e.target.id === 'emptyBulk') bulkAdd(); });
 $('#tkBulk').addEventListener('click', () => bulkAdd());
 $('#addPt').addEventListener('click', () => {
-  mutate(() => state.patients.push({id:uid(), bed:'', intern:'', problem:'', status:'New', admitDate:state.boardDate, cells:blankCells(ALL_COLS)}));
+  // a patient added by hand is someone you're taking over → Existing; new admissions (Admissions tab) are the ones marked New
+  mutate(() => state.patients.push({id:uid(), bed:'', intern:'', problem:'', status:'Existing', admitDate:state.boardDate, cells:blankCells(ALL_COLS)}));
   ui.filter = 'all'; ui.intern = ''; renderCensus();
   const inputs = document.querySelectorAll('#censusGrid input[data-field="bed"]'); inputs[inputs.length-1]?.focus();
 });
@@ -4791,7 +4792,7 @@ function bulkAdd(){
     <p class="muted" style="margin:-4px 0 8px">One patient per line: <code>Bed | Intern | Problem</code>. You can also paste columns from Excel or your EHR (tab-separated), or use <code> / </code> with spaces around it. Intern and problem are optional; add <code>| HD 4</code> at the end to set the hospital day. A line like <code>Intern B:</code> sets the intern for the lines under it.</p>
     <textarea id="baText" rows="9" spellcheck="false" placeholder="14E01/01 | Intern A | CHF exacerbation, diuresing&#10;14E01/02 | Intern A | Cirrhosis with HE | HD 5&#10;Intern B:&#10;14E03/01 | Sepsis, UTI source&#10;14E03/02 | AKI on CKD 3b"></textarea>
     <div class="baopts">
-      <label>Status <select id="baStatus"><option${hasTasks ? ' selected' : ''}>Existing</option><option${hasTasks ? '' : ' selected'}>New</option></select></label>
+      <label>Status <select id="baStatus"><option selected>Existing</option><option>New</option></select></label>
       <label>Admitted <input type="date" id="baDate" value="${state.boardDate}" max="${state.boardDate}"></label>
       <label>Beds already on the census <select id="baDup"><option value="skip">Skip them</option><option value="update">Update intern / problem</option></select></label>
       <label class="bachk"><input type="checkbox" id="baNewInt" checked> Add new interns to the intern list</label>
@@ -5730,6 +5731,7 @@ window.addEventListener('beforeprint', () => { const el = $('#printSheet'); if(e
 
 /* ---------- what's new: shown once after you open a newer version ---------- */
 const CHANGELOG = [
+  {v:177, d:'2026-11-06', items:['Patients added with <b>+ Add patient</b> or <b>Bulk Add</b> now start as <b>Existing</b>, not “New Admit”. Only admissions logged on the Admissions tab are marked New.']},
   {v:176, d:'2026-11-06', items:['Ready to host online (e.g. GitHub Pages): open Plexus from a bookmark, keep your data files on your network drive. Search engines are told not to index it.']},
   {v:175, d:'2026-11-06', items:['<b>Past shift files</b> (History & Archive): point Plexus at the folder with your data files and every earlier shift is listed. View any one read-only — sign-out sheet, tasks with results, analytics, activity log — or print it.', 'Tick several shifts for <b>analytics across shifts</b>: time to visit, time per phase and time to complete, pooled and shift by shift.']},
   {v:174, d:'2026-11-05', items:['<b>PLEXUS</b> in capitals at the top left.']},
