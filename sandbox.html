@@ -794,6 +794,7 @@ tr:hover .bedpen,.bedpen:focus-visible{opacity:1}.bedpen:hover{color:var(--ink);
 .takebox{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--head);margin:8px 0 10px}
 .takeok{font-weight:800;color:#188038}.takefile{font:600 13px ui-monospace,Menlo,Consolas,monospace;margin:4px 0;word-break:break-all}
 .takesteps{margin:6px 0 4px 20px;padding:0}.takesteps li{margin:6px 0;line-height:1.45}
+.chkok{color:#188038;text-decoration:none}#chkInd a{text-decoration:none}
 .histlist .h{padding:8px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;background:var(--head)}
 .split .scroller{margin:0}
 .dchead{position:sticky;left:0;padding:12px 12px 6px;font-weight:700;font-size:14px}
@@ -976,6 +977,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
   </header>
   <div class="nudge" id="nudge" hidden></div>
   <div class="nudge dfb" id="dfBanner" hidden></div>
+  <div class="nudge dfb err" id="chkBanner" hidden></div>
 
   <main>
     <!-- CENSUS -->
@@ -1092,7 +1094,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
   <div class="rounds" id="rounds" tabindex="-1" hidden><div id="roundsBody"></div></div>
 
   <footer class="legend" id="legend"></footer>
-  <div class="version" id="appVersion"></div>
+  <div class="version"><span id="appVersion"></span> <span id="chkInd"></span></div>
 </div>
 
 <script>
@@ -1104,8 +1106,8 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '178';
-const APP_UPDATED = '2026-11-06';
+const APP_VERSION = '179';
+const APP_UPDATED = '2026-11-10';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
 const BACKUP_KEY = `${KEY_PREFIX}.lastBackup.v1`;   // kept outside the board so Undo doesn't rewind it
@@ -3188,7 +3190,7 @@ function newDay(){
       const chosen = (document.querySelector('input[name="ndType"]:checked') || {}).value || activeType;
       const clearTasks = !!typeOf(chosen).tasks && !!($('#ndClearTasks') && $('#ndClearTasks').checked);
       if($('#ndBackup') && $('#ndBackup').checked) backupNow('quiet');
-      autoBackup('before new shift', true);
+      autoBackup('before new shift', true); setTimeout(() => autoCheck('new shift'), 1500);
       if(chosen !== activeType) switchBoard(chosen);
       mutate(() => {
         if(state.patients.length){
@@ -4943,7 +4945,7 @@ async function dfLink(h, viaUser){
         [['Use this browser’s copy', '', 'local'], ['Use the data file', 'primary', 'file']]);
       if(!use){ DF.handle = null; DF.name = ''; DF.status = 'off'; renderBackupInd(); renderDfBanner(); return false; }
     }
-    if(use === 'file'){ if(localHasData()) await autoBackup('before loading file', true); applyAll(pkg); whatsNewForFile(pkg); takeArrived(pkg); DF.status = 'ok'; DF.savedAt = fileAt; logAdd([{cat:'system', msg:`Loaded the board from data file ${h.name}`}]); toast(`Loaded from ${h.name} — changes now save to it`); }
+    if(use === 'file'){ if(localHasData()) await autoBackup('before loading file', true); applyAll(pkg); whatsNewForFile(pkg); takeArrived(pkg); setTimeout(() => autoCheck('data file opened'), 1500); DF.status = 'ok'; DF.savedAt = fileAt; logAdd([{cat:'system', msg:`Loaded the board from data file ${h.name}`}]); toast(`Loaded from ${h.name} — changes now save to it`); }
     else { DF.status = 'ok'; await dfWrite(); toast(`Kept this browser's board — saved it to ${h.name}`); }
     renderBackupInd(); renderDfBanner(); return true;
   }catch(e){ DF.status = 'error'; DF.err = (e && (e.message || e.name)) || String(e); renderBackupInd(); renderDfBanner(); return false; }
@@ -5082,7 +5084,7 @@ async function restorePkg(pkg, label){
   const go = await askChoice(`<h3>Restore this backup?</h3><p><b>${esc(label)}</b></p><p class="muted">Every board (all shift types), tasks, logs and shortcuts are replaced by this copy. The current board is backed up first — it'll be at the top of the Backups list if you need it back.</p>`, [['Cancel', '', false], ['Restore', 'primary', true]]);
   if(!go) return;
   await autoBackup('before restore', true);
-  applyAll(pkg); logAdd([{cat:'system', msg:`Restored a backup — ${label}`}]); abkDirty = false; dfQueue(); toast('Backup restored');
+  applyAll(pkg); logAdd([{cat:'system', msg:`Restored a backup — ${label}`}]); abkDirty = false; dfQueue(); toast('Backup restored'); setTimeout(() => autoCheck('backup restored'), 1500);
 }
 document.addEventListener('click', e => {
   const b = e.target.closest('[data-df]'); if(!b) return; e.preventDefault();
@@ -5737,6 +5739,7 @@ window.addEventListener('beforeprint', () => { const el = $('#printSheet'); if(e
 
 /* ---------- what's new: shown once after you open a newer version ---------- */
 const CHANGELOG = [
+  {v:179, d:'2026-11-10', items:['<b>Self-check on every open</b> — whenever Plexus opens, a data file is opened, a backup is restored or a new shift starts, it quietly checks your boards and reads your data file back from disk. All good: a ✓ in the footer. A real problem: a red bar with Details.']},
   {v:178, d:'2026-11-06', items:['<b>🧳 Take with me</b> (suitcase button at the top, Settings → Data file, or “take” in the command bar): saves an up-to-date copy to Downloads when you leave a computer, lists the next steps, and can then clear Plexus from that computer. Opening that copy later says when it was taken.']},
   {v:177, d:'2026-11-06', items:['Patients added with <b>+ Add patient</b> or <b>Bulk Add</b> now start as <b>Existing</b>, not “New Admit”. Only admissions logged on the Admissions tab are marked New.']},
   {v:176, d:'2026-11-06', items:['Ready to host online (e.g. GitHub Pages): open Plexus from a bookmark, keep your data files on your network drive. Search engines are told not to index it.']},
@@ -5953,6 +5956,33 @@ function takeArrived(pkg){ if(!pkg || !pkg.takenAt) return; const t = new Date(p
   setTimeout(() => toast(`🧳 Picked up the copy taken ${t.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'})} at ${pad(t.getHours())}:${pad(t.getMinutes())}`), 500);
   logAdd([{cat:'system', msg:`Picked up the copy taken ${t.toLocaleString()}`}]); }
 
+/* ---------- self-check on every open ----------
+   Runs quietly whenever Plexus opens, a data file is opened, a backup is restored or a new shift starts.
+   Silent when all is well (a ✓ in the footer); a red bar only for real problems. */
+var CHECK = {at:null, probs:[], why:''};
+const CHECK_SERIOUS = /differs from what is on screen|unreadable|Same bed on more than one|corrupted|duplicate record|could not|failed|blocked|damaged/i;
+async function autoCheck(why){
+  if(tabLocked || wiping) return;
+  let R; try{ R = runDiagnostics(); }catch(e){ R = [{lvl:'fail', title:'Self-check could not run', detail:String(e && e.message || e)}]; }
+  // the data file itself: read it back from disk and make sure it opens
+  if(DF.handle && DF.status === 'ok'){ try{ const f = await DF.handle.getFile(), txt = await f.text();
+      if(txt.trim()){ const pkg = JSON.parse(txt); if(!pkg || pkg.kind !== 'wardsMatrixData' || !pkg.boards) R.push({lvl:'fail', title:`Data file ${DF.name} doesn't look like a Plexus file`, detail:'Open the right file, or restore from Backups.'}); }
+    }catch(e){ R.push({lvl:'fail', title:`Data file ${DF.name} is damaged or can't be read`, detail:'Saving continues from this screen, which rewrites it. If something looks missing, restore from Backups.'}); } }
+  const probs = R.filter(r => r.lvl === 'fail' || (r.lvl === 'warn' && CHECK_SERIOUS.test(r.title)));
+  CHECK = {at:new Date(), probs, why};
+  if(probs.length) logAdd([{cat:'system', msg:`Self-check (${why}): ${probs.map(p => p.title).join('; ')}`}]);
+  renderCheck();
+}
+function renderCheck(){
+  const b = $('#chkBanner'); if(!b) return;
+  if(CHECK.probs.length && !CHECK.dismissed){ b.hidden = false;
+    b.innerHTML = `🩺 <b>Self-check found ${CHECK.probs.length === 1 ? 'a problem' : CHECK.probs.length + ' problems'}:</b> ${CHECK.probs.slice(0, 2).map(p => esc(p.title)).join(' · ')}${CHECK.probs.length > 2 ? ' …' : ''} <button class="btn sm primary" data-chk="open">Details</button> <button class="btn sm" data-chk="hide">Hide</button>`;
+  } else b.hidden = true;
+  const v = $('#chkInd'); if(v && CHECK.at) v.innerHTML = CHECK.probs.length ? `<a href="#" data-chk="open" class="red">· self-check: ${CHECK.probs.length} problem${CHECK.probs.length === 1 ? '' : 's'}</a>` : `<a href="#" data-chk="open" class="chkok" title="Checked ${CHECK.at.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})} (${esc(CHECK.why)}) — click for the full check">· self-check ✓</a>`;
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-chk]'); if(!b) return; e.preventDefault();
+  if(b.dataset.chk === 'open') diagnostics(); else { CHECK.dismissed = true; renderCheck(); } });
+
 /* ---------- boot ---------- */
 loadLog();
 $('#appVersion').textContent = `Plexus v${APP_VERSION} · ${SANDBOX ? 'Sandbox (test data only)' : 'Portable'} · updated ${fmtLong(APP_UPDATED)}`;
@@ -5970,6 +6000,7 @@ checkTodos();
 dfBoot();
 abkInit();
 pastInit();
+setTimeout(() => autoCheck('opened'), 2500);
 document.body.insertAdjacentHTML('beforeend', '<div id="printSheet" aria-hidden="true"></div>');
 $('#privBtn').addEventListener('click', () => privacyOn('button'));
 $('#takeBtn').addEventListener('click', () => takeWithMe());
