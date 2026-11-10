@@ -1110,7 +1110,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '181';
+const APP_VERSION = '182';
 const APP_UPDATED = '2026-11-10';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1154,7 +1154,7 @@ function typePickerHTML(name, sel){
   return `<div class="sitepick" data-for="${name}">${SITES.map(x => `<button type="button" class="${x.k === site ? 'on' : ''}" data-site="${x.k}">${esc(x.label)}</button>`).join('')}</div>
     ${SITES.map(x => `<div class="ndtypes" data-site="${x.k}" ${x.k === site ? '' : 'hidden'}>${SHIFT_TYPES.filter(t => t.site === x.k).map(t => typeOptHTML(name, t, sel)).join('')}</div>`).join('')}`;
 }
-const typeKindTxt = t => t.kind === 'admit' ? 'Admissions only · night tasks' : t.kind === 'night' ? 'Cross-cover census · night tasks' : t.kind === '24h' ? '24-hour · census, admissions, tasks' : 'Census · admissions';
+const typeKindTxt = t => t.kind === 'admit' ? 'Admissions only · night tasks' : t.kind === 'night' ? 'Cross-cover census · admissions · night tasks' : t.kind === '24h' ? '24-hour · census, admissions, tasks' : 'Census · admissions';
 function typeOptHTML(name, t, sel){ const n = t.k === activeType ? state.patients.length : boardCount(t.k);
   return `<label class="ndtype"><input type="radio" name="${name}" value="${t.k}" ${t.k === sel ? 'checked' : ''}><span class="ic">${t.icon}</span><span><b>${esc(t.label)}</b><br><span class="muted">${typeKindTxt(t)}${n ? ` · ${n} patient${n === 1 ? '' : 's'} on this board` : ''}${t.k === activeType ? ' · current' : ''}</span></span></label>`; }
 function wireTypePicker(m, name, onPick){
@@ -5797,6 +5797,7 @@ window.addEventListener('beforeprint', () => { const el = $('#printSheet'); if(e
 
 /* ---------- what's new: shown once after you open a newer version ---------- */
 const CHANGELOG = [
+  {v:182, d:'2026-11-10', items:['Night shifts (CCU, ICU, wards and night intern) are now described as what they are: cross-cover census, admissions and night tasks.']},
   {v:181, d:'2026-11-10', items:['Added <b>Bellevue CCU (Day)</b> and <b>Bellevue CCU (Night)</b>.']},
   {v:180, d:'2026-11-10', items:['<b>19 shift types across three sites</b> — Bellevue, Tisch / KP and VA. New Shift and Start a new file ask for the site first, then the shift; the switcher at the top groups them by site.', 'Day Wards is now <b>Tisch Wards (Day)</b>, Day ICU is <b>Tisch ICU (Day)</b>, Bellevue Nights is <b>Bellevue Night Admitting</b> and Tisch Nights is <b>Tisch Wards (Night)</b> — their boards carry over. If a board belongs to a different site, Settings → This board → Move it.', '24-hour ICU shifts run morning to morning; night intern and ICU night shifts get the night task list.']},
   {v:179, d:'2026-11-10', items:['<b>Self-check on every open</b> — whenever Plexus opens, a data file is opened, a backup is restored or a new shift starts, it quietly checks your boards and reads your data file back from disk. All good: a ✓ in the footer. A real problem: a red bar with Details.']},
