@@ -1110,7 +1110,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '180';
+const APP_VERSION = '181';
 const APP_UPDATED = '2026-11-10';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1125,6 +1125,8 @@ const SHIFT_TYPES = [
   ['night-adm-bellevue', 'bellevue', 'Bellevue Night Admitting',  'admit', {holds:true}],
   ['bv-icu-24',          'bellevue', 'Bellevue ICU (24 Hr)',      '24h'],
   ['bv-icu-day',         'bellevue', 'Bellevue ICU (Day)',        'day'],
+  ['bv-ccu-day',         'bellevue', 'Bellevue CCU (Day)',        'day'],
+  ['bv-ccu-night',       'bellevue', 'Bellevue CCU (Night)',      'night'],
   ['day-wards',          'tisch',    'Tisch Wards (Day)',         'day'],
   ['night-med-tisch',    'tisch',    'Tisch Wards (Night)',       'night'],
   ['day-icu',            'tisch',    'Tisch ICU (Day)',           'day'],
@@ -5795,6 +5797,7 @@ window.addEventListener('beforeprint', () => { const el = $('#printSheet'); if(e
 
 /* ---------- what's new: shown once after you open a newer version ---------- */
 const CHANGELOG = [
+  {v:181, d:'2026-11-10', items:['Added <b>Bellevue CCU (Day)</b> and <b>Bellevue CCU (Night)</b>.']},
   {v:180, d:'2026-11-10', items:['<b>19 shift types across three sites</b> — Bellevue, Tisch / KP and VA. New Shift and Start a new file ask for the site first, then the shift; the switcher at the top groups them by site.', 'Day Wards is now <b>Tisch Wards (Day)</b>, Day ICU is <b>Tisch ICU (Day)</b>, Bellevue Nights is <b>Bellevue Night Admitting</b> and Tisch Nights is <b>Tisch Wards (Night)</b> — their boards carry over. If a board belongs to a different site, Settings → This board → Move it.', '24-hour ICU shifts run morning to morning; night intern and ICU night shifts get the night task list.']},
   {v:179, d:'2026-11-10', items:['<b>Self-check on every open</b> — whenever Plexus opens, a data file is opened, a backup is restored or a new shift starts, it quietly checks your boards and reads your data file back from disk. All good: a ✓ in the footer. A real problem: a red bar with Details.']},
   {v:178, d:'2026-11-06', items:['<b>🧳 Take with me</b> (suitcase button at the top, Settings → Data file, or “take” in the command bar): saves an up-to-date copy to Downloads when you leave a computer, lists the next steps, and can then clear Plexus from that computer. Opening that copy later says when it was taken.']},
