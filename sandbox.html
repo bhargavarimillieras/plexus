@@ -795,6 +795,10 @@ tr:hover .bedpen,.bedpen:focus-visible{opacity:1}.bedpen:hover{color:var(--ink);
 .takeok{font-weight:800;color:#188038}.takefile{font:600 13px ui-monospace,Menlo,Consolas,monospace;margin:4px 0;word-break:break-all}
 .takesteps{margin:6px 0 4px 20px;padding:0}.takesteps li{margin:6px 0;line-height:1.45}
 .chkok{color:#188038;text-decoration:none}#chkInd a{text-decoration:none}
+.ndtypes[hidden]{display:none!important}
+.sitepick{display:inline-flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden;margin:2px 0 8px}
+.sitepick button{border:0;background:var(--panel);padding:6px 16px;font-weight:700;cursor:pointer;color:var(--muted);border-right:1px solid var(--line2)}
+.sitepick button:last-child{border-right:0}.sitepick button.on{background:var(--accent,#1a73e8);color:#fff}
 .histlist .h{padding:8px 12px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;background:var(--head)}
 .split .scroller{margin:0}
 .dchead{position:sticky;left:0;padding:12px 12px 6px;font-weight:700;font-size:14px}
@@ -1106,18 +1110,60 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '179';
+const APP_VERSION = '180';
 const APP_UPDATED = '2026-11-10';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
 const BACKUP_KEY = `${KEY_PREFIX}.lastBackup.v1`;   // kept outside the board so Undo doesn't rewind it
 /* Shift types — each keeps its own board (census, admissions, archive, history, settings). */
 const SHIFT_TYPES = [
-  {k:'day-wards',          label:'Senior – Day Wards',          short:'Day Wards',          icon:'☀', night:false, tab:'census'},
-  {k:'day-icu',            label:'Senior – Day ICU',            short:'Day ICU',            icon:'☀', night:false, tab:'census'},
-  {k:'night-adm-bellevue', label:'Night Admitting – Bellevue',  short:'Bellevue Nights', icon:'☾', night:true,  tab:'admits', admitOnly:true, noAdmitIntern:true, tasks:true},
-  {k:'night-med-tisch',    label:'Night Medicine – Tisch',      short:'Tisch Nights',  icon:'☾', night:true,  tab:'tasks', tasks:true, noAdmitIntern:true},
+  // Each shift type keeps its own board. The four original keys (day-wards, day-icu, night-adm-bellevue, night-med-tisch) are kept so existing boards and data files carry over.
+  // kinds — day: census + admissions · night: cross-cover census + night tasks · admit: admitting-only (no census) + tasks · 24h: census + admissions + tasks across a full day
+  ...[
+  ['bv-wards-day',       'bellevue', 'Bellevue Wards (Day)',      'day'],
+  ['bv-night-intern',    'bellevue', 'Bellevue Night Intern',     'night'],
+  ['night-adm-bellevue', 'bellevue', 'Bellevue Night Admitting',  'admit', {holds:true}],
+  ['bv-icu-24',          'bellevue', 'Bellevue ICU (24 Hr)',      '24h'],
+  ['bv-icu-day',         'bellevue', 'Bellevue ICU (Day)',        'day'],
+  ['day-wards',          'tisch',    'Tisch Wards (Day)',         'day'],
+  ['night-med-tisch',    'tisch',    'Tisch Wards (Night)',       'night'],
+  ['day-icu',            'tisch',    'Tisch ICU (Day)',           'day'],
+  ['ti-icu-night',       'tisch',    'Tisch ICU (Night)',         'night'],
+  ['kp-cards-day',       'tisch',    'KP Cardiology (Day)',       'day'],
+  ['kp-cards-night',     'tisch',    'KP Cardiology (Night)',     'night'],
+  ['kp-heme-day',        'tisch',    'KP Hematology (Day)',       'day'],
+  ['kp-heme-night',      'tisch',    'KP Hematology (Night)',     'night'],
+  ['va-wards-day',       'va',       'VA Wards (Day)',            'day'],
+  ['va-night-intern',    'va',       'VA Night Intern',           'night'],
+  ['va-night-adm',       'va',       'VA Night Admitting',        'admit'],
+  ['va-icu-day',         'va',       'VA ICU (Day)',              'day'],
+  ['va-icu-night',       'va',       'VA ICU (Night)',            'night'],
+  ['va-icu-24',          'va',       'VA ICU (24 Hr)',            '24h'],
+  ].map(([k, site, label, kind, extra]) => Object.assign({k, site, label, short:label, kind,
+    icon:kind === 'day' ? '☀' : kind === '24h' ? '⏱' : '☾', night:kind !== 'day', span24:kind === '24h',
+    tab:kind === 'admit' ? 'admits' : kind === 'night' ? 'tasks' : 'census',
+    tasks:kind !== 'day', admitOnly:kind === 'admit', noAdmitIntern:kind === 'admit' || kind === 'night'}, extra || {})),
 ];
+const SITES = [{k:'bellevue', label:'Bellevue'}, {k:'tisch', label:'Tisch / KP'}, {k:'va', label:'VA'}];
+const siteOf = k => SITES.find(x => x.k === typeOf(k).site) || SITES[0];
+// Site first, then the shift: one block of radio buttons per site, only the chosen site's shown
+function typePickerHTML(name, sel){
+  const site = typeOf(sel).site;
+  return `<div class="sitepick" data-for="${name}">${SITES.map(x => `<button type="button" class="${x.k === site ? 'on' : ''}" data-site="${x.k}">${esc(x.label)}</button>`).join('')}</div>
+    ${SITES.map(x => `<div class="ndtypes" data-site="${x.k}" ${x.k === site ? '' : 'hidden'}>${SHIFT_TYPES.filter(t => t.site === x.k).map(t => typeOptHTML(name, t, sel)).join('')}</div>`).join('')}`;
+}
+const typeKindTxt = t => t.kind === 'admit' ? 'Admissions only · night tasks' : t.kind === 'night' ? 'Cross-cover census · night tasks' : t.kind === '24h' ? '24-hour · census, admissions, tasks' : 'Census · admissions';
+function typeOptHTML(name, t, sel){ const n = t.k === activeType ? state.patients.length : boardCount(t.k);
+  return `<label class="ndtype"><input type="radio" name="${name}" value="${t.k}" ${t.k === sel ? 'checked' : ''}><span class="ic">${t.icon}</span><span><b>${esc(t.label)}</b><br><span class="muted">${typeKindTxt(t)}${n ? ` · ${n} patient${n === 1 ? '' : 's'} on this board` : ''}${t.k === activeType ? ' · current' : ''}</span></span></label>`; }
+function wireTypePicker(m, name, onPick){
+  const sp = m.querySelector(`.sitepick[data-for="${name}"]`); if(!sp) return;
+  sp.addEventListener('click', e => { const b = e.target.closest('[data-site]'); if(!b) return;
+    sp.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+    m.querySelectorAll(`.ndtypes[data-site]`).forEach(g => g.hidden = g.dataset.site !== b.dataset.site);
+    const g = m.querySelector(`.ndtypes[data-site="${b.dataset.site}"]`), cur = g.querySelector(`input[name="${name}"]:checked`);
+    if(!cur){ const first = g.querySelector(`input[name="${name}"]`); if(first){ first.checked = true; first.dispatchEvent(new Event('change', {bubbles:true})); } }
+    if(onPick) onPick(); });
+}
 const TYPE_KEY = `${KEY_PREFIX}.activeShiftType`;
 const typeOf = k => SHIFT_TYPES.find(x => x.k === k) || SHIFT_TYPES[0];
 const storeKeyFor = k => k === 'day-wards' ? STORE_KEY : `${STORE_KEY}.${k}`;      // existing data stays the Day Wards board
@@ -1128,6 +1174,8 @@ if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.tischScenario`) !== TIS
   localStorage.setItem(`${KEY_PREFIX}.activeShiftType`, 'night-med-tisch'); localStorage.setItem(`${KEY_PREFIX}.tischScenario`, TISCH_SCENARIO);
   const u = JSON.parse(localStorage.getItem(UI_KEY) || '{}'); u.tab = 'tasks'; localStorage.setItem(UI_KEY, JSON.stringify(u)); } }catch(e){} }
 let activeType = (() => { try{ const t = localStorage.getItem(TYPE_KEY); return SHIFT_TYPES.some(x => x.k === t) ? t : 'day-wards'; }catch(e){ return 'day-wards'; } })();
+// a clock time on a board's date: on overnight shifts times before noon are the next morning; on 24-hour shifts, times before 07:00
+const wrapsToNextDay = hm => { const t = typeOf(activeType); return t.span24 ? hm < '07:00' : (state.settings.shift === 'night' && hm < '12:00'); };
 function boardCount(k){ try{ const r = localStorage.getItem(storeKeyFor(k)); return r ? (JSON.parse(r).patients || []).length : null; }catch(e){ return null; } }
 
 // Order and colors match the legend in the original spreadsheet. Keys 1–8.
@@ -1594,7 +1642,7 @@ function stampPhases(prev){
 // A clock time on an admission (HH:MM) as a Date; on night shifts, times before noon fall on the next morning.
 function admitClock(a, hm){
   if(!a.date || !/^\d\d:\d\d$/.test(hm || '')) return null;
-  const d = state.settings.shift === 'night' && hm < '12:00' ? addDays(a.date, 1) : a.date;
+  const d = wrapsToNextDay(hm) ? addDays(a.date, 1) : a.date;
   return new Date(+d.slice(0,4), +d.slice(5,7) - 1, +d.slice(8,10), +hm.slice(0,2), +hm.slice(3,5));
 }
 // Tisch boards: you're responsible once the patient is on your floor, so the visit clock starts at Arrived.
@@ -1605,7 +1653,7 @@ const visitClockLabel = () => arrivalBoard() ? 'Arrived → seen' : 'Assigned �
 // Start of an admission: its Time in (night times before noon fall on the next morning), else when it was created.
 function admitStart(a){
   if(a.date && /^\d\d:\d\d$/.test(a.timeIn || '')){
-    const nightNext = state.settings.shift === 'night' && a.timeIn < '12:00';
+    const nightNext = wrapsToNextDay(a.timeIn);
     const d = nightNext ? addDays(a.date, 1) : a.date;
     return new Date(+d.slice(0,4), +d.slice(5,7) - 1, +d.slice(8,10), +a.timeIn.slice(0,2), +a.timeIn.slice(3,5));
   }
@@ -2396,7 +2444,7 @@ function renderAdmits(){
   if(ui.admitView === 'today') list = list.filter(a => a.date === d);
   if(ui.admitView === 'open') list = list.filter(a => !isHold(a) && !admitClosed(a) && admitSigned(a) < ADMIT_ITEMS.length);
   list = [...list].sort((a,b) => (b.date||'').localeCompare(a.date||'') || (isHold(a) - isHold(b)) || (a.seq||0) - (b.seq||0));
-  $('#addHold').hidden = !typeOf(activeType).admitOnly;
+  $('#addHold').hidden = !typeOf(activeType).holds;
   document.querySelectorAll('#admitSeg button').forEach(b => b.classList.toggle('on', b.dataset.a === ui.admitView));
 
   const todays = state.admits.filter(a => a.date === d && !isHold(a));
@@ -2651,7 +2699,7 @@ function renderChromeInner(){
     $('#boardDate').title = shiftLabel(d, state.settings.shift); }
   renderShiftPill(); renderTodoInd(); tickClocks();
   { const k = scLabel('bulkAdd'), plain = k.replace(/<[^>]+>/g, ''); const e2 = $('#bulkKey2'); if(e2) e2.innerHTML = k; const b = $('#bulkPt'); if(b) b.dataset.tip = `Bulk Add patients${plain ? '\nShortcut: ' + plain : ''}`; }
-  $('#shiftType').innerHTML = SHIFT_TYPES.map(t => `<option value="${t.k}" ${t.k === activeType ? 'selected' : ''} title="${esc(t.label)}">${t.icon} ${esc(t.short)}</option>`).join('');
+  $('#shiftType').innerHTML = SITES.map(x => `<optgroup label="${esc(x.label)}">${SHIFT_TYPES.filter(t => t.site === x.k).map(t => `<option value="${t.k}" ${t.k === activeType ? 'selected' : ''} title="${esc(t.label)}">${t.icon} ${esc(t.short)}</option>`).join('')}</optgroup>`).join('');
   if(!document.querySelector('#teamWrap .teamedit')){
     const t = state.settings.team;
     $('#teamWrap').innerHTML = `<button class="teamname ${t?'':'unset'}" id="teamBtn" title="${t ? 'Click to rename the team' : 'Click to set the team name'}">${t ? esc(t) : '+ Team'}</button>`;
@@ -3172,8 +3220,7 @@ function newDay(){
   const next = todayISO() > state.boardDate ? todayISO() : addDays(state.boardDate, 1);
   modal(`<h3>Start a new shift</h3>
     <label class="f">Shift type <span class="muted" style="font-weight:400">— each type keeps its own board</span></label>
-    <div class="ndtypes">${SHIFT_TYPES.map(t => { const n = t.k === activeType ? state.patients.length : boardCount(t.k);
-      return `<label class="ndtype"><input type="radio" name="ndType" value="${t.k}" ${t.k === activeType ? 'checked' : ''}><span class="ic">${t.icon}</span><span><b>${esc(t.label)}</b><br><span class="muted">${t.admitOnly ? 'Opens Admissions · admits are logged without a census' : n === null ? 'New board' : `${n} patient${n===1?'':'s'} on this board`}${t.k === activeType ? ' · current' : ''}</span></span></label>`; }).join('')}</div>
+    ${typePickerHTML('ndType', activeType)}
     <label class="f">Shift date <span class="muted" style="font-weight:400">(for overnight, the date the shift starts)</span></label><input type="date" id="ndDate" value="${next}">
     <p>This will:</p><ul>
       <li>Save a read-only snapshot of that board's last shift to History</li>
@@ -3213,6 +3260,7 @@ function newDay(){
       toast(`${typeOf(activeType).label} · ${shiftLabel(nd, state.settings.shift)}`);
     }]], m => {
       // switching to a different shift type defaults the date to today; the current type keeps "next shift"
+      wireTypePicker(m, 'ndType');
       m.querySelectorAll('input[name="ndType"]').forEach(r => r.addEventListener('change', () => { $('#ndDate').value = r.value === activeType ? next : todayISO(); $('#ndTasksWrap').hidden = !typeOf(r.value).tasks; }));
     });
 }
@@ -3312,6 +3360,11 @@ function settings(){
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button class="btn" id="bDiag">🩺 Run self-check</button><span class="muted">Checks storage, saved boards, data integrity, backups and shortcuts.</span></div>
     <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
     <hr>
+    <b>This board</b>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 12px"><span>This board is <b>${esc(typeOf(activeType).label)}</b>.</span>
+      <label class="muted">Move it to <select id="mvTo">${SITES.map(x => `<optgroup label="${esc(x.label)}">${SHIFT_TYPES.filter(t => t.site === x.k && t.k !== activeType).map(t => `<option value="${t.k}">${esc(t.label)}${boardCount(t.k) ? ' (has a board)' : ''}</option>`).join('')}</optgroup>`).join('')}</select></label>
+      <button class="btn sm" id="mvGo">Move board</button><span class="muted small">For when a board was filed under the wrong shift type — patients, tasks, history and log all move.</span></div>
+    <hr>
     <b>Data file <span class="muted" style="font-weight:500">— USB drive or network folder</span></b>
     <p class="muted" style="margin:4px 0 8px">Keep your whole board (all four shift types, settings and shortcuts) in one file you carry with you. Every change saves to it automatically. On another computer, open this board and choose <b>Open my data file</b>. Works in Chrome and Edge. Use an encrypted, hospital-approved drive or folder.</p>
     <div class="dfstat ${DF.handle ? DF.status : 'off'}">${esc(dfStatusText())}</div>
@@ -3363,7 +3416,7 @@ function settings(){
     <b>Reset</b>
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
       <button class="btn danger" id="bEmpty">Start empty (clear everything)</button>
-      ${SANDBOX ? `<button class="btn" id="bDemo">${activeType === 'night-med-tisch' ? 'Load Tisch overnight scenario' : activeType === 'night-adm-bellevue' ? 'Load Bellevue admitting scenario' : 'Reset to demo patients'}</button>` : ''}
+      ${SANDBOX ? `<button class="btn" id="bDemo">${typeOf(activeType).kind === 'night' ? 'Load overnight cross-cover scenario' : typeOf(activeType).kind === 'admit' ? 'Load night admitting scenario' : 'Reset to demo patients'}</button>` : ''}
     </div>
     <p class="privacy" style="margin-top:12px">Privacy: keep identifiers (names, MRNs, DOBs) out of this board and follow your institution's PHI policy. Everything stays in this browser unless you export it.</p>`,
     [['Close'],['Save settings','primary',() => {
@@ -3397,6 +3450,7 @@ function settings(){
       il.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.matches('[data-iname],[data-icap]')){ e.preventDefault(); m.querySelector('#sAddIntern').click(); } });
       m.querySelector('#bExport').onclick = () => { closeModal(); backupNow(); };
       m.querySelector('#bSetExp').onclick = () => exportSettings();
+      m.querySelector('#mvGo').onclick = () => { const to = m.querySelector('#mvTo').value; closeModal(); moveBoard(to); };
       m.querySelector('#sIdle').onchange = e => { PRIV.idle = +e.target.value || 0; privSave(); toast(PRIV.idle ? `The screen hides after ${PRIV.idle} min without activity` : 'Automatic hiding is off'); };
       m.querySelector('#sPinSet').onclick = async () => { const v = m.querySelector('#sPin').value.trim(); if(!/^\d{4,12}$/.test(v)){ toast('Use 4–12 digits'); return; } PRIV.pin = await pinHash(v); privSave(); toast('PIN set — needed to show the board after it hides'); closeModal(); settings(); };
       const pc = m.querySelector('#sPinClear'); if(pc) pc.onclick = () => { PRIV.pin = ''; privSave(); toast('PIN removed'); closeModal(); settings(); };
@@ -4373,7 +4427,8 @@ setInterval(tickClocks, 1000);
 /* Timeline view: one lane per bed across the shift, tasks placed at their times */
 function shiftWindow(timed){
   const night = state.settings.shift === 'night', [y, m, d] = state.boardDate.split('-').map(Number);
-  let a = night ? new Date(y, m - 1, d, 19, 0) : new Date(y, m - 1, d, 6, 0), b = night ? new Date(y, m - 1, d + 1, 8, 0) : new Date(y, m - 1, d, 20, 0);
+  const t24 = typeOf(activeType).span24;
+  let a = night && !t24 ? new Date(y, m - 1, d, 19, 0) : new Date(y, m - 1, d, 6, 0), b = night ? new Date(y, m - 1, d + 1, 8, 0) : new Date(y, m - 1, d, 20, 0);
   timed.forEach(t => { const x = new Date(t.due); if(x < a){ a = new Date(x); a.setMinutes(0, 0, 0); } if(x >= b){ b = new Date(x); b.setMinutes(0, 0, 0); b.setHours(b.getHours() + 1); } });
   return [a, b];
 }
@@ -4613,7 +4668,7 @@ function bellevueDemo(){
     settings:{team:TEAM, interns:['Intern A','Intern B','Intern C','Intern D'], tsHours:72, bmDays:3, cap:0, admitCap:6},
     patients:[], admits, archive:[], history:[], todos};
 }
-const sandboxDemoFor = k => k === 'night-med-tisch' ? normalize(tischDemo()) : k === 'night-adm-bellevue' ? normalize(bellevueDemo()) : k === 'day-wards' ? normalize(linkDemo(demoState())) : null;
+const sandboxDemoFor = k => { const kind = typeOf(k).kind; return kind === 'night' ? normalize(tischDemo()) : kind === 'admit' ? normalize(bellevueDemo()) : kind === 'day' && (k === 'day-wards' || !/icu/.test(k)) ? normalize(linkDemo(demoState())) : null; };
 function tischDemo(){
   const d = todayISO(), d1 = addDays(d, 1), ago = n => addDays(d, -n);
   const night = (h, m = 0) => `${h >= 12 ? d : d1}T${pad(h)}:${pad(m)}`;          // 19:00–23:59 tonight, 00:00–11:59 tomorrow morning
@@ -5106,7 +5161,7 @@ function newFileModal(){
   modal(`<h3>Start a new file</h3>
     <p class="muted" style="margin-top:-4px">A clean board saved in its own file — one per night shift, or one for a whole day block. Your settings, interns, columns and shortcuts come along; patients, tasks and history start empty.</p>
     <label class="f">Shift type</label>
-    <div class="ndtypes">${SHIFT_TYPES.map(t => `<label class="ndtype"><input type="radio" name="nfType" value="${t.k}" ${t.k === def ? 'checked' : ''}><span class="ic">${t.icon}</span><span><b>${esc(t.label)}</b><br><span class="muted">${t.night ? 'One file per night' : 'One file for the whole block'}</span></span></label>`).join('')}</div>
+    ${typePickerHTML('nfType', def)}
     <label class="f" id="nfDateLab">Shift date</label><input type="date" id="nfDate" value="${today}">
     <label class="f">File name</label><input type="text" id="nfName">
     <label class="ndbk"><input type="checkbox" id="nfStart" checked> Start the shift now (shows as Active)</label>
@@ -5119,7 +5174,8 @@ function newFileModal(){
       setTimeout(() => dfStartNew(k, d, name, start, bk), 0);
     }]], m => {
       m.classList.add('wide');
-      const upd = () => { const k = (m.querySelector('input[name="nfType"]:checked') || {}).value || def; $('#nfDateLab').textContent = typeOf(k).night ? 'Shift date (the evening it starts)' : 'Block start date'; $('#nfName').value = nameFor(k, $('#nfDate').value || today); };
+      wireTypePicker(m, 'nfType', () => upd());
+      const upd = () => { const k = (m.querySelector('input[name="nfType"]:checked') || {}).value || def; $('#nfDateLab').textContent = typeOf(k).span24 ? 'Shift date (the morning it starts)' : typeOf(k).night ? 'Shift date (the evening it starts)' : 'Block start date'; $('#nfName').value = nameFor(k, $('#nfDate').value || today); };
       m.addEventListener('change', e => { if(e.target.name === 'nfType' || e.target.id === 'nfDate') upd(); });
       upd();
     });
@@ -5372,7 +5428,7 @@ function cmdParse(input){
   if(simple[v] && !rest.length) return {html:simple[v][0], run:simple[v][1], nav:['validate','full','rounds','newshift','endshift','print','hide','lock','whatsnew','changes','take','leaving'].includes(v)};
   if(v === 'admit' || v === 'hold'){
     const hold = v === 'hold';
-    if(hold && !typeOf(activeType).admitOnly) return {err:'Moonlighter holds are for admitting nights (Bellevue)'};
+    if(hold && !typeOf(activeType).holds) return {err:'Moonlighter holds are for Bellevue Night Admitting'};
     if(!rest.length) return {err:hold ? 'hold <bed> <problem> [from <name>]' : 'admit <bed> <problem>'};
     const bed = rest[0], fi = rest.findIndex((w, i) => i > 0 && w.toLowerCase() === 'from'), problem = (fi > 0 ? rest.slice(1, fi) : rest.slice(1)).join(' '), from = fi > 0 ? rest.slice(fi + 1).join(' ') : '';
     const dup = ents.find(e => e.key === nb(bed) && e.a && e.a.date === state.boardDate);
@@ -5739,6 +5795,7 @@ window.addEventListener('beforeprint', () => { const el = $('#printSheet'); if(e
 
 /* ---------- what's new: shown once after you open a newer version ---------- */
 const CHANGELOG = [
+  {v:180, d:'2026-11-10', items:['<b>19 shift types across three sites</b> — Bellevue, Tisch / KP and VA. New Shift and Start a new file ask for the site first, then the shift; the switcher at the top groups them by site.', 'Day Wards is now <b>Tisch Wards (Day)</b>, Day ICU is <b>Tisch ICU (Day)</b>, Bellevue Nights is <b>Bellevue Night Admitting</b> and Tisch Nights is <b>Tisch Wards (Night)</b> — their boards carry over. If a board belongs to a different site, Settings → This board → Move it.', '24-hour ICU shifts run morning to morning; night intern and ICU night shifts get the night task list.']},
   {v:179, d:'2026-11-10', items:['<b>Self-check on every open</b> — whenever Plexus opens, a data file is opened, a backup is restored or a new shift starts, it quietly checks your boards and reads your data file back from disk. All good: a ✓ in the footer. A real problem: a red bar with Details.']},
   {v:178, d:'2026-11-06', items:['<b>🧳 Take with me</b> (suitcase button at the top, Settings → Data file, or “take” in the command bar): saves an up-to-date copy to Downloads when you leave a computer, lists the next steps, and can then clear Plexus from that computer. Opening that copy later says when it was taken.']},
   {v:177, d:'2026-11-06', items:['Patients added with <b>+ Add patient</b> or <b>Bulk Add</b> now start as <b>Existing</b>, not “New Admit”. Only admissions logged on the Admissions tab are marked New.']},
@@ -5982,6 +6039,25 @@ function renderCheck(){
 }
 document.addEventListener('click', e => { const b = e.target.closest('[data-chk]'); if(!b) return; e.preventDefault();
   if(b.dataset.chk === 'open') diagnostics(); else { CHECK.dismissed = true; renderCheck(); } });
+
+/* Move the whole current board (patients, admissions, tasks, history, log) to another shift type — only into an empty one */
+async function moveBoard(to){
+  if(!to || to === activeType || tabLocked) return;
+  if(boardCount(to) || (() => { try{ const r = JSON.parse(localStorage.getItem(storeKeyFor(to)) || 'null'); return r && ((r.admits || []).length || (r.todos || []).length); }catch(e){ return false; } })()){
+    toast(`${typeOf(to).label} already has a board — open it and clear it first, or pick another`); return; }
+  const from = activeType, ok = await askChoice(`<h3>Move this board?</h3><p><b>${esc(typeOf(from).label)}</b> → <b>${esc(typeOf(to).label)}</b></p><p class="muted">Everything on it moves: patients, admissions, tasks, history and the activity log. ${esc(typeOf(from).label)} is left empty.</p>`, [['Cancel', '', false], ['Move board', 'primary', true]]);
+  if(!ok) return;
+  await autoBackup('before moving board', true);
+  try{
+    const st = JSON.parse(JSON.stringify(state)); st.settings.shiftType = to;
+    localStorage.setItem(storeKeyFor(to), JSON.stringify(st));
+    localStorage.setItem(logKeyFor(to), JSON.stringify([...actLog, {t:new Date().toISOString(), cat:'system', msg:`Board moved here from ${typeOf(from).label}`}]));
+    localStorage.removeItem(storeKeyFor(from)); localStorage.removeItem(logKeyFor(from));
+  }catch(e){ toast('Couldn’t move the board: ' + (e.message || e)); return; }
+  activeType = to; try{ localStorage.setItem(TYPE_KEY, to); }catch(e){}
+  state = normalize(JSON.parse(localStorage.getItem(storeKeyFor(to)))); loadLog(); undoStack.length = 0; redoStack.length = 0; histSel = null;
+  ui.tab = typeOf(to).tab; saveUI(); renderAll(); dfQueue(); toast(`Board moved to ${typeOf(to).label}`);
+}
 
 /* ---------- boot ---------- */
 loadLog();
