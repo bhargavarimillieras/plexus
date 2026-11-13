@@ -550,6 +550,9 @@ body.tkfull #hclocks{margin-right:4px}
 .tktime{width:58px;font-weight:800;font-variant-numeric:tabular-nums;text-align:center}
 .tktext{flex:1;min-width:160px}
 .tkres{width:240px;color:var(--muted)!important;font-style:italic}
+.tklist{container-type:inline-size}
+@container (max-width:900px){.tkres{width:150px}.tktext{min-width:110px}}
+@container (max-width:700px){.tkrow{flex-wrap:wrap}.tkres{flex:1 1 100%;width:auto;margin-left:30px}}
 .tkbed{border:0;background:var(--head);border-radius:6px;padding:3px 9px;font-weight:800;cursor:pointer;white-space:nowrap;min-width:52px}
 .tkbed:hover{background:var(--hover)}
 .tkadm{flex:none;font-size:11px;font-weight:800;color:var(--info-ink);background:var(--info-bg);border-radius:8px;padding:1px 6px;min-width:26px;text-align:center}
@@ -700,6 +703,24 @@ kbd{font:600 11px ui-monospace,Menlo,monospace;border:1px solid var(--line2);bor
 #cmdbar[hidden]{display:none}
 body.cmd-open .app{height:calc(100vh - var(--cmdh, 120px))}
 body.cmd-open .toast{bottom:calc(var(--cmdh, 120px) + 14px)}
+/* command bar docked on the right (Settings → Command bar) */
+body.cmd-right #cmdbar{left:auto;top:0;bottom:0;width:var(--cmdw,400px)}
+body.cmd-right.cmd-open .app{height:100vh;width:calc(100vw - var(--cmdw,400px))}
+body.cmd-right.cmd-open .toast{bottom:18px;left:calc((100vw - var(--cmdw,400px)) / 2)}
+body.cmd-right .cmdbox{height:100%;display:flex;flex-direction:column;border-top:0;border-left:1px solid #3a3a3c;box-shadow:-10px 0 30px rgba(0,0,0,.3)}
+body.cmd-right .cmdtitle{order:0;flex:none}
+body.cmd-right .cmdtitle .tt{margin-right:0;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.cmd-right .cmdout{order:1;flex:1 1 auto;display:block!important;overflow:auto;white-space:pre-wrap;word-break:break-word;padding:10px 14px;border-bottom:1px solid #2c2c2e}
+body.cmd-right .cmdout:empty::before{content:'What your commands do shows up here.';color:#6e6e73}
+body.cmd-right .cmdlist{order:2;position:static;width:auto;max-height:40vh;border:0;border-top:1px solid #3a3a3c;border-radius:0;box-shadow:none;flex:none}
+body.cmd-right .cmdin{order:3;flex:none;border-top:1px solid #2c2c2e;padding-top:10px}
+body.cmd-right .cmdprev{order:4;flex:none;white-space:normal}
+body.cmd-right .cmdfoot{order:5;flex:none;flex-wrap:wrap}
+.cmdside{margin-left:auto;cursor:pointer;color:#a1a1a6;font-size:13px;padding:0 5px;border-radius:4px;line-height:18px}.cmdside:hover{color:#fff;background:#48484a}
+.cmdgrip{display:none}
+body.cmd-right .cmdgrip{display:block;position:absolute;left:-3px;top:0;bottom:0;width:7px;cursor:ew-resize;z-index:2}
+body.cmd-right .cmdgrip:hover,body.cmd-right .cmdgrip.drag{background:linear-gradient(90deg,transparent 2px,#0a84ff 2px,#0a84ff 4px,transparent 4px)}
+body.cmd-dragging{cursor:ew-resize;user-select:none}
 .cmdbox{position:relative;pointer-events:auto;background:#1e1e1e;color:#e6e6e6;border-top:1px solid #3a3a3c;box-shadow:0 -10px 30px rgba(0,0,0,.35);font:13.5px/1.45 ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace}
 .cmdtitle{display:flex;align-items:center;gap:8px;height:24px;padding:0 10px;background:linear-gradient(#3a3a3c,#2f2f31);border-bottom:1px solid #111;color:#a1a1a6;font:600 11.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .cmdtitle .tl{display:flex;gap:6px}.cmdtitle .tl i{width:11px;height:11px;border-radius:50%;display:block;background:#5a5a5e}
@@ -1111,7 +1132,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '183';
+const APP_VERSION = '184';
 const APP_UPDATED = '2026-11-13';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3361,6 +3382,7 @@ function settings(){
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;align-items:center"><button class="btn" id="bKeys">⌨ Keyboard shortcuts…</button><span class="muted">See and change every shortcut (press <kbd>?</kbd> on the board to view them).</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button class="btn" id="bDiag">🩺 Run self-check</button><span class="muted">Checks storage, saved boards, data integrity, backups and shortcuts.</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Command bar <select id="sCmdDock"><option value="bottom" ${CMDDOCK.side === 'bottom' ? 'selected' : ''}>Strip along the bottom</option><option value="right" ${CMDDOCK.side === 'right' ? 'selected' : ''}>Panel on the right</option></select></label><span class="muted">Switch any time with ⇆ in the bar. The side panel can be resized by dragging its left edge, and it moves to the bottom when the window is too narrow. Saved on this computer.</span></div>
     <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
     <hr>
     <b>This board</b>
@@ -3454,6 +3476,7 @@ function settings(){
       m.querySelector('#bExport').onclick = () => { closeModal(); backupNow(); };
       m.querySelector('#bSetExp').onclick = () => exportSettings();
       m.querySelector('#mvGo').onclick = () => { const to = m.querySelector('#mvTo').value; closeModal(); moveBoard(to); };
+      m.querySelector('#sCmdDock').onchange = e => cmdDockSet(e.target.value);
       m.querySelector('#sIdle').onchange = e => { PRIV.idle = +e.target.value || 0; privSave(); toast(PRIV.idle ? `The screen hides after ${PRIV.idle} min without activity` : 'Automatic hiding is off'); };
       m.querySelector('#sPinSet').onclick = async () => { const v = m.querySelector('#sPin').value.trim(); if(!/^\d{4,12}$/.test(v)){ toast('Use 4–12 digits'); return; } PRIV.pin = await pinHash(v); privSave(); toast('PIN set — needed to show the board after it hides'); closeModal(); settings(); };
       const pc = m.querySelector('#sPinClear'); if(pc) pc.onclick = () => { PRIV.pin = ''; privSave(); toast('PIN removed'); closeModal(); settings(); };
@@ -4491,7 +4514,7 @@ function openTkPop(btn, id){
   (t.done ? res : res).focus();
 }
 document.addEventListener('mousedown', e => { if(tkPop && !tkPop.contains(e.target)) { const cm = () => { const r = tkPop && tkPop.querySelector('[data-pres]'); }; closeTkPop(); } });
-let tlResize; window.addEventListener('resize', () => { clearTimeout(tlResize); tlResize = setTimeout(() => { if(ui.tab === 'tasks' && tkUI.view === 'timeline') renderTasks(); }, 150); });
+let tlResize; ['resize', 'plexus-relayout'].forEach(ev => window.addEventListener(ev, () => { clearTimeout(tlResize); tlResize = setTimeout(() => { if(ui.tab === 'tasks' && tkUI.view === 'timeline') renderTasks(); }, 150); }));
 
 /* full-screen task view (timeline or lists) */
 const tkFullOn = () => document.body.classList.contains('tkfull');
@@ -5523,9 +5546,9 @@ let cmdHist = (() => { try{ const h = JSON.parse(localStorage.getItem(`${KEY_PRE
 const cmdUI = {open:false, sel:-1, plan:null, hi:-1, prevFocus:null, out:[]};
 function cmdEl(){
   let el = $('#cmdbar'); if(el) return el;
-  document.body.insertAdjacentHTML('beforeend', `<div id="cmdbar" hidden><div class="cmdbox" role="dialog" aria-label="Command bar">
+  document.body.insertAdjacentHTML('beforeend', `<div id="cmdbar" hidden><div class="cmdbox" role="dialog" aria-label="Command bar"><div class="cmdgrip" title="Drag to resize"></div>
     <div id="cmdList" class="cmdlist" role="listbox"></div>
-    <div class="cmdtitle"><span class="tl"><i class="r" data-cmdclose title="Close (Esc)"></i><i class="y"></i><i class="g"></i></span><span class="tt">plexus — ${esc(typeOf(activeType).short)} — command</span></div>
+    <div class="cmdtitle"><span class="tl"><i class="r" data-cmdclose title="Close (Esc)"></i><i class="y"></i><i class="g"></i></span><span class="tt">plexus — ${esc(typeOf(activeType).short)} — command</span><span class="cmdside" data-cmdside title="Move to the side / bottom">⇆</span></div>
     <div id="cmdOut" class="cmdout"></div>
     <div class="cmdin"><span class="cmdps" id="cmdPs"></span><input id="cmdIn" autocomplete="off" spellcheck="false" placeholder="ED15L visit complete · task ED-21 04:00 H/H · go tasks · help"></div>
     <div id="cmdPrev" class="cmdprev"></div>
@@ -5535,10 +5558,30 @@ function cmdEl(){
   inp.addEventListener('input', () => { cmdUI.sel = -1; cmdUI.hi = -1; cmdRender(); });
   inp.addEventListener('keydown', cmdKey);
   el.addEventListener('mousedown', e => { if(e.target.closest('[data-cmdclose]')){ e.preventDefault(); cmdClose(); } });
+  el.addEventListener('mousedown', e => { if(e.target.closest('[data-cmdside]')){ e.preventDefault(); cmdDockSet(CMDDOCK.side === 'right' ? 'bottom' : 'right'); setTimeout(() => $('#cmdIn').focus(), 0); } });
+  el.querySelector('.cmdgrip').addEventListener('pointerdown', cmdGripDown);
   el.addEventListener('click', e => { if(e.target.closest('[data-cmdhelp]')){ e.preventDefault(); cmdClose(); cmdHelp(); return; }
     const it = e.target.closest('[data-ci]'); if(it){ cmdUI.sel = +it.dataset.ci; cmdPick(true); } });
   return el;
 }
+/* Where the command bar sits: bottom strip or a panel on the right. Kept per computer (it depends on the screen). */
+const CMDDOCK_KEY = `${KEY_PREFIX}.cmdDock`, CMD_NARROW = 1100, CMD_WMIN = 300;   // windows narrower than CMD_NARROW use the bottom strip
+var CMDDOCK = (() => { try{ const v = JSON.parse(localStorage.getItem(CMDDOCK_KEY) || '{}'); return {side:v.side === 'right' ? 'right' : 'bottom', w:+v.w || 400}; }catch(e){ return {side:'bottom', w:400}; } })();
+function cmdWMax(){ return Math.max(CMD_WMIN, Math.min(800, innerWidth - 600)); }
+function cmdW(){ return Math.max(CMD_WMIN, Math.min(CMDDOCK.w, cmdWMax())); }
+function cmdIsRight(){ return CMDDOCK.side === 'right' && innerWidth >= CMD_NARROW; }
+function cmdDockApply(){ const was = document.body.classList.contains('cmd-right'), r = cmdIsRight();
+  document.body.classList.toggle('cmd-right', r); document.documentElement.style.setProperty('--cmdw', cmdW() + 'px');
+  if($('#cmdOut')){ cmdRender(); cmdSize(); } if(was !== r || r) requestAnimationFrame(() => { fitHeader(); window.dispatchEvent(new Event('plexus-relayout')); }); }
+function cmdDockSet(side){ CMDDOCK.side = side; try{ localStorage.setItem(CMDDOCK_KEY, JSON.stringify(CMDDOCK)); }catch(e){} cmdDockApply();
+  if(side === 'right' && !cmdIsRight()) toast('This window is too narrow for the side panel — using the bottom until it’s wider'); }
+function cmdGripDown(e){ e.preventDefault(); const g = e.currentTarget; g.classList.add('drag'); document.body.classList.add('cmd-dragging'); g.setPointerCapture(e.pointerId);
+  const mv = ev => { CMDDOCK.w = Math.round(Math.max(CMD_WMIN, Math.min(innerWidth - ev.clientX, cmdWMax()))); document.documentElement.style.setProperty('--cmdw', CMDDOCK.w + 'px'); };
+  const up = () => { g.classList.remove('drag'); document.body.classList.remove('cmd-dragging'); g.removeEventListener('pointermove', mv); g.removeEventListener('pointerup', up); g.removeEventListener('pointercancel', up);
+    try{ localStorage.setItem(CMDDOCK_KEY, JSON.stringify(CMDDOCK)); }catch(e){} cmdDockApply(); };
+  g.addEventListener('pointermove', mv); g.addEventListener('pointerup', up); g.addEventListener('pointercancel', up); }
+{ let fr = 0; window.addEventListener('resize', () => { cancelAnimationFrame(fr); fr = requestAnimationFrame(cmdDockApply); }); }
+try{ cmdDockApply(); }catch(e){}
 function cmdSize(){ const b = document.querySelector('#cmdbar .cmdbox'); if(!b) return; const h = b.offsetHeight; document.documentElement.style.setProperty('--cmdh', h + 'px'); }
 function cmdOpen(prefill){
   if(cmdUI.open){ const inp = $('#cmdIn'); if(prefill != null){ inp.value = prefill; cmdRender(); } inp.focus(); return; }   // already open: just come back to it
@@ -5552,7 +5595,7 @@ function cmdOpen(prefill){
 function cmdClose(restore = true){ const el = $('#cmdbar'); if(!el || el.hidden) return; try{ $('#cmdIn').blur(); }catch(e){} el.hidden = true; cmdUI.open = false; document.body.classList.remove('cmd-open'); if(restore && cmdUI.prevFocus && cmdUI.prevFocus.isConnected && cmdUI.prevFocus !== document.body) try{ cmdUI.prevFocus.focus({preventScroll:true}); }catch(e){} }
 function cmdRender(){
   if($('#cmdPs')) $('#cmdPs').innerHTML = `${esc(typeOf(activeType).short.toLowerCase().replace(/\s+/g, '-'))}<span style="color:#e6e6e6">:</span><b>${esc({census:'census', admits:'admits', discharges:'discharges', transfers:'transfers', tasks:'tasks', history:'history'}[ui.tab] || ui.tab)}</b> <span style="color:#e6e6e6">%</span>`;
-  $('#cmdOut').innerHTML = cmdUI.out.map(o => `<div><span class="muted">%</span> ${esc(o.cmd)}</div><div class="${o.ok === 'same' ? 'samel' : o.ok ? 'okl' : 'badl'}">  ${o.ok === 'same' ? '=' : o.ok ? '✓' : '✗'} ${esc(o.msg)}</div>`).join('');
+  const co = $('#cmdOut'); co.innerHTML = (document.body.classList.contains('cmd-right') ? cmdUI.out : cmdUI.out.slice(-3)).map(o => `<div><span class="muted">%</span> ${esc(o.cmd)}</div><div class="${o.ok === 'same' ? 'samel' : o.ok ? 'okl' : 'badl'}">  ${o.ok === 'same' ? '=' : o.ok ? '✓' : '✗'} ${esc(o.msg)}</div>`).join(''); co.scrollTop = co.scrollHeight;
   const v = $('#cmdIn').value; let plan; try{ plan = cmdParse(v); }catch(e){ plan = {err:'Couldn’t read that — ' + esc(e.message)}; }
   cmdUI.plan = plan;
   $('#cmdPrev').className = 'cmdprev ' + (plan.already ? 'same' : plan.err ? 'bad' : plan.run ? 'ok' : '');
@@ -5577,7 +5620,7 @@ function cmdExec(fn, text, nav){
   let msg = '', ok = true; try{ msg = fn() || ''; }catch(e){ msg = 'That command failed: ' + (e.message || e); ok = false; }
   if(nav){ if(msg) toast(msg, ok); return; }
   // terminal style: stay open, echo the command and its result, ready for the next one
-  cmdUI.out.push({cmd:t, msg:msg || 'done', ok}); cmdUI.out = cmdUI.out.slice(-3);
+  cmdUI.out.push({cmd:t, msg:msg || 'done', ok}); cmdUI.out = cmdUI.out.slice(-200);
   if(ok && msg) toast(msg, true);
   if(!cmdUI.open) return;   // the command opened something else (a pop-up)
   const inp = $('#cmdIn'); inp.value = ''; cmdUI.sel = -1; cmdUI.hi = -1; cmdRender(); inp.focus(); cmdSize();
@@ -5599,7 +5642,7 @@ function cmdKey(e){
   }
   if(e.key === 'Tab'){ e.preventDefault(); if(L.length){ if(cmdUI.sel < 0) cmdUI.sel = 0; cmdPick(false); } return; }
   if(e.key === 'Enter'){ e.preventDefault(); if(cmdUI.sel >= 0 && L[cmdUI.sel]) cmdPick(true); else if(plan.run) cmdExec(plan.run, inp.value); else if(L.length){ cmdUI.sel = 0; cmdPick(false); }
-    else if(plan.err && inp.value.trim()){ cmdUI.out.push({cmd:inp.value.trim(), msg:plan.err.replace(/<[^>]+>/g, ''), ok:plan.already ? 'same' : false}); cmdUI.out = cmdUI.out.slice(-3); if(plan.already) inp.value = ''; cmdRender(); cmdSize(); }
+    else if(plan.err && inp.value.trim()){ cmdUI.out.push({cmd:inp.value.trim(), msg:plan.err.replace(/<[^>]+>/g, ''), ok:plan.already ? 'same' : false}); cmdUI.out = cmdUI.out.slice(-200); if(plan.already) inp.value = ''; cmdRender(); cmdSize(); }
     return; }
 }
 function cmdHelp(){
@@ -5798,6 +5841,7 @@ window.addEventListener('beforeprint', () => { const el = $('#printSheet'); if(e
 
 /* ---------- what's new: shown once after you open a newer version ---------- */
 const CHANGELOG = [
+  {v:184, d:'2026-11-13', items:['<b>Command bar on the right</b> — Settings → Command bar, or ⇆ in the bar, docks it as a panel down the right side. The board gets narrower, not shorter, and the panel keeps a scrolling history of your commands.', 'Drag the panel’s left edge to resize it. In a narrow window it moves to the bottom automatically, and comes back when there’s room.', 'Task rows fit narrower boards: the Result / note box shrinks, and on very narrow boards drops to its own line.']},
   {v:183, d:'2026-11-13', items:['The <b>PLEXUS</b> logo is now white lettering in a dark rounded box.']},
   {v:182, d:'2026-11-10', items:['Night shifts (CCU, ICU, wards and night intern) are now described as what they are: cross-cover census, admissions and night tasks.']},
   {v:181, d:'2026-11-10', items:['Added <b>Bellevue CCU (Day)</b> and <b>Bellevue CCU (Night)</b>.']},
@@ -6003,7 +6047,7 @@ async function clearThisComputer(){
     <p class="red"><b>Only do this once your copy is safely uploaded</b> — after this, that file is the only copy.</p>`, [['Cancel', '', false], ['Clear this computer', 'danger', true]]);
   if(!go) return;
   wiping = true; tabLocked = true; clearTimeout(dfTimer); dfTimer = null;   // nothing may save on the way out
-  const keep = new Set([SEEN_KEY, PRIV_KEY]);
+  const keep = new Set([SEEN_KEY, PRIV_KEY, CMDDOCK_KEY]);
   try{ Object.keys(localStorage).forEach(k => { if((k === KEY_PREFIX || k.startsWith(KEY_PREFIX + '.')) && !keep.has(k)) localStorage.removeItem(k); }); }catch(e){}
   try{ await idbSet(null); }catch(e){}
   for(const k of ['snaps', 'bkdir', 'pastdir']){ try{ await idbPutK(k, null); }catch(e){} }
