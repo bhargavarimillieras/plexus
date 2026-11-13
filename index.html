@@ -971,6 +971,84 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 .optrow .ib{border:1px solid var(--line);background:var(--panel);border-radius:5px;cursor:pointer;width:26px;height:28px;color:var(--muted)}
 .optrow .ib:hover{color:var(--ink);background:var(--hover)}
 .note{background:var(--info-bg);color:var(--info-ink);border-radius:6px;padding:6px 10px;font-size:12px;margin-top:10px}
+
+/* ---------- Overview: command hub ---------- */
+#view-overview{overflow:auto;padding:14px 16px 18px}#view-overview.on{display:block}
+.hub{display:flex;flex-direction:column;gap:14px;max-width:1500px;margin:0 auto}
+.hubband{background:linear-gradient(135deg,#0d121b 0%,#162031 60%,#1a2740 100%);color:#e7ecf4;border-radius:14px;padding:12px 16px 16px;box-shadow:0 6px 24px rgba(10,20,40,.18);position:relative;overflow:hidden}
+.hubband::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none}
+.hubtop{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font:600 12px/1.3 ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:#9fb0c8;letter-spacing:.04em}
+.hublive{display:inline-flex;align-items:center;gap:6px;color:#7ee2a0;font-weight:800}
+.hublive i{width:8px;height:8px;border-radius:50%;background:#34d27b;box-shadow:0 0 0 0 rgba(52,210,123,.6);animation:hubpulse 2s infinite}
+@keyframes hubpulse{0%{box-shadow:0 0 0 0 rgba(52,210,123,.55)}70%{box-shadow:0 0 0 8px rgba(52,210,123,0)}100%{box-shadow:0 0 0 0 rgba(52,210,123,0)}}
+.hubtop b{color:#e7ecf4}
+.hubclock{margin-left:auto;font-size:20px;font-weight:700;color:#fff;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+.hubprog{display:flex;align-items:center;gap:10px;margin:8px 0 14px;font:600 11px ui-monospace,Menlo,monospace;color:#8496b0}
+.hubprog .bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+.hubprog .bar i{display:block;height:100%;background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;position:relative;z-index:1}
+.kpi{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:10px 12px 11px;cursor:pointer;transition:background .15s,border-color .15s;min-width:0}
+.kpi:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
+.kpi .kl{display:flex;align-items:center;gap:6px;font:800 10.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#8ea0bb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .kl .dot{width:7px;height:7px;border-radius:50%;flex:none;background:#34d27b}
+.kpi .kl .dot.amb{background:#f5b83d}.kpi .kl .dot.red{background:#ff5d52}.kpi .kl .dot.off{background:#566479}
+.kpi .kv{font:700 34px/1.05 ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:#fff;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi .kv small{font-size:17px;color:#7f90a8;font-weight:600;margin-left:2px}
+.kpi .ks{font-size:11.5px;color:#9fb0c8;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .ks b{color:#e7ecf4}.kpi .ks .r{color:#ff8a80;font-weight:700}.kpi .ks .a{color:#f7c96b;font-weight:700}
+.kpi .mini{display:flex;gap:2px;margin-top:7px;height:5px}.kpi .mini i{flex:1;border-radius:2px;background:rgba(255,255,255,.1)}
+.kpi .mini i.f{background:#60a5fa}.kpi .mini i.o{background:#ff5d52}.kpi .mini i.n{background:#34d27b}
+.hubgrid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}
+.hp{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-width:0}
+.hp.s8{grid-column:span 8}.hp.s4{grid-column:span 4}.hp.s6{grid-column:span 6}.hp.s12{grid-column:span 12}
+.hph{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.hph h4{margin:0;font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hph .n{font:700 13px ui-monospace,Menlo,monospace;color:var(--ink);background:var(--head);border-radius:6px;padding:1px 7px}
+.hph a{margin-left:auto;font-size:12px;color:var(--accent);text-decoration:none;font-weight:600}
+.lanes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.lane{background:var(--bg);border-radius:9px;padding:7px;min-height:120px}
+.lane h6{margin:0 0 6px;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between}
+.lane h6 b{color:var(--ink)}
+.acard{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:7px;padding:6px 8px;margin-bottom:6px;cursor:pointer;font-size:12px}
+.acard:hover{border-color:var(--line2)}
+.acard.l-wait{border-left-color:#9aa3b2}.acard.l-p1{border-left-color:#4285F4}.acard.l-p2{border-left-color:#34A853}.acard.l-p3{border-left-color:#9b72e8}.acard.l-done{border-left-color:#1e8e3e;opacity:.75}
+.acard .t{display:flex;align-items:center;gap:6px}
+.acard .t b{font-size:12.5px}.acard .t .sq{font:700 10.5px ui-monospace,Menlo,monospace;color:var(--muted)}
+.acard .t .asg{margin-left:auto}
+.acard .pr{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.acard .pb{display:flex;gap:2px;margin-top:5px;height:4px}.acard .pb i{flex:1;border-radius:2px;background:var(--line)}.acard .pb i.d{background:#34A853}
+.lane .none{font-size:11.5px;color:var(--muted);text-align:center;padding:14px 0}
+.irow{display:grid;grid-template-columns:minmax(120px,1.3fr) 2fr auto;gap:10px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.irow:last-child{border-bottom:0}
+.irow .nm{font-weight:700;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.irow .nm i{font-style:normal;font-size:9.5px;font-weight:800;background:#34A853;color:#fff;border-radius:6px;padding:0 5px;margin-left:5px;vertical-align:1px}
+.slots{display:flex;gap:2px;flex-wrap:wrap}.slots i{width:10px;height:14px;border-radius:2px;background:var(--line)}
+.slots i.f{background:#60a5fa}.slots i.nw{background:#f5b83d}.slots i.dc{background:#34A853}.slots i.ov{background:#ff5d52}
+.irow .st{font:600 11.5px ui-monospace,Menlo,monospace;color:var(--muted);white-space:nowrap}.irow .st b{color:var(--ink)}
+.slotkey{display:flex;gap:10px;font-size:11px;color:var(--muted);margin-top:8px;flex-wrap:wrap}.slotkey span{display:inline-flex;align-items:center;gap:4px}.slotkey i{width:9px;height:11px;border-radius:2px;display:inline-block}
+.dcl{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line);font-size:12px;cursor:pointer}
+.dcl:last-child{border-bottom:0}.dcl .bd{font-weight:800}.dcl .who{color:var(--muted);font-size:11.5px}.dcl .k{font:700 11.5px ui-monospace,Menlo,monospace}.dcl .k.ok{color:#1e8e3e}
+.dcl .dcbar{grid-column:1/-1;margin-top:-2px}
+.dcsub{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:8px 0 2px}
+.trow{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px;cursor:pointer}
+.trow:last-child{border-bottom:0}
+.trow .tm{font:700 12px ui-monospace,Menlo,monospace;border-radius:5px;padding:1px 6px;background:var(--head)}
+.trow .tm.over{background:#d93025;color:#fff}.trow .tm.soon{background:#fbe3a3;color:#5c3d00}
+.trow .bd{font-weight:800;font-size:12px;color:var(--info-ink);background:var(--info-bg);border-radius:5px;padding:1px 6px;white-space:nowrap}
+.trow .tx{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.arow{display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid var(--line);font-size:12.5px;cursor:pointer}
+.arow:last-child{border-bottom:0}.arow .bd{font-weight:800;min-width:68px}
+.arow .fl{display:flex;gap:4px;flex-wrap:wrap}
+.arow .fl span{font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px}
+.arow .fl .bad{background:var(--bad-bg);color:var(--bad-ink)}.arow .fl .warn{background:var(--warn-bg);color:var(--warn-ink)}.arow .fl .info{background:var(--info-bg);color:var(--info-ink)}
+.hpempty{font-size:12px;color:var(--muted);padding:8px 0}
+@media (max-width:1250px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.hp.s8,.hp.s4{grid-column:span 12}.hp.s6{grid-column:span 12}}
+@media (prefers-color-scheme: dark){.hubband{background:linear-gradient(135deg,#0a0e15 0%,#111a28 60%,#142035 100%);border:1px solid #232c3a}.trow .tm.soon{background:#4a3a12;color:#f7d27a}}
+.lanes.l6{grid-template-columns:repeat(6,minmax(0,1fr))}
+.hp.tall .lane{min-height:calc(100vh - 400px)}
+.hp.tall .acard{font-size:12.5px;padding:8px 10px}.hp.tall .acard .t b{font-size:13.5px}
+.lane.hold{background:color-mix(in srgb,#7e57c2 8%,var(--bg))}.acard.l-hold{border-left-color:#7e57c2}
+@media (max-width:1000px){.lanes,.lanes.l6{grid-template-columns:repeat(2,minmax(0,1fr))}.hp.tall .lane{min-height:0}}
 </style>
 </head>
 <body>
@@ -979,8 +1057,9 @@ td.pulsetd{animation:pulse 1.6s ease-out}
     <div class="brand"><span class="brandname">PLEXUS</span> <span id="teamWrap"></span></div>
     <div class="boarddate"><button class="shiftpill" id="shiftPill"></button><b id="boardDate"></b><span class="bdsep"></span><select id="shiftType" class="shiftsel" title="Shift type — each type keeps its own separate board"></select></div>
     <nav class="tabs" id="tabs">
+      <button data-tab="overview">Overview</button>
       <button data-tab="tasks" hidden>Tasks</button>
-      <button data-tab="census" class="on">Census</button>
+      <button data-tab="census">Census</button>
       <button data-tab="admits">Admissions</button>
       <button data-tab="discharges">Discharges</button>
       <button data-tab="transfers">Transfers</button>
@@ -1007,7 +1086,8 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 
   <main>
     <!-- CENSUS -->
-    <section class="view on" id="view-census">
+    <section class="view on" id="view-overview"></section>
+    <section class="view" id="view-census">
       <div class="ovwrap">
       <aside class="side" id="summary"></aside>
       <div class="ovmain">
@@ -1132,7 +1212,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '184';
+const APP_VERSION = '185';
 const APP_UPDATED = '2026-11-13';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1165,7 +1245,7 @@ const SHIFT_TYPES = [
   ['va-icu-24',          'va',       'VA ICU (24 Hr)',            '24h'],
   ].map(([k, site, label, kind, extra]) => Object.assign({k, site, label, short:label, kind,
     icon:kind === 'day' ? '☀' : kind === '24h' ? '⏱' : '☾', night:kind !== 'day', span24:kind === '24h',
-    tab:kind === 'admit' ? 'admits' : kind === 'night' ? 'tasks' : 'census',
+    tab:'overview', work:kind === 'admit' ? 'admits' : kind === 'night' ? 'tasks' : 'census',
     tasks:kind !== 'day', admitOnly:kind === 'admit', noAdmitIntern:kind === 'admit' || kind === 'night'}, extra || {})),
 ];
 const SITES = [{k:'bellevue', label:'Bellevue'}, {k:'tisch', label:'Tisch / KP'}, {k:'va', label:'VA'}];
@@ -1579,6 +1659,7 @@ function save(){
 }
 const ui = (() => { try{ return Object.assign({filter:'all', intern:'', hidden:[], admitView:'today', tab:'census'}, JSON.parse(localStorage.getItem(UI_KEY)||'{}')); }catch(e){ return {filter:'all', intern:'', hidden:[], admitView:'today', tab:'census'}; } })();
 ui.search = ''; if(!['all','open','flagged'].includes(ui.filter)) ui.filter = 'all';
+ui.tab = 'overview';   // Plexus always opens to the Overview
 function saveUI(){ try{ const {search, ...rest} = ui; localStorage.setItem(UI_KEY, JSON.stringify(rest)); }catch(e){} }
 
 /* ---------- undo ---------- */
@@ -2752,11 +2833,12 @@ function renderChromeInner(){
   if(ui.tab !== 'tasks' && typeof tkFullOn === 'function' && tkFullOn()) exitTkFull();
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === `view-${ui.tab}`));
+  if(ui.tab === 'overview') try{ renderOverview(); }catch(e){ console.error(e); }
 }
 
 let lastFocus = null;
 function renderAll(){
-  renderChrome(); renderCensus(); renderAdmits(); renderDischarges(); renderTransfers(); renderHistory(); renderRounds(); renderTasks();
+  renderChrome(); renderOverview(); renderCensus(); renderAdmits(); renderDischarges(); renderTransfers(); renderHistory(); renderRounds(); renderTasks();
   if(lastFocus){
     const el = (rounds.open ? $('#roundsBody') : document).querySelector(`.tc[data-kind="${lastFocus.kind}"][data-id="${lastFocus.id}"][data-col="${lastFocus.col}"]`);
     if(el) el.focus({preventScroll:true});
@@ -5245,7 +5327,7 @@ const CMD_YES = new Set(['complete','completed','done','yes','y','ok','check','c
 const CMD_NO = new Set(['undo','no','n','clear','uncheck','untick','off','remove','notdone','false','undone','unmark']);
 const CMD_TABS = {census:['census'], overview:['census'], board:['census'], cen:['census'], admits:['admits'], admit:['admits'], admissions:['admits'], admission:['admits'],
   discharges:['discharges'], discharge:['discharges'], dc:['discharges'], transfers:['transfers'], transfer:['transfers'], xfer:['transfers'],
-  tasks:['tasks'], task:['tasks'], todo:['tasks'], todos:['tasks'], history:['history'], archive:['history','__archive'], analytics:['history','__analytics'], stats:['history','__analytics'], log:['history','__log'], activity:['history','__log'], past:['history','__past'], pastshifts:['history','__past'], files:['history','__past']};
+  overview:['overview'], ov:['overview'], home:['overview'], hub:['overview'], dashboard:['overview'], tasks:['tasks'], task:['tasks'], todo:['tasks'], todos:['tasks'], history:['history'], archive:['history','__archive'], analytics:['history','__analytics'], stats:['history','__analytics'], log:['history','__log'], activity:['history','__log'], past:['history','__past'], pastshifts:['history','__past'], files:['history','__past']};
 // extra names for Admissions columns and fields
 const CMD_A_ALIAS = {ed:'edcourse', course:'edcourse', edc:'edcourse', pl:'problist', problems:'problist', problemlist:'problist', meds:'medadm', medadmission:'medadm', adm:'medadm',
   mr:'medrec', medsrec:'medrec', labs:'labord', laborders:'labord', lab:'labord', so:'signout', signedout:'signout', signoff:'signout', vis:'visit', see:'visit',
@@ -5439,7 +5521,7 @@ function cmdParse(input){
     const pre = t0 ? [...new Set(Object.keys(CMD_TABS).filter(k => k.startsWith(t0)).map(k => CMD_TABS[k].join('|')))] : [];
     const t = CMD_TABS[t0] ? t0 : pre.length === 1 ? Object.keys(CMD_TABS).find(k => k.startsWith(t0)) : t0, dest = CMD_TABS[t];
     if(!dest) return {err:'Go where? census, admits, discharges, transfers, tasks, history, analytics, log', sugg:Object.keys(CMD_TABS).filter(k => k.startsWith(t)).slice(0, 8).map(k => ({label:`go ${k}`, fill:`go ${k}`}))};
-    const nice = {census:'Census', admits:'Admissions', discharges:'Discharges', transfers:'Transfers', tasks:'Tasks', history:'History & Archive'}[dest[0]] + (dest[1] ? ' → ' + {__archive:'Archive', __analytics:'Analytics', __log:'Activity log', __past:'Past shift files'}[dest[1]] : '');
+    const nice = {overview:'Overview', census:'Census', admits:'Admissions', discharges:'Discharges', transfers:'Transfers', tasks:'Tasks', history:'History & Archive'}[dest[0]] + (dest[1] ? ' → ' + {__archive:'Archive', __analytics:'Analytics', __log:'Activity log', __past:'Past shift files'}[dest[1]] : '');
     return {nav:true, html:`Go to <b>${esc(nice)}</b>`, run:() => { if(!scGoTab(dest[0])) return ''; if(dest[1]){ histSel = dest[1]; renderHistory(); } return ''; }};
   }
   const simple = {validate:['Run Validation', () => { ui.tab === 'admits' ? admitValidation() : (ui.tab !== 'census' && scGoTab('census'), validation()); return ''; }],
@@ -5587,14 +5669,14 @@ function cmdOpen(prefill){
   if(cmdUI.open){ const inp = $('#cmdIn'); if(prefill != null){ inp.value = prefill; cmdRender(); } inp.focus(); return; }   // already open: just come back to it
   if(modalEl) closeModal();
   const el = cmdEl();
-  $('#cmdPs').innerHTML = `${esc(typeOf(activeType).short.toLowerCase().replace(/\s+/g, '-'))}<span style="color:#e6e6e6">:</span><b>${esc({census:'census', admits:'admits', discharges:'discharges', transfers:'transfers', tasks:'tasks', history:'history'}[ui.tab] || ui.tab)}</b> <span style="color:#e6e6e6">%</span>`;
+  $('#cmdPs').innerHTML = `${esc(typeOf(activeType).short.toLowerCase().replace(/\s+/g, '-'))}<span style="color:#e6e6e6">:</span><b>${esc({overview:'overview', census:'census', admits:'admits', discharges:'discharges', transfers:'transfers', tasks:'tasks', history:'history'}[ui.tab] || ui.tab)}</b> <span style="color:#e6e6e6">%</span>`;
   el.querySelector('.tt').textContent = `plexus — ${typeOf(activeType).short} — command`; cmdUI.prevFocus = el.contains(document.activeElement) ? null : document.activeElement; cmdUI.open = true; el.hidden = false;
   const inp = $('#cmdIn'); inp.value = prefill || ''; cmdUI.sel = -1; cmdUI.hi = -1; cmdRender(); inp.focus();
   document.body.classList.add('cmd-open'); cmdSize();
 }
 function cmdClose(restore = true){ const el = $('#cmdbar'); if(!el || el.hidden) return; try{ $('#cmdIn').blur(); }catch(e){} el.hidden = true; cmdUI.open = false; document.body.classList.remove('cmd-open'); if(restore && cmdUI.prevFocus && cmdUI.prevFocus.isConnected && cmdUI.prevFocus !== document.body) try{ cmdUI.prevFocus.focus({preventScroll:true}); }catch(e){} }
 function cmdRender(){
-  if($('#cmdPs')) $('#cmdPs').innerHTML = `${esc(typeOf(activeType).short.toLowerCase().replace(/\s+/g, '-'))}<span style="color:#e6e6e6">:</span><b>${esc({census:'census', admits:'admits', discharges:'discharges', transfers:'transfers', tasks:'tasks', history:'history'}[ui.tab] || ui.tab)}</b> <span style="color:#e6e6e6">%</span>`;
+  if($('#cmdPs')) $('#cmdPs').innerHTML = `${esc(typeOf(activeType).short.toLowerCase().replace(/\s+/g, '-'))}<span style="color:#e6e6e6">:</span><b>${esc({overview:'overview', census:'census', admits:'admits', discharges:'discharges', transfers:'transfers', tasks:'tasks', history:'history'}[ui.tab] || ui.tab)}</b> <span style="color:#e6e6e6">%</span>`;
   const co = $('#cmdOut'); co.innerHTML = (document.body.classList.contains('cmd-right') ? cmdUI.out : cmdUI.out.slice(-3)).map(o => `<div><span class="muted">%</span> ${esc(o.cmd)}</div><div class="${o.ok === 'same' ? 'samel' : o.ok ? 'okl' : 'badl'}">  ${o.ok === 'same' ? '=' : o.ok ? '✓' : '✗'} ${esc(o.msg)}</div>`).join(''); co.scrollTop = co.scrollHeight;
   const v = $('#cmdIn').value; let plan; try{ plan = cmdParse(v); }catch(e){ plan = {err:'Couldn’t read that — ' + esc(e.message)}; }
   cmdUI.plan = plan;
@@ -5650,7 +5732,7 @@ function cmdHelp(){
     ['ED-21 dvt heparin', 'Diet / DVT PPx — any option, first letters are enough'], ['ED-21 team GM2', 'Admission fields: team, timein, arrived, problem, from'], ['ED-21 bed 14E05/01', 'New bed (ED → floor) — the tasks move with the patient'], ['14E12/02 arrived now', 'Tisch: patient is on the floor (or arrived 21:40)'],
     ['7W05 vitals done', 'Census status — complete, revisit, pending, ordered, panic, N/A, comments, ALOC, or 1–8'], ['7W05 io revisit low UOP', 'Status with a note'], ['7W05 edd tomorrow', 'Dates — today, tomorrow, +2, 10/30'],
     ['7W05 dest home', 'Census dropdowns'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['snooze ED-21 lactate 30', 'Push a task back'],
-    ['admit ED-14 sepsis', 'New admission'], ['hold ED-30 CAP from Dr K', 'New moonlighter hold'], ['go census', 'Change tab — census, admits, discharges, transfers, tasks, history, analytics, log (just “tasks” or “go adm” works too)']];
+    ['admit ED-14 sepsis', 'New admission'], ['hold ED-30 CAP from Dr K', 'New moonlighter hold'], ['go census', 'Change tab — overview, census, admits, discharges, transfers, tasks, history, analytics, log (just “tasks” or “go adm” works too)']];
   modal(`<h3>Command bar</h3><p class="muted" style="margin-top:-4px">Open with <kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>:</kbd>. Beds can be typed without dashes or slashes (<b>ed15l</b>, <b>14e1202</b>); column names can be shortened (<b>ed</b>, <b>pl</b>, <b>mr</b>, <b>so</b>). You see what will happen before Enter, and <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes it.</p>
     <table class="sctab">${ex.map(([c, d]) => `<tr><td><code class="cmdcode">${esc(c)}</code></td><td>${esc(d)}</td></tr>`).join('')}</table>
     <p class="muted small">Also: ${CMD_VERBS.filter(([k]) => !['go','admit','hold','task','done','snooze','help'].includes(k)).map(([k, , d]) => `<b>${k}</b> (${esc(d.toLowerCase())})`).join(' · ')}. <kbd>↑</kbd> in an empty bar brings back earlier commands.</p>`, [['Open the command bar', '', () => setTimeout(() => cmdOpen(), 0)], ['Close', 'primary']], m => m.classList.add('wide'));
@@ -5840,7 +5922,125 @@ function printSheet(){ $('#printSheet').innerHTML = printSheetHTML(); logAdd([{c
 window.addEventListener('beforeprint', () => { const el = $('#printSheet'); if(el && !el.dataset.fresh) el.innerHTML = printSheetHTML(); });
 
 /* ---------- what's new: shown once after you open a newer version ---------- */
+
+/* ---------- Overview: a bird's-eye command hub for the whole team ---------- */
+function admLane(a){
+  if(a.timeOut || admitSigned(a) === ADMIT_ITEMS.length) return 'done';
+  if(!itemDone(a, 'visit')) return 'wait';
+  const ph = ADMIT_PHASES.find(p => !p.keys.every(k => itemDone(a, k)));
+  return ph ? 'p' + ph.n : 'done';
+}
+function ovGoTab(t){ ui.tab = t; saveUI(); closePop(); renderChrome(); }
+function renderOverview(){
+  const V = $('#view-overview'); if(!V || !state) return;
+  const ps = state.patients, cap = +state.settings.cap || 0, n = ps.length, d = state.boardDate, now = new Date();
+  const T = typeOf(activeType), night = state.settings.shift === 'night';
+  const nw = ps.filter(p => p.status === 'New').length;
+  const spots = cap ? cap - n : null;
+  const rows = workloadRows(), next = rows.find(r => r.next);
+  // admissions
+  const adm = state.admits.filter(a => a.date === d && !isHold(a)), holds = state.admits.filter(a => a.date === d && isHold(a));
+  const lanes = {wait:[], p1:[], p2:[], p3:[], done:[]}; adm.forEach(a => lanes[admLane(a)].push(a));
+  const inProg = adm.length - lanes.done.length;
+  const running = adm.map(a => ({a, i:asgInfo(a)})).filter(x => x.i && !x.i.seen && x.i.ms != null);
+  const longest = running.reduce((m, x) => Math.max(m, x.i.ms), 0);
+  const admDot = longest > 2*3600e3 ? 'red' : longest > 3600e3 ? 'amb' : inProg ? '' : 'off';
+  // discharges
+  const dcT = ps.filter(p => dcBucket(p) === 'today'), dcTm = ps.filter(p => dcBucket(p) === 'tomorrow'), xf = ps.filter(p => p.status === 'Transfer');
+  const dcReady = dcT.filter(p => dcSigned(p) === DC_KEYS.length).length;
+  // tasks
+  const tl = taskList(), open = tl.filter(t => !t.done), over = open.filter(t => todoState(t) === 'over');
+  const in2h = open.filter(t => t.due && new Date(t.due) - now <= 2*3600e3 && new Date(t.due) >= now);
+  const in1h = in2h.filter(t => new Date(t.due) - now <= 3600e3);
+  const upcoming = [...over, ...open.filter(t => t.due && new Date(t.due) >= now).sort((x, y) => x.due.localeCompare(y.due))].slice(0, 9);
+  // attention
+  const att = ps.map(p => ({p, f:flagsFor(p).filter(f => f[0] === 'bad' || f[0] === 'warn')})).filter(x => x.f.length)
+    .sort((x, y) => y.f.filter(f => f[0] === 'bad').length - x.f.filter(f => f[0] === 'bad').length || y.f.length - x.f.length);
+  const panic = att.filter(x => x.f.some(f => /panic/i.test(f[1]))).length;
+  // shift clock
+  const end = shiftEndDate(), start = state.shiftStartedAt ? new Date(state.shiftStartedAt) : new Date(end - 12.5*3600e3);
+  const pct = Math.max(0, Math.min(100, (now - start) / (end - start) * 100)), left = Math.max(0, end - now);
+  const t2 = x => `${pad(x.getHours())}:${pad(x.getMinutes())}`;
+  const kpi = (go, label, dot, val, sub, extra = '') => `<div class="kpi" data-ovgo="${go}"><div class="kl"><i class="dot ${dot}"></i>${label}</div><div class="kv">${val}</div><div class="ks">${sub}</div>${extra}</div>`;
+  const censusMini = cap ? `<div class="mini">${Array.from({length:cap}, (_, i) => `<i class="${i < n ? (i >= cap ? 'o' : 'f') : ''}"></i>`).join('')}</div>` : '';
+  const spotMini = cap ? `<div class="mini">${Array.from({length:cap}, (_, i) => `<i class="${i < n ? '' : 'n'}"></i>`).join('')}</div>` : '';
+
+  const acard = a => { const done = ADMIT_PHASES.map(ph => ph.keys.every(k => itemDone(a, k)));
+    return `<div class="acard l-${admLane(a)}" data-ovadm="${a.id}" title="${esc(admLabel(a))}"><div class="t"><b>${esc(a.bed || '—')}</b><span class="sq">${esc(aTag(a))}</span>${asgTimerHTML(a)}</div>
+      <div class="pr">${esc(a.problem || 'No problem entered')}${a.intern ? ' · ' + esc(a.intern) : ''}</div>
+      <div class="pb">${done.map(x => `<i class="${x ? 'd' : ''}"></i>`).join('')}</div></div>`; };
+  const hcard = a => `<div class="acard l-hold" data-ovadm="${a.id}" title="${esc(admLabel(a))}"><div class="t"><b>${esc(a.bed || '—')}</b><span class="sq">${esc(aTag(a))}</span></div><div class="pr">${esc(a.problem || 'No problem entered')}</div></div>`;
+  const lane = (k, label) => `<div class="lane"><h6>${label}<b>${lanes[k].length}</b></h6>${lanes[k].length ? lanes[k].map(acard).join('') : '<div class="none">—</div>'}</div>`;
+
+  const slotRow = r => { const mine = ps.filter(p => (p.intern || '') === r.name);
+    const cells = mine.map(p => dcBucket(p) === 'today' ? 'dc' : p.status === 'New' ? 'nw' : 'f');
+    const total = Math.max(r.cap || 0, mine.length), extra = r.cap ? Math.max(0, mine.length - r.cap) : 0;
+    const sl = Array.from({length:total}, (_, i) => `<i class="${i < cells.length ? (r.cap && i >= r.cap ? 'ov' : cells[i]) : ''}"></i>`).join('');
+    return `<div class="irow" data-ovint="${esc(r.name)}"><div class="nm">${esc(r.name || 'Unassigned')}${r.next ? '<i>NEXT UP</i>' : ''}</div><div class="slots">${sl}</div>
+      <div class="st"><b>${r.n}</b>${r.cap ? '/' + r.cap : ''} · ${r.open} left${extra ? ' · <span class="red">+' + extra + '</span>' : ''}</div></div>`; };
+
+  const dcLine = p => { const k = dcSigned(p); return `<div class="dcl" data-ovgo="discharges"><span class="bd">${esc(p.bed || '—')}</span><span class="who">${esc(p.intern || '')}${p.problem ? ' · ' + esc(p.problem) : ''}</span><span class="k ${k === DC_KEYS.length ? 'ok' : ''}">${k === DC_KEYS.length ? 'READY' : k + '/' + DC_KEYS.length}</span>${dcBar(p)}</div>`; };
+  const tRow = t => { const s = todoState(t); return `<div class="trow" data-ovgo="tasks"><span class="tm ${s}">${t.due ? hhmmOf(t.due) : '—'}</span><span class="bd">${esc(todoWhere(t) || '—')}</span><span class="tx">${t.pri === 'emergent' ? '‼ ' : t.pri === 'urgent' ? '! ' : ''}${esc(t.text || '')}</span></div>`; };
+
+  const band = kp => `<div class="hubband">
+      <div class="hubtop"><span class="hublive"><i></i>LIVE</span><span><b>${esc(T.label)}</b>${state.settings.team ? ' · ' + esc(state.settings.team) : ''}</span><span>${esc(shiftLabel(d, state.settings.shift))}</span><span class="hubclock" id="ovClock">${t2(now)}</span></div>
+      <div class="hubprog"><span>${t2(start)}</span><span class="bar"><i style="width:${pct.toFixed(1)}%"></i></span><span>${t2(end)}</span><span style="color:#cfd8e6">${Math.floor(left/3600e3)}h ${pad(Math.floor(left/60000) % 60)}m left</span></div>
+      <div class="kpis">${kp}</div></div>`;
+  if(T.admitOnly){   // admitting shift: the whole page is the admissions pipeline
+    const acap = +state.settings.admitCap || 0, ph = k => lanes[k].length;
+    const laneKeys = [['wait', 'Not seen'], ['p1', 'Phase 1'], ['p2', 'Phase 2'], ['p3', 'Phase 3'], ['done', 'Done']];
+    V.innerHTML = `<div class="hub">${band(
+      kpi('admits', 'Admissions', acap && adm.length >= acap ? 'red' : acap && adm.length >= acap - 1 ? 'amb' : '', `${adm.length}${acap ? `<small>/${acap}</small>` : ''}`, acap ? (adm.length >= acap ? '<span class="r">At cap</span>' : `<b>${acap - adm.length}</b> left before cap`) : 'No admission cap set')
+      + kpi('admits', 'Not seen', lanes.wait.length ? (longest > 2*3600e3 ? 'red' : 'amb') : '', `${lanes.wait.length}`, longest ? `longest <span class="${longest > 2*3600e3 ? 'r' : longest > 3600e3 ? 'a' : ''}">${asgHM(longest)}</span>` : lanes.wait.length ? 'Just assigned' : 'Everyone has been seen')
+      + kpi('admits', 'In progress', inProg ? '' : 'off', `${inProg - lanes.wait.length}`, `P1 <b>${ph('p1')}</b> · P2 <b>${ph('p2')}</b> · P3 <b>${ph('p3')}</b>`)
+      + kpi('admits', 'Done', lanes.done.length ? '' : 'off', `${lanes.done.length}`, `of <b>${adm.length}</b> tonight`)
+      + kpi('admits', 'Holds', holds.length ? '' : 'off', `${holds.length}`, holds.length ? 'Sign out in the morning' : 'No moonlighter holds')
+      + kpi(T.tasks ? 'tasks' : 'admits', 'Open tasks', over.length ? 'red' : in1h.length ? 'amb' : '', `${open.length}`, `${over.length ? `<span class="r">${over.length} overdue</span>` : '<b>0</b> overdue'} · <b>${in1h.length}</b> due in 1 h`))}
+      <div class="hp s12 tall"><div class="hph"><h4>Admissions pipeline</h4><span class="n">${adm.length}</span><a href="#" data-ovgo="admits">Admissions →</a></div>
+        <div class="lanes${holds.length ? ' l6' : ''}">${laneKeys.map(([k, l]) => lane(k, l)).join('')}${holds.length ? `<div class="lane hold"><h6>Holds<b>${holds.length}</b></h6>${holds.map(hcard).join('')}</div>` : ''}</div></div>
+    </div>`;
+    return;
+  }
+  V.innerHTML = `<div class="hub">
+    ${band(`
+        ${kpi('census', 'Census', cap && n >= cap ? 'red' : cap && n >= cap - 2 ? 'amb' : '', `${n}${cap ? `<small>/${cap}</small>` : ''}`, `<b>${nw}</b> new · <b>${n - nw}</b> existing`, censusMini)}
+        ${kpi('census', 'Open spots', spots == null ? 'off' : spots <= 0 ? 'red' : spots <= 2 ? 'amb' : '', spots == null ? '—' : spots < 0 ? `<span style="color:#ff8a80">${spots}</span>` : spots, spots == null ? 'No team cap set' : next ? `Next up: <b>${esc(next.name)}</b>` : spots <= 0 ? '<span class="r">At cap</span>' : 'Under cap', spotMini)}
+        ${kpi('admits', 'Admits in progress', admDot, `${inProg}<small>/${adm.length}</small>`, `<b>${lanes.wait.length}</b> not seen${longest ? ` · longest <span class="${longest > 2*3600e3 ? 'r' : longest > 3600e3 ? 'a' : ''}">${asgHM(longest)}</span>` : ''}${holds.length ? ` · <b>${holds.length}</b> hold${holds.length === 1 ? '' : 's'}` : ''}`)}
+        ${kpi('discharges', 'Discharges', dcT.length ? (dcReady === dcT.length ? '' : 'amb') : 'off', `${dcT.length}`, `<b>${dcReady}</b> ready · <b>${dcT.length - dcReady}</b> in progress · <b>${dcTm.length}</b> tmrw${xf.length ? ` · <b>${xf.length}</b> xfer` : ''}`)}
+        ${kpi(T.tasks ? 'tasks' : 'census', 'Open tasks', over.length ? 'red' : in1h.length ? 'amb' : '', `${open.length}`, `${over.length ? `<span class="r">${over.length} overdue</span>` : '<b>0</b> overdue'} · <b>${in1h.length}</b> due in 1 h`)}
+        ${kpi('census', 'Needs attention', att.length ? (panic ? 'red' : 'amb') : '', `${att.length}`, att.length ? `${panic ? `<span class="r">${panic} panic / order</span> · ` : ''}${esc(att[0].p.bed || '')}: ${esc(att[0].f[0][1])}` : 'Nothing flagged')}
+`)}
+    <div class="hubgrid">
+      <div class="hp s8"><div class="hph"><h4>Admissions pipeline</h4><span class="n">${adm.length}</span><a href="#" data-ovgo="admits">Admissions →</a></div>
+        <div class="lanes">${lane('wait', 'Not seen')}${lane('p1', 'Phase 1')}${lane('p2', 'Phase 2')}${lane('p3', 'Phase 3')}${lane('done', 'Done')}</div></div>
+      <div class="hp s4"><div class="hph"><h4>Team load</h4><span class="n">${n}${cap ? '/' + cap : ''}</span><a href="#" data-ovgo="census">Census →</a></div>
+        ${rows.length ? rows.map(slotRow).join('') : '<div class="hpempty">No interns yet — add them in Settings.</div>'}
+        <div class="slotkey"><span><i style="background:#60a5fa"></i>existing</span><span><i style="background:#f5b83d"></i>new</span><span><i style="background:#34A853"></i>DC today</span><span><i style="background:var(--line)"></i>open slot</span></div></div>
+      <div class="hp s4"><div class="hph"><h4>Tasks — overdue &amp; up next</h4><span class="n">${open.length}</span><a href="#" data-ovgo="${T.tasks ? 'tasks' : 'census'}">Tasks →</a></div>
+        ${upcoming.length ? upcoming.map(tRow).join('') : '<div class="hpempty">No open tasks with a time.</div>'}</div>
+      <div class="hp s4"><div class="hph"><h4>Discharges</h4><span class="n">${dcT.length}</span><a href="#" data-ovgo="discharges">Discharges →</a></div>
+        ${dcT.length ? dcT.map(dcLine).join('') : '<div class="hpempty">No discharges planned today.</div>'}
+        ${dcTm.length ? `<div class="dcsub">Tomorrow</div><div class="chips2">${dcTm.map(p => `<span>${esc(p.bed || '—')} <b>${dcSigned(p)}/${DC_KEYS.length}</b></span>`).join('')}</div>` : ''}
+        ${xf.length ? `<div class="dcsub">Transfers out</div>${xf.map(p => `<div class="dcl" data-ovgo="transfers"><span class="bd">${esc(p.bed || '—')}</span><span class="who">→ ${esc(xferOf(p).dest || 'destination not set')}</span><span class="k">${xferDone(p)}/${XFER_CHECKS.length}</span></div>`).join('')}` : ''}</div>
+      <div class="hp s4"><div class="hph"><h4>Needs attention</h4><span class="n">${att.length}</span><a href="#" data-ovgo="census" data-ovf="flagged">Flagged →</a></div>
+        ${att.length ? att.slice(0, 9).map(x => `<div class="arow" data-ovgo="census" data-ovf="flagged"><span class="bd">${esc(x.p.bed || '—')}</span><span class="fl">${x.f.slice(0, 3).map(f => `<span class="${f[0]}">${esc(f[1])}</span>`).join('')}</span></div>`).join('') : '<div class="hpempty">Nothing flagged.</div>'}</div>
+    </div>
+  </div>`;
+}
+document.addEventListener('click', e => {
+  if(!e.target.closest('#view-overview')) return;
+  const ad = e.target.closest('[data-ovadm]');
+  if(ad){ e.preventDefault(); ui.admitView = 'all'; ovGoTab('admits'); renderAdmits(); const r = document.querySelector(`#admitGrid tbody tr[data-id="${ad.dataset.ovadm}"]`); if(r){ r.scrollIntoView({block:'center'}); r.classList.add('rowpulse'); setTimeout(() => r.classList.remove('rowpulse'), 1600); } return; }
+  const it = e.target.closest('[data-ovint]');
+  if(it){ ui.intern = it.dataset.ovint; ui.filter = 'all'; ovGoTab('census'); renderCensus(); return; }
+  const g = e.target.closest('[data-ovgo]');
+  if(g){ e.preventDefault(); if(g.dataset.ovf){ ui.filter = g.dataset.ovf; ui.intern = ''; } ovGoTab(g.dataset.ovgo); if(g.dataset.ovgo === 'census') renderCensus(); }
+});
+setInterval(() => { if(ui.tab === 'overview' && !document.hidden){ const c = $('#ovClock'); if(c){ const n = new Date(); c.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}`; } } }, 5000);
+setInterval(() => { if(ui.tab === 'overview' && !document.hidden) renderOverview(); }, 60000);
+
 const CHANGELOG = [
+  {v:185, d:'2026-11-13', items:['<b>Overview</b> — a new first tab, and the page Plexus opens to. One look at the whole team: census and open spots, admissions in progress, discharges, open tasks and patients who need attention, plus a shift clock. Below: an admissions pipeline (Not seen → Phase 1–3 → Done, with the live timers), team load by intern, upcoming tasks, discharges and flags. Click anything to jump to it.', 'On admitting shifts (Bellevue and VA Night Admitting) the Overview is the admissions pipeline across the whole page, with moonlighter holds in their own column.', '“go overview” (or “home”) in the command bar.']},
   {v:184, d:'2026-11-13', items:['<b>Command bar on the right</b> — Settings → Command bar, or ⇆ in the bar, docks it as a panel down the right side. The board gets narrower, not shorter, and the panel keeps a scrolling history of your commands.', 'Drag the panel’s left edge to resize it. In a narrow window it moves to the bottom automatically, and comes back when there’s room.', 'Task rows fit narrower boards: the Result / note box shrinks, and on very narrow boards drops to its own line.']},
   {v:183, d:'2026-11-13', items:['The <b>PLEXUS</b> logo is now white lettering in a dark rounded box.']},
   {v:182, d:'2026-11-10', items:['Night shifts (CCU, ICU, wards and night intern) are now described as what they are: cross-cover census, admissions and night tasks.']},
