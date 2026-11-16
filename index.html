@@ -564,6 +564,9 @@ body.tkfull #hclocks{margin-right:4px}
 .tkcensus{font-size:11px;font-weight:700;color:var(--info-ink);background:var(--info-bg);border-radius:8px;padding:1px 7px;white-space:nowrap}
 .tkhints{display:flex;gap:16px;flex-wrap:wrap;align-items:baseline}
 .tklinkhint{font-size:12.5px;color:var(--info-ink)}
+.tkrep{flex:none;font-size:11px;font-weight:800;color:#7e57c2;background:color-mix(in srgb,#7e57c2 12%,transparent);border-radius:8px;padding:1px 6px;white-space:nowrap;cursor:default}
+.tkcount{width:42px;text-align:center}
+.cmdrep{color:#c4a7ff;font-weight:700}
 .tkteam{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line2);border-radius:8px;padding:0 6px;white-space:nowrap}
 .tkrow .ib{border:1px solid var(--line2);background:var(--panel);border-radius:6px;width:26px;height:26px;cursor:pointer;color:var(--muted);flex:none}
 .tkrow .btn.sm{padding:2px 7px}
@@ -1170,7 +1173,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
             <input id="tkTeam" list="tkTeams" placeholder="Team" autocomplete="off"><datalist id="tkTeams"></datalist>
             <input id="tkText" placeholder="Task — e.g. f/u 9pm labs, UOP check at 4am" autocomplete="off">
             <input id="tkTime" class="hhmm" placeholder="HH:MM" inputmode="numeric" maxlength="5" title="Time, 24-hour (HH:MM) — e.g. 21:00, 04:30. Leave blank to use a time written in the task (e.g. “f/u 9pm labs”)." autocomplete="off">
-            <select id="tkRep" title="Repeat until the end of the shift"><option value="0">Once</option><option value="1">q1h</option><option value="2">q2h</option><option value="4">q4h</option><option value="6">q6h</option></select>
+            <select id="tkRep" title="Repeat — until the end of the shift, or as many times as you set"><option value="0">Once</option><option value="0.5">q30min</option><option value="1">q1h</option><option value="2">q2h</option><option value="3">q3h</option><option value="4">q4h</option><option value="6">q6h</option><option value="8">q8h</option><option value="12">q12h</option></select><input id="tkCount" class="tkcount" placeholder="×" inputmode="numeric" maxlength="2" title="How many times (blank = until the end of the shift)" hidden autocomplete="off">
             <div class="seg tkpri" id="tkPri" title="Priority — or start the task with ! (urgent) or !! (emergent)"><button type="button" data-p="" class="on">Routine</button><button type="button" data-p="urgent">Urgent</button><button type="button" data-p="emergent">Emergent</button></div>
             <button class="btn primary" id="tkAdd">Add <kbd>↵</kbd></button>
             <button class="btn" id="tkNextPt" title="Clear the bed for the next patient (team resets to the board's team)">Next patient</button>
@@ -1212,8 +1215,8 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '185';
-const APP_UPDATED = '2026-11-13';
+const APP_VERSION = '186';
+const APP_UPDATED = '2026-11-15';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
 const BACKUP_KEY = `${KEY_PREFIX}.lastBackup.v1`;   // kept outside the board so Undo doesn't rewind it
@@ -3343,7 +3346,7 @@ function newDay(){
       const chosen = (document.querySelector('input[name="ndType"]:checked') || {}).value || activeType;
       const clearTasks = !!typeOf(chosen).tasks && !!($('#ndClearTasks') && $('#ndClearTasks').checked);
       if($('#ndBackup') && $('#ndBackup').checked) backupNow('quiet');
-      autoBackup('before new shift', true); setTimeout(() => autoCheck('new shift'), 1500);
+      autoBackup('before new shift', true); setTimeout(() => autoCheck('new shift'), 1500); setTimeout(tidyNudge, 4000);
       if(chosen !== activeType) switchBoard(chosen);
       mutate(() => {
         if(state.patients.length){
@@ -3464,7 +3467,8 @@ function settings(){
     </div>
     <div style="margin-top:12px;display:flex;gap:8px;align-items:center"><button class="btn" id="bKeys">⌨ Keyboard shortcuts…</button><span class="muted">See and change every shortcut (press <kbd>?</kbd> on the board to view them).</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button class="btn" id="bDiag">🩺 Run self-check</button><span class="muted">Checks storage, saved boards, data integrity, backups and shortcuts.</span></div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Command bar <select id="sCmdDock"><option value="bottom" ${CMDDOCK.side === 'bottom' ? 'selected' : ''}>Strip along the bottom</option><option value="right" ${CMDDOCK.side === 'right' ? 'selected' : ''}>Panel on the right</option></select></label><span class="muted">Switch any time with ⇆ in the bar. The side panel can be resized by dragging its left edge, and it moves to the bottom when the window is too narrow. Saved on this computer.</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Command bar <select id="sCmdDock"><option value="bottom" ${CMDDOCK.side === 'bottom' ? 'selected' : ''}>Strip along the bottom</option><option value="right" ${CMDDOCK.side === 'right' ? 'selected' : ''}>Panel on the right</option></select></label><span class="muted" id="cmdDockNote">Switch any time with ⇆ in the bar. The side panel can be resized by dragging its left edge, and it moves to the bottom when the window is too narrow. Saved on this computer.</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Older shifts: move out anything older than <select id="sTidyDays">${TIDY_DAYS.map(d => `<option value="${d}" ${TIDY.days === d ? 'selected' : ''}>${d} days</option>`).join('')}</select></label><button class="btn sm" id="bTidy">🗄 Move older shifts out…</button><span class="muted">Keeps the data file small. Plexus also offers this when you start a new shift.</span></div>
     <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
     <hr>
     <b>This board</b>
@@ -3559,6 +3563,8 @@ function settings(){
       m.querySelector('#bSetExp').onclick = () => exportSettings();
       m.querySelector('#mvGo').onclick = () => { const to = m.querySelector('#mvTo').value; closeModal(); moveBoard(to); };
       m.querySelector('#sCmdDock').onchange = e => cmdDockSet(e.target.value);
+      m.querySelector('#sTidyDays').onchange = e => { TIDY.days = +e.target.value; tidySave(); };
+      m.querySelector('#bTidy').onclick = () => { closeModal(); setTimeout(tidyRun, 0); };
       m.querySelector('#sIdle').onchange = e => { PRIV.idle = +e.target.value || 0; privSave(); toast(PRIV.idle ? `The screen hides after ${PRIV.idle} min without activity` : 'Automatic hiding is off'); };
       m.querySelector('#sPinSet').onclick = async () => { const v = m.querySelector('#sPin').value.trim(); if(!/^\d{4,12}$/.test(v)){ toast('Use 4–12 digits'); return; } PRIV.pin = await pinHash(v); privSave(); toast('PIN set — needed to show the board after it hides'); closeModal(); settings(); };
       const pc = m.querySelector('#sPinClear'); if(pc) pc.onclick = () => { PRIV.pin = ''; privSave(); toast('PIN removed'); closeModal(); settings(); };
@@ -4205,6 +4211,9 @@ function addTodo(pid, text, due, bed){
 }
 function updateTodo(id, patch){ mutate(() => { const t = state.todos.find(x => x.id === id); if(!t) return; Object.assign(t, patch); if('done' in patch) t.doneAt = patch.done ? localISO() : ''; if('due' in patch) alertedTodos.delete(id); }); }
 function deleteTodo(id){ mutate(() => { state.todos = state.todos.filter(x => x.id !== id); }); }
+function repBadge(t){ const L = state.todos.filter(x => x.series === t.series).sort((a, b) => (a.due || '').localeCompare(b.due || '')), i = L.findIndex(x => x.id === t.id);
+  const ev = t.every || (L.length > 1 && L[0].due && L[1].due ? (new Date(L[1].due) - new Date(L[0].due)) / 3600000 : 0);
+  return `<span class="tkrep" title="Repeating task${ev ? ' — ' + repLabel(ev) : ''}: ${i + 1} of ${L.length}${L.length ? `, last at ${hhmmOf(L[L.length - 1].due)}` : ''}">↻ ${i + 1}/${L.length}</span>`; }
 const QUICK = [[15,'+15m'],[30,'+30m'],[60,'+1h'],[120,'+2h'],[240,'+4h']];
 
 /* priority: '' routine · 'urgent' (orange) · 'emergent' (red) */
@@ -4494,15 +4503,24 @@ function linkTaskModal(id){
       toast(p ? `Linked to ${p.bed || 'patient'}` : 'Unlinked from the census');
     }]]);
 }
-function addTasks(bed, team, text, due, everyH, pri){
+// everyH: repeat every N hours (0.5 = q30min). count: exactly that many (otherwise repeats until the end of the shift)
+function repTimes(due, everyH, count){
+  const times = [due || ''];
+  if(!everyH) return times;
+  if(!due){ const n = new Date(); n.setMinutes(Math.ceil(n.getMinutes() / 5) * 5, 0, 0); times[0] = due = localISO(n); }
+  const end = shiftEndDate(), max = count ? Math.min(count, 48) : 48; let d = new Date(due);
+  while(times.length < max){ d = new Date(d.getTime() + everyH * 3600000); if(!count && d > end) break; times.push(localISO(d)); }
+  return times;
+}
+const repLabel = h => !h ? '' : h < 1 ? `q${Math.round(h * 60)}min` : `q${+h.toFixed(2)}h`;
+function addTasks(bed, team, text, due, everyH, pri, count){
   text = (text || '').trim(); bed = (bed || '').trim(); if(!text) return 0;
   const p = censusByBed(bed);
-  const times = [due || ''];
-  if(due && everyH){ const end = shiftEndDate(); let d = new Date(due); for(let i = 0; i < 24; i++){ d = new Date(d.getTime() + everyH * 3600000); if(d > end) break; times.push(localISO(d)); } }
+  const times = repTimes(due, everyH, count);
   const series = times.length > 1 ? uid() : '';
   const ad = !p && bed ? admitByBed(bed) : null;
-  mutate(() => { times.forEach(tm => state.todos.push({id:uid(), pid: p ? p.id : null, aid: ad && !admitClosed(ad) ? ad.id : '', bed: p ? '' : bed, team:(team || '').trim(), text, due:tm, done:false, doneAt:'', result:'', series, src:'tasks', pri:pri || '', createdAt:localISO()})); },
-    {label:`${pri ? PRI[pri].label + ' t' : 'T'}ask${times.length > 1 ? 's' : ''} added — ${bed || 'no bed'}${team ? ' (' + team.trim() + ')' : ''}: “${text}”${due ? ` at ${times.map(hhmmOf).join(', ')}` : ''}`, cat:'todo'});
+  mutate(() => { times.forEach(tm => state.todos.push({id:uid(), pid: p ? p.id : null, aid: ad && !admitClosed(ad) ? ad.id : '', bed: p ? '' : bed, team:(team || '').trim(), text, due:tm, done:false, doneAt:'', result:'', series, every:series ? everyH : 0, src:'tasks', pri:pri || '', createdAt:localISO()})); },
+    {label:`${pri ? PRI[pri].label + ' t' : 'T'}ask${times.length > 1 ? 's' : ''} added${times.length > 1 ? ` (${repLabel(everyH)} ×${times.length})` : ''} — ${bed || 'no bed'}${team ? ' (' + team.trim() + ')' : ''}: “${text}”${due ? ` at ${times.map(hhmmOf).join(', ')}` : ''}`, cat:'todo'});
   return times.length;
 }
 /* flip clocks: current time (24 h) and time since the shift started */
@@ -4644,7 +4662,7 @@ function renderTasks(){
       <input class="tktime hhmm" data-tktime inputmode="numeric" maxlength="5" value="${t.due ? hhmmOf(t.due) : ''}" placeholder="HH:MM" title="${t.due ? new Date(t.due).toLocaleString() : 'No time — type HH:MM (24-hour)'}">
       ${showBed ? `<button class="tkbed ${p || ad ? 'linked' : ''}" data-tkbed="${esc(bedKey(t))}" title="${p ? `On census: ${esc([p.intern, p.problem].filter(Boolean).join(' · '))} — click to show only this bed` : ad ? `${esc(admLabel(ad))} — click to show only this bed` : 'Not on the census — click to show only this bed'}">${esc(todoWhere(t))}</button>${t.team ? `<span class="tkteam">${esc(t.team)}</span>` : ''}` : ''}
       ${admitOnly ? (ad ? `<span class="tkadm" title="${esc(admLabel(ad))}">${aTag(ad)}</span>` : '<span class="tkadm none" title="No admission logged for this bed">—</span>') : `<button class="tklink ${p ? 'on' : ''}" data-tklink title="${p ? 'Linked to the census patient — click to change' : 'Link to a census patient'}">${p ? '🔗' : '⛓'}</button>`}
-      <input class="tktext" data-tktext value="${esc(t.text)}">
+      ${t.series ? repBadge(t) : ''}<input class="tktext" data-tktext value="${esc(t.text)}">
       <input class="tkres" data-tkres value="${esc(t.result || '')}" placeholder="${t.done ? 'Result / what you did' : 'Result / note'}">
       <span class="tddue ${s}">${esc(t.done ? 'done ' + hhmmOf(t.doneAt) : dueLabel(t))}</span>
       ${t.done ? '<span class="tksp"></span>' : `<button class="btn sm" data-tksnz="15" title="Snooze 15 min">+15</button><button class="btn sm" data-tksnz="60" title="Snooze 1 h">+1h</button>`}
@@ -4669,6 +4687,15 @@ function renderTasks(){
   if(tkFocusAfter){ const el = document.querySelector(`#tkList [data-tk="${tkFocusAfter.id}"] ${tkFocusAfter.sel}`); tkFocusAfter = null; if(el) el.focus(); }
 }
 let tkFocusAfter = null;
+async function tkDelete(t){
+  const later = t.series ? state.todos.filter(x => x.series === t.series && x.id !== t.id && !x.done && (x.due || '') > (t.due || '')) : [];
+  let all = false;
+  if(later.length){ all = await askChoice(`<h3>Delete a repeating task</h3><p><b>${esc(todoWhere(t))}</b> — ${esc(t.text)} repeats; ${later.length} more ${later.length === 1 ? 'is' : 'are'} still to come (last at ${hhmmOf(later[later.length - 1].due)}).</p>`,
+    [['Cancel', '', null], ['Just this one', '', false], [`Stop the repeats (this + ${later.length} later)`, 'danger', true]]); if(all === null) return; }
+  const ids = new Set([t.id, ...(all ? later.map(x => x.id) : [])]);
+  mutate(() => { state.todos = state.todos.filter(x => !ids.has(x.id)); }, {label:`Deleted ${ids.size > 1 ? `${ids.size} repeats of` : 'task'} “${t.text}” — ${todoWhere(t)}`, cat:'todo'});
+  toast(ids.size > 1 ? `Repeats stopped — ${ids.size} tasks removed` : 'Task deleted', true);
+}
 function tkUpdate(id, patch, label){ mutate(() => { const t = state.todos.find(x => x.id === id); if(!t) return; Object.assign(t, patch); if('done' in patch) t.doneAt = patch.done ? localISO() : ''; if('due' in patch) alertedTodos.delete(id); }, label ? {label, cat:'todo'} : undefined); }
 function signBackText(){
   const all = taskList(); if(!all.length) return 'No night tasks.';
@@ -4705,11 +4732,14 @@ function editChips(){
     if(tm.value.trim()) finishHHMM(tm);
     if(tm.value.trim() && !parseHHMM(tm.value)){ toast('Use HH:MM, 24-hour — e.g. 21:00'); tm.focus(); return; }
     const d = tm.value.trim() ? parseHHMM(tm.value) : timeInText(txt.value);
-    const n = addTasks(bed.value, team.value, txt.value, d ? localISO(d) : '', d ? +rep.value : 0, pri);
-    if(n > 1) toast(`${n} tasks added (every ${rep.value} h)`);
-    txt.value = ''; tm.value = ''; rep.value = '0'; setPri(''); preview(); txt.focus();
+    const cnt = Math.max(0, parseInt($('#tkCount').value, 10) || 0);
+    const n = addTasks(bed.value, team.value, txt.value, d ? localISO(d) : '', +rep.value, pri, cnt);
+    if(n > 1) toast(`${n} tasks added — ${repLabel(+rep.value)}${cnt ? '' : ' until the end of the shift'}`);
+    txt.value = ''; tm.value = ''; rep.value = '0'; $('#tkCount').value = ''; $('#tkCount').hidden = true; setPri(''); preview(); txt.focus();
   };
   $('#tkAdd').onclick = add;
+  rep.addEventListener('change', () => { $('#tkCount').hidden = rep.value === '0'; if(rep.value === '0') $('#tkCount').value = ''; });
+  $('#tkCount').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } });
   [bed, team, txt, tm, rep].forEach(x => x.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } }));
   team.addEventListener('input', () => { if(team.value.trim() !== (state.settings.team || '').trim()) team.dataset.touched = '1'; else delete team.dataset.touched; });
   $('#tkNextPt').onclick = () => { bed.value = ''; delete team.dataset.touched; team.value = (state.settings.team || '').trim(); txt.value = ''; tm.value = ''; rep.value = '0'; preview(); bed.focus(); };
@@ -4731,7 +4761,7 @@ function editChips(){
     const r = e.target.closest('[data-tk]'); if(!r) return; const id = r.dataset.tk, t = state.todos.find(x => x.id === id); if(!t) return;
     if(e.target.closest('[data-tklink]')){ linkTaskModal(id); return; }
     if(e.target.closest('[data-tkpri]')){ const np = nextPri(t.pri || ''); tkUpdate(id, {pri:np}); toast(`Priority: ${PRI[np].label}`); return; }
-    if(e.target.closest('[data-tkdel]')){ mutate(() => { state.todos = state.todos.filter(x => x.id !== id); }); toast('Task deleted', true); return; }
+    if(e.target.closest('[data-tkdel]')){ tkDelete(t); return; }
     const sz = e.target.closest('[data-tksnz]'); if(sz){ const base = t.due ? Math.max(Date.now(), new Date(t.due).getTime()) : Date.now(); const d = new Date(base + sz.dataset.tksnz * 60000); tkUpdate(id, {due:localISO(d)}); toast(`Snoozed to ${pad(d.getHours())}:${pad(d.getMinutes())}`); }
   });
   L.addEventListener('change', e => {
@@ -5500,13 +5530,13 @@ const CMD_VERBS = [
   ['go', 'go tasks', 'Switch tab — census, admits, discharges, transfers, tasks, history, analytics, log'],
   ['admit', 'admit ED-14 sepsis', 'New admission with this bed and problem'],
   ['hold', 'hold ED-30 pneumonia from Dr K', 'New moonlighter hold (admitting nights)'],
-  ['task', 'task ED-21 04:00 H/H check !', 'New task — time as 04:00, 0400, 4am or “in 30 min”; ! urgent, !! emergent'],
+  ['task', 'task ED-21 04:00 H/H check !', 'New task — time as 04:00, 0400, 4am or “in 30 min”; ! urgent, !! emergent; repeat with q1h / q30m, and ×6 for how many'],
   ['done', 'done ED-21 H/H', 'Tick off a task for a bed (words narrow it down)'],
   ['snooze', 'snooze ED-21 H/H 30', 'Push a task back — minutes, or 1h (default 15)'],
   ['undo', 'undo', 'Undo the last change'], ['redo', 'redo', 'Redo'],
   ['validate', 'validate', 'Run Validation for this tab'], ['signback', 'signback', 'Copy the night-task sign-back'],
   ['signout', 'signout', 'Copy the morning sign-out list (admitting nights)'], ['full', 'full', 'Tasks timeline full screen on / off'],
-  ['rounds', 'rounds', 'Start Rounds'], ['print', 'print', 'Print the sign-out sheet'], ['take', 'take', 'Take with me — copy to carry to the next computer'], ['hide', 'hide', 'Hide the screen (privacy)'], ['whatsnew', 'whatsnew', 'What’s new in this version'], ['backup', 'backup', 'Back up now'], ['newshift', 'newshift', 'Start a new shift'], ['endshift', 'endshift', 'End this shift'],
+  ['rounds', 'rounds', 'Start Rounds'], ['print', 'print', 'Print the sign-out sheet'], ['take', 'take', 'Take with me — copy to carry to the next computer'], ['hide', 'hide', 'Hide the screen (privacy)'], ['whatsnew', 'whatsnew', 'What’s new in this version'], ['tidy', 'tidy', 'Move shifts older than 2 weeks out of the data file'], ['backup', 'backup', 'Back up now'], ['newshift', 'newshift', 'Start a new shift'], ['endshift', 'endshift', 'End this shift'],
   ['help', 'help', 'Show every command'],
 ];
 function cmdParse(input){
@@ -5525,6 +5555,7 @@ function cmdParse(input){
     return {nav:true, html:`Go to <b>${esc(nice)}</b>`, run:() => { if(!scGoTab(dest[0])) return ''; if(dest[1]){ histSel = dest[1]; renderHistory(); } return ''; }};
   }
   const simple = {validate:['Run Validation', () => { ui.tab === 'admits' ? admitValidation() : (ui.tab !== 'census' && scGoTab('census'), validation()); return ''; }],
+    tidy:['Move older shifts out of the data file', () => { setTimeout(tidyRun, 0); return ''; }],
     signback:['Copy the night-task sign-back', () => { copyText(signBackText()); return 'Sign-back copied'; }],
     signout:['Copy the morning sign-out list', () => { copyText(soText(state.boardDate)); return 'Sign-out list copied'; }],
     full:['Tasks full screen on / off', () => { if(ui.tab !== 'tasks' && !scGoTab('tasks')) return ''; tkFullOn() ? exitTkFull() : enterTkFull(); return ''; }],
@@ -5533,7 +5564,7 @@ function cmdParse(input){
     print:['Print the sign-out sheet', () => { printSheet(); return ''; }], take:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], leaving:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], hide:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }], lock:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }],
     whatsnew:['What’s new in this version', () => { whatsNew(null); return ''; }], changes:['What’s new in this version', () => { whatsNew(null); return ''; }],
     newshift:['Start a new shift…', () => { newDay(); return ''; }], endshift:['End this shift…', () => { if(!shiftIsActive()) return 'No active shift'; shiftPillClick(); return ''; }]};
-  if(simple[v] && !rest.length) return {html:simple[v][0], run:simple[v][1], nav:['validate','full','rounds','newshift','endshift','print','hide','lock','whatsnew','changes','take','leaving'].includes(v)};
+  if(simple[v] && !rest.length) return {html:simple[v][0], run:simple[v][1], nav:['validate','full','rounds','newshift','endshift','print','hide','lock','whatsnew','changes','take','leaving','tidy'].includes(v)};
   if(v === 'admit' || v === 'hold'){
     const hold = v === 'hold';
     if(hold && !typeOf(activeType).holds) return {err:'Moonlighter holds are for Bellevue Night Admitting'};
@@ -5562,14 +5593,18 @@ function cmdParse(input){
       let txt = tw.join(' '), pri = '';
       if(/(^|\s)!!(\s|$)/.test(txt) || /^!!/.test(txt)) pri = 'emergent'; else if(/(^|\s)!(\s|$)/.test(txt) || /^!/.test(txt)) pri = 'urgent';
       txt = txt.replace(/(^|\s)!{1,2}(?=\s|$)/g, ' ').replace(/^!+/, '').trim();
+      let every = 0, count = 0;
+      txt = txt.replace(/(?:^|\s)(?:q|every\s*)(\d+(?:\.\d+)?)\s*(h|hr|hrs|hours?|m|min|mins|minutes?)?(?=\s|$)/i, (_, n, u) => { every = u && /^m/i.test(u) ? +n / 60 : +n; return ' '; })
+               .replace(/(?:^|\s)(?:x|×)\s?(\d{1,2})(?=\s|$)|(?:^|\s)(\d{1,2})\s?(?:x|×)(?=\s|$)/i, (_, a, b2) => { count = +(a || b2); return ' '; }).replace(/\s+/g, ' ').trim();
+      if(every > 24 || every < 0.25) every = 0; if(count && !every) count = 0;
       let due = null; const m = txt.match(/^(\d{1,2}:\d{2}|\d{4}|\d{1,2}(?::\d{2})?\s?(?:am|pm|a|p))\b\s*/i);
       if(m){ due = parseTimeInput(m[1].replace(/^(\d{2})(\d{2})$/, '$1:$2')); if(due) txt = txt.slice(m[0].length).trim(); }
       if(!due) due = timeInText(txt);
       if(!txt) return {err:'What’s the task? e.g. task ED-21 04:00 H/H check'};
       const where = b.ent ? entSub(b.ent) : 'new bed';
-      return {html:`New ${pri ? `<span class="cmdpri ${pri}">${PRI[pri].label}</span> ` : ''}task · <b>${esc(bed)}</b> <span class="muted">${esc(where)}</span> · ${due ? `<b>${pad(due.getHours())}:${pad(due.getMinutes())}</b> · ` : '<span class="muted">no time</span> · '}${esc(txt)}`,
+      return {html:`New ${pri ? `<span class="cmdpri ${pri}">${PRI[pri].label}</span> ` : ''}task · <b>${esc(bed)}</b> <span class="muted">${esc(where)}</span> · ${due ? `<b>${pad(due.getHours())}:${pad(due.getMinutes())}</b> · ` : every ? '<b>from now</b> · ' : '<span class="muted">no time</span> · '}${esc(txt)}${every ? ` · <span class="cmdrep">↻ ${repLabel(every)} ${count ? '×' + count : 'until end of shift'} = ${repTimes(due ? localISO(due) : '', every, count).length} tasks</span>` : ''}`,
         sugg:b.cands && b.cands.length > 1 ? b.cands.slice(0, 8).map(e => ({label:`${esc(e.bed)} <span class="muted">${esc(entSub(e))}</span>`, fill:`task ${e.bed} ${rest.slice(1).join(' ')}`})) : [],
-        run:() => { addTasks(bed, (b.ent && ((b.ent.a && b.ent.a.team) || '')) || state.settings.team || '', txt, due ? localISO(due) : '', 0, pri); return `Task added — ${bed}${due ? ' at ' + pad(due.getHours()) + ':' + pad(due.getMinutes()) : ''}`; }};
+        run:() => { const n = addTasks(bed, (b.ent && ((b.ent.a && b.ent.a.team) || '')) || state.settings.team || '', txt, due ? localISO(due) : '', every, pri, count); return n > 1 ? `${n} tasks added — ${bed} ${repLabel(every)}` : `Task added — ${bed}${due ? ' at ' + pad(due.getHours()) + ':' + pad(due.getMinutes()) : ''}`; }};
     }
     if(!b.ent) return {err:`Which bed? ${b.cands && b.cands.length ? '' : 'No bed matches “' + esc(rest[0]) + '”'}`, sugg:(b.cands || []).slice(0, 8).map(e => ({label:`${esc(e.bed)} <span class="muted">${esc(entSub(e))}</span>`, fill:`${v} ${e.bed} `}))};
     const tw = rest.slice(b.used); let mins = 15;
@@ -6039,7 +6074,87 @@ document.addEventListener('click', e => {
 setInterval(() => { if(ui.tab === 'overview' && !document.hidden){ const c = $('#ovClock'); if(c){ const n = new Date(); c.textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}`; } } }, 5000);
 setInterval(() => { if(ui.tab === 'overview' && !document.hidden) renderOverview(); }, 60000);
 
+/* ---------- 🗄 Older shifts: keep the live data file small ----------
+   Admissions, archived patients, end-of-shift census snapshots and activity-log entries older than N days (default 14)
+   are moved out of every board into a separate “Plexus older shifts …” file — or deleted, if you'd rather not keep them.
+   Nothing on the current census, nothing tied to an open task, and nothing newer than the cutoff is touched.
+   With “save”, the live data is only trimmed once the older-shifts file has been written (backup folder) or you confirm it's in Downloads. */
+const TIDY_KEY = `${KEY_PREFIX}.tidy`, TIDY_DAYS = [7, 14, 30, 60];
+var TIDY = (() => { try{ const v = JSON.parse(localStorage.getItem(TIDY_KEY) || '{}'); return {days:TIDY_DAYS.includes(+v.days) ? +v.days : 14, snooze:v.snooze || ''}; }catch(e){ return {days:14, snooze:''}; } })();
+const tidySave = () => { try{ localStorage.setItem(TIDY_KEY, JSON.stringify(TIDY)); }catch(e){} };
+const tidyCut = () => addDays(todayISO(), -TIDY.days);
+function tidyScan(){
+  const all = collectAll(), cut = tidyCut(), cutT = new Date(toUTC(cut) + new Date().getTimezoneOffset() * 60000).getTime();
+  const out = {cut, boards:{}, logs:{}, n:{a:0, r:0, h:0, l:0}, from:'', to:''};
+  const span = d => { if(!d) return; if(!out.from || d < out.from) out.from = d; if(!out.to || d > out.to) out.to = d; };
+  Object.entries(all.boards).forEach(([k, b]) => { if(!b) return;
+    const live = new Set((b.patients || []).map(p => p.id)), busy = new Set((b.todos || []).filter(t => t.aid).map(t => t.aid));
+    const A = (b.admits || []).filter(a => a.date && a.date < cut && !(a.patientId && live.has(a.patientId)) && !busy.has(a.id));
+    const Rr = (b.archive || []).filter(p => p.leftOn && p.leftOn < cut);
+    const H = (b.history || []).filter(h => h.date && h.date < cut);
+    const L = (all.logs[k] || []).filter(x => x && x.t && Date.parse(x.t) < cutT);
+    if(!A.length && !Rr.length && !H.length && !L.length) return;
+    A.forEach(a => span(a.date)); Rr.forEach(p => span(p.leftOn)); H.forEach(h => span(h.date));
+    out.n.a += A.length; out.n.r += Rr.length; out.n.h += H.length; out.n.l += L.length;
+    const last = [...A.map(a => a.date), ...Rr.map(p => p.leftOn), ...H.map(h => h.date)].sort().pop() || cut;
+    out.boards[k] = {version:1, boardDate:last, settings:b.settings, patients:(H.find(h => h.date === last) || {}).patients || [], admits:A, archive:Rr, history:H, todos:[], olderShifts:true};
+    out.logs[k] = L;
+  });
+  out.any = !!Object.keys(out.boards).length;
+  return out;
+}
+const tidySum = sc => [sc.n.a && `${sc.n.a} admission${sc.n.a === 1 ? '' : 's'}`, sc.n.r && `${sc.n.r} archived patient${sc.n.r === 1 ? '' : 's'}`, sc.n.h && `${sc.n.h} end-of-shift census snapshot${sc.n.h === 1 ? '' : 's'}`, sc.n.l && `${sc.n.l} activity-log entr${sc.n.l === 1 ? 'y' : 'ies'}`].filter(Boolean).join(' · ');
+function tidyPkg(sc){ return {kind:'wardsMatrixData', appVersion:APP_VERSION, edition:EDITION, savedAt:new Date().toISOString(), olderShifts:{before:sc.cut, from:sc.from, to:sc.to}, activeType:Object.keys(sc.boards)[0], boards:sc.boards, logs:sc.logs}; }
+const tidyName = sc => `Plexus ${SANDBOX ? 'SANDBOX ' : ''}older shifts ${sc.from || '?'} to ${sc.to || sc.cut}.json`;
+// remove exactly what the scan found (by id), from every board — the open one through mutate so it's undoable and saved
+function tidyApply(sc, how){
+  const ids = k => { const b = sc.boards[k]; return {a:new Set(b.admits.map(x => x.id)), r:new Set(b.archive.map(x => x.id + '|' + x.leftOn)), h:new Set(b.history.map(x => x.date + '|' + x.savedAt)), l:new Set((sc.logs[k] || []).map(x => x.t + '|' + x.msg))}; };
+  const trim = (b, I) => { b.admits = (b.admits || []).filter(x => !I.a.has(x.id)); b.archive = (b.archive || []).filter(x => !I.r.has(x.id + '|' + x.leftOn)); b.history = (b.history || []).filter(x => !I.h.has(x.date + '|' + x.savedAt)); };
+  Object.keys(sc.boards).forEach(k => { const I = ids(k);
+    if(k === activeType){ actLog = actLog.filter(x => !I.l.has(x.t + '|' + x.msg)); saveLog(); return; }
+    try{ const b = JSON.parse(localStorage.getItem(storeKeyFor(k)) || 'null'); if(b){ trim(b, I); localStorage.setItem(storeKeyFor(k), JSON.stringify(b)); }
+      const L = JSON.parse(localStorage.getItem(logKeyFor(k)) || '[]'); localStorage.setItem(logKeyFor(k), JSON.stringify(L.filter(x => !I.l.has(x.t + '|' + x.msg)))); }catch(e){} });
+  const msg = `${how === 'delete' ? 'Deleted' : 'Moved out'} shifts older than ${TIDY.days} days (${fmtShort(sc.from)} – ${fmtShort(sc.to)}): ${tidySum(sc)}`;
+  mutate(() => { if(sc.boards[activeType]) trim(state, ids(activeType)); }, {label:msg, cat:'system'});
+  dfQueue(); return msg;
+}
+async function tidyRun(){
+  const sc = tidyScan();
+  if(!sc.any){ toast(`Nothing older than ${TIDY.days} days — your data file is already trim`); return; }
+  const size = n => n > 1e6 ? (n / 1e6).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1e3)) + ' KB';
+  const before = JSON.stringify(collectAll()).length, moved = JSON.stringify(tidyPkg(sc)).length;
+  const go = await askChoice(`<h3>🗄 Move older shifts out</h3>
+    <p>Everything from <b>${fmtShort(sc.from)} – ${fmtShort(sc.to)}</b> (older than ${TIDY.days} days), across all your boards:</p>
+    <p class="takebox" style="margin:6px 0">${tidySum(sc)}</p>
+    <p class="muted">Your current census, open tasks, and anything from the last ${TIDY.days} days stay exactly as they are. The data file goes from about ${size(before)} to ${size(Math.max(0, before - moved))}.</p>
+    <p class="muted"><b>Save to a file</b> writes them to “${esc(tidyName(sc))}” ${BKF.handle && BKF.status === 'ok' ? `in your backup folder <b>${esc(BKF.name)}</b>` : 'in your <b>Downloads</b>'} — open it any time from History &amp; Archive → Past shift files (read-only). <b>Delete</b> removes them for good — fine if you don't need to look back that far.</p>`,
+    [['Cancel', '', null], ['Delete them…', 'danger', 'delete'], ['Save to a file, then remove', 'primary', 'save']]);
+  if(!go) return;
+  if(go === 'delete'){
+    const sure = await askChoice(`<h3>Delete older shifts for good?</h3><p>${tidySum(sc)} from ${fmtShort(sc.from)} – ${fmtShort(sc.to)} will be removed from Plexus and your data file. There's no copy unless a backup has them.</p>`, [['Cancel', '', false], ['Delete', 'danger', true]]);
+    if(!sure) return; tidyApply(sc, 'delete'); toast('Older shifts deleted'); return; }
+  const pkg = tidyPkg(sc), name = tidyName(sc), txt = JSON.stringify(pkg);
+  if(BKF.handle && BKF.status === 'ok'){
+    try{ const fh = await BKF.handle.getFileHandle(name, {create:true}), w = await fh.createWritable(); await w.write(txt); await w.close();
+      const f = await fh.getFile(); if(f.size !== new Blob([txt]).size) throw new Error('the saved file came back a different size');
+      tidyApply(sc, 'save'); toast(`Older shifts saved to “${BKF.name}” and removed from the live data`); return;
+    }catch(e){ toast(`Couldn't save to “${BKF.name}” (${e.message || e.name}) — downloading instead`); }
+  }
+  download(name, txt, 'application/json');
+  const ok = await askChoice(`<h3>Check your Downloads</h3><p>“<b>${esc(name)}</b>” should be in your Downloads now. Once you can see it there, remove these shifts from Plexus.</p><p class="muted">Nothing has been removed yet.</p>`,
+    [['Not yet', '', false], ['It’s there — remove them', 'primary', true]]);
+  if(ok){ tidyApply(sc, 'save'); toast('Older shifts removed from the live data'); }
+}
+// after a new shift starts: offer it when there's something to move (at most once every 3 days if you say not now)
+function tidyNudge(){
+  if(tabLocked || modalEl || (TIDY.snooze && TIDY.snooze > todayISO())) return;
+  const sc = tidyScan(); if(!sc.any) return;
+  modal(`<h3>🗄 Your data file is carrying old shifts</h3><p>${tidySum(sc)} from <b>${fmtShort(sc.from)} – ${fmtShort(sc.to)}</b> — older than ${TIDY.days} days. Move them out to keep Plexus quick and the file small?</p>`,
+    [['Not now', '', () => { TIDY.snooze = addDays(todayISO(), 3); tidySave(); }], ['Review…', 'primary', () => setTimeout(tidyRun, 0)]]);
+}
+
 const CHANGELOG = [
+  {v:186, d:'2026-11-15', items:['<b>Repeating tasks</b> — q30min, q1h, q2h, q3h, q4h, q6h, q8h or q12h, until the end of the shift or a set number of times (the new × box). In the command bar: <b>task ED-9 21:00 q1h FSG ×6</b>, or leave out the time to start now. Each one shows ↻ 2/6; deleting one asks whether to stop the rest.', '<b>Move older shifts out</b> — Settings, or <b>tidy</b> in the command bar. Admissions, archived patients, census snapshots and log entries older than 2 weeks (or 7/30/60 days) move into their own file, which opens under Past shift files, or are deleted if you prefer. Your current census and open tasks are never touched. Plexus offers it when you start a new shift.']},
   {v:185, d:'2026-11-13', items:['<b>Overview</b> — a new first tab, and the page Plexus opens to. One look at the whole team: census and open spots, admissions in progress, discharges, open tasks and patients who need attention, plus a shift clock. Below: an admissions pipeline (Not seen → Phase 1–3 → Done, with the live timers), team load by intern, upcoming tasks, discharges and flags. Click anything to jump to it.', 'On admitting shifts (Bellevue and VA Night Admitting) the Overview is the admissions pipeline across the whole page, with moonlighter holds in their own column.', '“go overview” (or “home”) in the command bar.']},
   {v:184, d:'2026-11-13', items:['<b>Command bar on the right</b> — Settings → Command bar, or ⇆ in the bar, docks it as a panel down the right side. The board gets narrower, not shorter, and the panel keeps a scrolling history of your commands.', 'Drag the panel’s left edge to resize it. In a narrow window it moves to the bottom automatically, and comes back when there’s room.', 'Task rows fit narrower boards: the Result / note box shrinks, and on very narrow boards drops to its own line.']},
   {v:183, d:'2026-11-13', items:['The <b>PLEXUS</b> logo is now white lettering in a dark rounded box.']},
@@ -6099,7 +6214,7 @@ function pastEntries(name, pkg, mod, src){
   Object.entries(pkg.boards || {}).forEach(([k, b]) => {
     if(!b || !SHIFT_TYPES.some(x => x.k === k)) return;
     const p = (b.patients || []).length, a = (b.admits || []).filter(x => !x.hold).length, h = (b.admits || []).filter(x => x.hold).length, t = (b.todos || []).length;
-    if(!p && !a && !h && !t) return;
+    if(!p && !a && !h && !t && !(b.archive || []).length && !(b.history || []).length) return;
     out.push({id:`${name}|${k}|${pkg.savedAt || mod}`, name, k, pkg, savedAt:pkg.savedAt || new Date(mod || Date.now()).toISOString(), date:b.boardDate || '', shift:(b.settings && b.shiftType) || '', p, a, h, t, src, ver:pkg.appVersion || ''});
   });
   return out;
@@ -6334,7 +6449,7 @@ tabClaim();
 { const tryWN = n => { if(modalEl || tabLocked || (SANDBOX && !(() => { try{ return localStorage.getItem(SEEN_KEY); }catch(e){ return ''; } })())){ if(SANDBOX && !modalEl && !tabLocked){ try{ localStorage.setItem(SEEN_KEY, APP_VERSION); }catch(e){} return; } if(n < 20) setTimeout(() => tryWN(n + 1), 1500); return; } whatsNewBoot(); };
   setTimeout(() => tryWN(0), 900); }
 // test hook for the automated checks (sandbox only)
-if(SANDBOX) window.__wmTest = {get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }};
+if(SANDBOX) window.__wmTest = {get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
 setTimeout(() => { try{ const bad = runDiagnostics().filter(r => r.lvl === 'fail'); if(bad.length) toast(`Self-check found ${bad.length} problem${bad.length===1?'':'s'}: ${bad[0].title} — see Settings → Run self-check`); }catch(e){} }, 1500);
 })();
 </script>
