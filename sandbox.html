@@ -1415,7 +1415,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '195';
+const APP_VERSION = '196';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6686,9 +6686,16 @@ function showLaunch(opts = {}){
       <span class="lrst ${st.cls}">${st.txt}</span>
       <span class="lrc">${esc(c)}</span><span class="lrx">›</span></button>`; };
   const panel = (title, ids, extra = '') => ids.length ? `<section class="lpanel"><header><h4>${title}</h4><span class="n">${ids.length}</span>${extra}</header>${ids.map(row).join('')}</section>` : '';
+  // what the board up top is: the current rotation (by date), the next one, a later or earlier one, a singular shift…
+  const kicker = k => { const r = ROTS[k]; if(!r) return knownBoard(k) ? 'Board without a schedule' : '';
+    if(r.prn) return r.end < today ? 'Past singular shift' : 'Singular shift';
+    if(r.start <= today && r.end >= today) return 'Current rotation';
+    if(r.end < today) return 'Past rotation';
+    const nx = Object.values(ROTS).filter(x => !x.prn && x.start > today).sort((a, b) => a.start.localeCompare(b.start))[0];
+    return nx && nx.id === r.id ? 'Next rotation' : 'Upcoming rotation'; };
   const draw = () => {
     const okSel = knownBoard(sel), T = okSel ? typeOf(sel) : null, cont = sel === activeType, st = okSel ? status(sel, true) : null, c = okSel ? counts(sel) : '';
-    const now = new Date(), hr = now.getHours(), greet = hr < 5 ? 'Up late' : hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+    const now = new Date();
     let body = '';
     if(view === 'rot'){
       const R = rotsSorted().filter(r => !r.prn), P = rotsSorted().filter(r => r.prn);
@@ -6707,7 +6714,7 @@ function showLaunch(opts = {}){
       <div class="lhero">
         <div class="lhtop"><span class="brandname">PLEXUS</span>${SANDBOX ? '<span class="lsbx">SANDBOX</span>' : ''}<span class="lclock">${now.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'})} · <b>${pad(now.getHours())}:${pad(now.getMinutes())}</b></span></div>
         <div class="lhmain">
-          <div class="lhl"><div class="lgreet">${opts.switching ? 'Switch board' : greet}</div>
+          <div class="lhl"><div class="lgreet">${kicker(sel)}</div>
             ${okSel ? `<div class="lhname">${rotBlock(ROTS[sel]) ? `<span class="lhblk"><i>BLOCK</i>${rotBlock(ROTS[sel])}</span>` : ''}<span>${esc(ROTS[sel] ? (ROTS[sel].icon || '') : T.icon)}</span><span>${esc(T.label)}</span></div><div class="lhsub">${esc(sub(sel))}</div>
               <div class="lhst"><span class="lhpill ${st.cls}">${st.txt}</span>${c ? `<span class="lhc">${esc(c)}</span>` : ''}</div>` : '<div class="lhname">Pick a board</div>'}</div>
           <div class="lhr">${opts.switching ? `<button type="button" class="btn ghost" data-lback>← Back to ${esc(typeOf(activeType).label)}</button>` : ''}
@@ -6977,6 +6984,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:196, d:'2026-11-17', items:['The launch screen labels the board up top by date: Current rotation, Next rotation, Upcoming or Past rotation, or Singular shift.']},
   {v:195, d:'2026-11-17', items:['Launch screen rows: the block number (with BLOCK above it), then the rotation’s emoji, then its name.']},
   {v:194, d:'2026-11-17', items:['Rotation names capitalised: Tisch Pulm (Days), VA Wards (Days), Jeopardy (Block 17) and Jeopardy (Block 23).']},
   {v:193, d:'2026-11-17', items:['<b>Block numbers</b> on the launch screen: each rotation shows its block in a dark square, and the board up top shows it too (e.g. Block 11). Set or change it under New rotation / Edit schedule.']},
