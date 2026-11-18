@@ -1113,13 +1113,50 @@ body.touch #cmdIn{font-size:17px}
 body.touch .shiftsel{width:auto!important;max-width:none!important;field-sizing:content}
 body.touch:not(.cmd-open) .toast{bottom:calc(var(--tbarh) + env(safe-area-inset-bottom) + 14px)}
 @media (orientation:portrait){body.touch #view-census .side{display:none}body.touch #teamWrap{display:none}}
+/* ---------- Launch screen ---------- */
+#launch{position:fixed;inset:0;z-index:250;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(28px,env(safe-area-inset-top)) 16px 28px}
+#launch[hidden]{display:none}
+body.launching .app,body.launching .tbar,body.launching .fab,body.launching .toast{visibility:hidden}
+.lbox{width:min(760px,100%);margin:auto 0}
+.lhead{display:flex;align-items:center;gap:10px;margin-bottom:26px}
+.lhead .brandname{font-size:17px;padding:6px 12px 6px 14px}
+.lsbx{font:800 11px -apple-system,sans-serif;letter-spacing:.1em;background:#f57c00;color:#fff;border-radius:10px;padding:3px 9px}
+.lclock{margin-left:auto;font:600 14px ui-monospace,Menlo,monospace;color:var(--muted)}
+.lbox h2{margin:0;font-size:26px;letter-spacing:-.01em}
+.lsub{margin:6px 0 18px;font-size:14px}
+.lsites{display:inline-flex;background:var(--head);border-radius:10px;padding:3px;gap:2px;margin-bottom:14px}
+.lsites button{border:0;background:none;font:700 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--muted);padding:9px 18px;border-radius:8px;cursor:pointer}
+.lsites button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.lgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.lcard{display:flex;gap:12px;align-items:flex-start;text-align:left;border:1.5px solid var(--line);background:var(--panel);border-radius:12px;padding:13px 14px;cursor:pointer;color:var(--ink);font:inherit;min-height:88px}
+.lcard:hover{border-color:var(--line2)}
+.lcard.on{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.lcard .lic{font-size:22px;line-height:1;margin-top:2px;width:26px;text-align:center}
+.lcard .lt{min-width:0;flex:1}
+.lcard b{font-size:15.5px}
+.lcard .lk{font-size:12px;color:var(--muted)}
+.lcard .ls{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.lcard.s-live .ls{color:var(--ink)}
+.lsdot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--line2)}.lsdot.s-live{background:#1e8e3e}.lsdot.s-ended{background:#9aa3b2}
+.llast{font-style:normal;font:800 9.5px -apple-system,sans-serif;letter-spacing:.08em;background:var(--accent);color:#fff;border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:2px}
+.lfoot{display:flex;align-items:center;gap:12px;margin-top:20px;flex-wrap:wrap;position:sticky;bottom:0;background:var(--bg);padding:12px 0}
+.lsel{font-size:15px}
+.lgo{margin-left:auto;font-size:16px;padding:11px 22px;min-height:46px}
+.lver{margin-top:6px;font-size:12px;text-align:center}
+@media (max-width:700px){.lgrid{grid-template-columns:1fr}}
+/* the board's context in the header: a label, not a menu */
+.ndboard{background:var(--head);border-radius:8px;padding:8px 12px;margin:4px 0 10px}
+.shiftlbl{display:inline-flex;align-items:center;gap:6px;border:0;background:none;font:600 14px inherit;font-family:inherit;color:var(--ink);padding:2px 0;cursor:pointer;white-space:nowrap}
+.shiftlbl .sw{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line2);border-radius:6px;padding:1px 6px}
+.shiftlbl:hover .sw{color:var(--accent);border-color:var(--accent)}
+body.touch .shiftlbl{font-size:17px}
 </style>
 </head>
 <body>
 <div class="app">
   <header class="top">
     <div class="brand"><span class="brandname">PLEXUS</span> <span id="teamWrap"></span></div>
-    <div class="boarddate"><button class="shiftpill" id="shiftPill"></button><b id="boardDate"></b><span class="bdsep"></span><select id="shiftType" class="shiftsel" title="Shift type — each type keeps its own separate board"></select></div>
+    <div class="boarddate"><button class="shiftpill" id="shiftPill"></button><b id="boardDate"></b><span class="bdsep"></span><button type="button" id="shiftLabel" class="shiftlbl" title="This board’s site and shift. To work on a different one: Switch board…"></button></div>
     <nav class="tabs" id="tabs">
       <button data-tab="overview">Overview</button>
       <button data-tab="tasks" hidden>Tasks</button>
@@ -1276,8 +1313,8 @@ body.touch:not(.cmd-open) .toast{bottom:calc(var(--tbarh) + env(safe-area-inset-
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '188';
-const APP_UPDATED = '2026-11-16';
+const APP_VERSION = '189';
+const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
 const BACKUP_KEY = `${KEY_PREFIX}.lastBackup.v1`;   // kept outside the board so Undo doesn't rewind it
@@ -2868,7 +2905,7 @@ function renderChromeInner(){
     $('#boardDate').title = shiftLabel(d, state.settings.shift); }
   renderShiftPill(); renderTodoInd(); tickClocks();
   { const k = scLabel('bulkAdd'), plain = k.replace(/<[^>]+>/g, ''); const e2 = $('#bulkKey2'); if(e2) e2.innerHTML = k; const b = $('#bulkPt'); if(b) b.dataset.tip = `Bulk Add patients${plain ? '\nShortcut: ' + plain : ''}`; }
-  $('#shiftType').innerHTML = SITES.map(x => `<optgroup label="${esc(x.label)}">${SHIFT_TYPES.filter(t => t.site === x.k).map(t => `<option value="${t.k}" ${t.k === activeType ? 'selected' : ''} title="${esc(t.label)}">${t.icon} ${esc(t.short)}</option>`).join('')}</optgroup>`).join('');
+  { const T = typeOf(activeType); $('#shiftLabel').innerHTML = `${T.icon} ${esc(T.label)} <span class="sw" aria-label="Switch board">⇆</span>`; }
   if(!document.querySelector('#teamWrap .teamedit')){
     const t = state.settings.team;
     $('#teamWrap').innerHTML = `<button class="teamname ${t?'':'unset'}" id="teamBtn" title="${t ? 'Click to rename the team' : 'Click to set the team name'}">${t ? esc(t) : '+ Team'}</button>`;
@@ -2891,8 +2928,6 @@ function renderChromeInner(){
     n.innerHTML = `<b>It's ${fmtLong(todayISO())}.</b> The board is still dated ${shiftLabel(state.boardDate, state.settings.shift)}. <button class="btn sm primary" id="nudgeNewDay">Start new shift</button>`;
   } else n.hidden = true;
   renderBackupInd();
-  { const sel = $('#shiftType'), o = sel.options[sel.selectedIndex], cv = renderChrome.cv || (renderChrome.cv = document.createElement('canvas').getContext('2d'));
-    cv.font = `600 ${getComputedStyle(sel).fontSize} ${getComputedStyle(sel).fontFamily}`; if(o) sel.style.width = Math.ceil(cv.measureText(o.textContent).width + 26) + 'px'; }
   { const hasTasks = !!typeOf(activeType).tasks; $('#tabs button[data-tab="tasks"]').hidden = !hasTasks; document.body.classList.toggle('has-tasks', hasTasks); if(!hasTasks && ui.tab === 'tasks') ui.tab = typeOf(activeType).tab; }
   if(ui.tab !== 'tasks' && typeof tkFullOn === 'function' && tkFullOn()) exitTkFull();
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
@@ -3344,10 +3379,7 @@ $('#redoBtn').addEventListener('click', () => redo());
 $('#todoInd').addEventListener('click', () => todoPanel());
 $('#shiftPill').addEventListener('click', shiftPillClick);
 $('#backupInd').addEventListener('click', () => { if(DF.handle && DF.status === 'conflict'){ renderDfBanner(); toast('Saving is paused — choose a copy in the bar at the top'); return; } if(DF.handle && DF.status === 'needs') dfReconnect(); else if(DF.handle && DF.status === 'error') dfWrite(); else backupNow(); });
-$('#shiftType').addEventListener('change', e => {
-  const k = e.target.value; switchBoard(k);
-  toast(`Switched to ${typeOf(k).label}${boardCount(k) ? '' : ''}`);
-});
+$('#shiftLabel').addEventListener('click', () => switchBoardFlow());
 $('#teamWrap').addEventListener('click', e => {
   if(!e.target.closest('#teamBtn')) return;
   const w = $('#teamWrap');
@@ -3390,8 +3422,7 @@ function newDay(){
   const stillHere = state.patients.filter(p => p.status === 'Discharge' || p.status === 'Transfer');
   const next = todayISO() > state.boardDate ? todayISO() : addDays(state.boardDate, 1);
   modal(`<h3>Start a new shift</h3>
-    <label class="f">Shift type <span class="muted" style="font-weight:400">— each type keeps its own board</span></label>
-    ${typePickerHTML('ndType', activeType)}
+    <p class="ndboard">${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${esc(siteOf(activeType).label)} — a new shift on this board. For a different site or shift type, use <b>Switch board…</b></span></p>
     <label class="f">Shift date <span class="muted" style="font-weight:400">(for overnight, the date the shift starts)</span></label><input type="date" id="ndDate" value="${next}">
     <p>This will:</p><ul>
       <li>Save a read-only snapshot of that board's last shift to History</li>
@@ -3405,11 +3436,10 @@ function newDay(){
     <p class="muted">You can undo this right after if needed.</p>`,
     [['Cancel'],['Start new shift','primary',() => {
       const nd = $('#ndDate').value || next;
-      const chosen = (document.querySelector('input[name="ndType"]:checked') || {}).value || activeType;
+      const chosen = activeType;
       const clearTasks = !!typeOf(chosen).tasks && !!($('#ndClearTasks') && $('#ndClearTasks').checked);
       if($('#ndBackup') && $('#ndBackup').checked) backupNow('quiet');
       autoBackup('before new shift', true); setTimeout(() => autoCheck('new shift'), 1500); setTimeout(tidyNudge, 4000);
-      if(chosen !== activeType) switchBoard(chosen);
       mutate(() => {
         if(state.patients.length){
           state.history = state.history.filter(h => h.date !== state.boardDate);
@@ -3530,6 +3560,7 @@ function settings(){
     <div style="margin-top:12px;display:flex;gap:8px;align-items:center"><button class="btn" id="bKeys">⌨ Keyboard shortcuts…</button><span class="muted">See and change every shortcut (press <kbd>?</kbd> on the board to view them).</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button class="btn" id="bDiag">🩺 Run self-check</button><span class="muted">Checks storage, saved boards, data integrity, backups and shortcuts.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Command bar <select id="sCmdDock"><option value="bottom" ${CMDDOCK.side === 'bottom' ? 'selected' : ''}>Strip along the bottom</option><option value="right" ${CMDDOCK.side === 'right' ? 'selected' : ''}>Panel on the right</option></select></label><span class="muted" id="cmdDockNote">Switch any time with ⇆ in the bar. The side panel can be resized by dragging its left edge, and it moves to the bottom when the window is too narrow. Saved on this computer.</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>Board: ${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${esc(siteOf(activeType).label)}</span></span><button class="btn sm" id="bSwitchBoard">⇆ Switch board…</button><span class="muted">Opens the launch screen. Plexus also shows it every time it opens.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Layout <select id="sLayout"><option value="auto" ${LAYOUT === 'auto' ? 'selected' : ''}>Automatic (${touchMQ.matches ? 'touch on this device' : 'desktop on this device'})</option><option value="touch" ${LAYOUT === 'touch' ? 'selected' : ''}>Touch — iPad style</option><option value="desktop" ${LAYOUT === 'desktop' ? 'selected' : ''}>Desktop</option></select></label><span class="muted">Touch: tab bar at the bottom, ⌘ button for the command bar, swipe tasks, long-press a bed to change it.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Older shifts: move out anything older than <select id="sTidyDays">${TIDY_DAYS.map(d => `<option value="${d}" ${TIDY.days === d ? 'selected' : ''}>${d} days</option>`).join('')}</select></label><button class="btn sm" id="bTidy">🗄 Move older shifts out…</button><span class="muted">Keeps the data file small. Plexus also offers this when you start a new shift.</span></div>
     <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
@@ -3627,6 +3658,7 @@ function settings(){
       m.querySelector('#mvGo').onclick = () => { const to = m.querySelector('#mvTo').value; closeModal(); moveBoard(to); };
       m.querySelector('#sCmdDock').onchange = e => cmdDockSet(e.target.value);
       m.querySelector('#sLayout').onchange = e => layoutSet(e.target.value);
+      m.querySelector('#bSwitchBoard').onclick = () => { closeModal(); setTimeout(switchBoardFlow, 0); };
       m.querySelector('#sTidyDays').onchange = e => { TIDY.days = +e.target.value; tidySave(); };
       m.querySelector('#bTidy').onclick = () => { closeModal(); setTimeout(tidyRun, 0); };
       m.querySelector('#sIdle').onchange = e => { PRIV.idle = +e.target.value || 0; privSave(); toast(PRIV.idle ? `The screen hides after ${PRIV.idle} min without activity` : 'Automatic hiding is off'); };
@@ -6308,6 +6340,7 @@ function moreSheet(){
     <button class="row" data-do="tab:history"><span class="ic">🗂</span>History &amp; Archive</button>
     ${$('#tabs button[data-tab=census]').hidden ? '' : ''}
     <h5>Shift</h5>
+    <button class="row" data-do="switch"><span class="ic">⇆</span>Switch board…<span class="sub">${esc(typeOf(activeType).label)}</span></button>
     ${$('#newDayBtn').disabled ? '' : '<button class="row" data-do="newDayBtn"><span class="ic">▶</span>New Shift</button>'}
     <button class="row red" data-do="endShiftBtn"><span class="ic">■</span>End Shift</button>
     <h5>This ${/iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'device'}</h5>
@@ -6315,7 +6348,7 @@ function moreSheet(){
     <button class="row" data-do="restore"><span class="ic">↺</span>Restore from Files…</button>
     <button class="row" data-do="privBtn"><span class="ic">👁</span>Hide screen</button>
     <button class="row" data-do="settingsBtn"><span class="ic">⚙</span>Settings</button>`,
-  d => { if(d.startsWith('tab:')) touchTab(d.slice(4)); else if(d === 'files') filesBackup(); else if(d === 'restore') filesRestorePick(); else { const b = document.getElementById(d); if(b) b.click(); } });
+  d => { if(d.startsWith('tab:')) touchTab(d.slice(4)); else if(d === 'files') filesBackup(); else if(d === 'restore') filesRestorePick(); else if(d === 'switch') switchBoardFlow(); else { const b = document.getElementById(d); if(b) b.click(); } });
 }
 // ---- command bar: tappable starters ----
 function cmdChips(){
@@ -6362,14 +6395,93 @@ function touchStart(){
   try{ if(navigator.storage && navigator.storage.persist) navigator.storage.persist().then(ok => { try{ localStorage.setItem(`${KEY_PREFIX}.persisted`, ok ? '1' : '0'); }catch(e){} }); }catch(e){}
   let seen = ''; try{ seen = localStorage.getItem(A2HS_KEY) || ''; }catch(e){}
   if(!isStandalone() && /iPad|iPhone|Macintosh/.test(navigator.userAgent) && (!seen || (seen !== 'done' && seen < todayISO())))
-    setTimeout(() => { if(modalEl || tabLocked) return; modal(`<h3>📲 Add Plexus to your Home Screen</h3>
+    whenLaunched(() => setTimeout(() => { if(modalEl || tabLocked || launching) return; modal(`<h3>📲 Add Plexus to your Home Screen</h3>
       <p>On iPad, Safari can clear a website's data if you don't open it for a while. <b>Plexus opened from the Home Screen keeps its data</b> — and opens full-screen, like an app.</p>
       <ol class="takesteps"><li>Tap <b>Share</b> <span class="muted">(the square with the arrow, top right)</span>.</li><li>Tap <b>Add to Home Screen</b>, then <b>Add</b>.</li><li>From now on, open Plexus from its icon.</li></ol>
       <p class="muted">Data you already have here doesn't carry over to the Home Screen app automatically — before you switch, use More → <b>Back up to Files</b>, then <b>Restore from Files</b> in the new one.</p>`,
-      [['Remind me tomorrow', '', () => { try{ localStorage.setItem(A2HS_KEY, todayISO()); }catch(e){} }], ['I’ve done it', 'primary', () => { try{ localStorage.setItem(A2HS_KEY, 'done'); }catch(e){} }]]); }, 2500);
+      [['Remind me tomorrow', '', () => { try{ localStorage.setItem(A2HS_KEY, todayISO()); }catch(e){} }], ['I’ve done it', 'primary', () => { try{ localStorage.setItem(A2HS_KEY, 'done'); }catch(e){} }]]); }, 1500));
+}
+
+/* ---------- 🚪 Launch screen: choose the board first, every time Plexus opens ----------
+   The board's context (site + shift type) is fixed once it's loaded — the header shows it as a label, not a menu.
+   Changing it means going back here on purpose (More / ⚙ / the label → Switch board…), so data can't land on the wrong board. */
+var launching = false; const launchQ = [];
+const whenLaunched = fn => { if(launching) launchQ.push(fn); else fn(); };
+function boardInfo(k){
+  let b = null;
+  if(k === activeType) b = state; else { try{ b = JSON.parse(localStorage.getItem(storeKeyFor(k)) || 'null'); }catch(e){} }
+  if(!b) return {n:0, a:0, t:0, txt:'Empty', cls:'s-empty'};
+  const n = (b.patients || []).length, a = (b.admits || []).filter(x => x.date === b.boardDate).length, t = (b.todos || []).filter(x => !x.done).length;
+  const any = n || a || t, sh = shiftLabel(b.boardDate, (b.settings || {}).shift);
+  const stale = b.boardDate && b.boardDate < addDays(todayISO(), -1);
+  const counts = [n && `${n} patient${n === 1 ? '' : 's'}`, a && `${a} admission${a === 1 ? '' : 's'}`, t && `${t} open task${t === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
+  if(!any && !(b.history || []).length) return {n, a, t, txt:'Empty', cls:'s-empty'};
+  if(b.shiftActive === false) return {n, a, t, txt:`Shift ended · ${sh}${counts ? ' · ' + counts : ''}`, cls:'s-ended'};
+  if(stale) return {n, a, t, txt:`Last used ${sh}${counts ? ' · ' + counts : ''}`, cls:'s-ended'};
+  return {n, a, t, txt:`Shift in progress · ${sh}${counts ? ' · ' + counts : ''}`, cls:'s-live'};
+}
+function showLaunch(opts = {}){
+  closeModal(); try{ cmdClose(false); }catch(e){}
+  launching = true; document.body.classList.add('launching');
+  let sel = activeType, site = typeOf(sel).site;
+  let el = $('#launch'); if(!el){ el = document.createElement('div'); el.id = 'launch'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Choose your board'); document.body.appendChild(el); }
+  el.hidden = false;
+  const now = new Date();
+  const draw = () => {
+    const T = typeOf(sel), cont = sel === activeType;
+    el.innerHTML = `<div class="lbox">
+      <div class="lhead"><span class="brandname">PLEXUS</span>${SANDBOX ? '<span class="lsbx">SANDBOX · demo data</span>' : ''}<span class="lclock">${now.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'})} · ${pad(now.getHours())}:${pad(now.getMinutes())}</span></div>
+      <h2>${opts.switching ? 'Switch to another board' : 'Choose your board'}</h2>
+      <p class="muted lsub">Each board keeps its own patients, admissions and tasks. Once it’s open, the board stays fixed until you come back here.</p>
+      <div class="lsites" role="tablist">${SITES.map(x => `<button type="button" role="tab" data-lsite="${x.k}" class="${x.k === site ? 'on' : ''}">${esc(x.label)}</button>`).join('')}</div>
+      <div class="lgrid">${SHIFT_TYPES.filter(t => t.site === site).map(t => { const i = boardInfo(t.k);
+        return `<button type="button" class="lcard ${t.k === sel ? 'on' : ''} ${i.cls}" data-lk="${t.k}">
+          <span class="lic">${t.icon}</span><span class="lt"><b>${esc(t.label)}</b>${t.k === activeType ? '<i class="llast">LAST USED</i>' : ''}<br><span class="lk">${typeKindTxt(t)}</span><span class="ls"><i class="lsdot ${i.cls}"></i>${esc(i.txt)}</span></span></button>`; }).join('')}</div>
+      <div class="lfoot">
+        ${opts.switching ? `<button type="button" class="btn" data-lback>← Back to ${esc(typeOf(activeType).label)}</button>` : ''}
+        <span class="lsel">${T.icon} <b>${esc(T.label)}</b> <span class="muted">· ${esc(siteOf(sel).label)}</span></span>
+        <button type="button" class="btn primary lgo" data-lgo>${cont ? 'Continue' : 'Load board'} →</button>
+      </div>
+      <div class="lver muted">Plexus v${APP_VERSION}${SANDBOX ? ' · Sandbox (test data only)' : ''}</div>
+    </div>`;
+    if(!isTouch()) setTimeout(() => { const g = el.querySelector('[data-lgo]'); if(g) g.focus({preventScroll:true}); }, 0);
+  };
+  const pickSite = s => { site = s; if(typeOf(sel).site !== s) sel = (SHIFT_TYPES.find(t => t.site === s && t.k === activeType) || SHIFT_TYPES.find(t => t.site === s)).k; draw(); };
+  el.onclick = e => {
+    const s = e.target.closest('[data-lsite]'); if(s){ pickSite(s.dataset.lsite); return; }
+    const c = e.target.closest('[data-lk]'); if(c){ sel = c.dataset.lk; draw(); if(e.detail === 2) go(); return; }
+    if(e.target.closest('[data-lgo]')){ go(); return; }
+    if(e.target.closest('[data-lback]')){ sel = activeType; go(); }
+  };
+  el.onkeydown = null;
+  launchKeys = e => {
+    const list = SHIFT_TYPES.filter(t => t.site === site), i = list.findIndex(t => t.k === sel);
+    if(e.key === 'ArrowDown' || e.key === 'ArrowRight' && e.target.closest('.lcard')){ e.preventDefault(); sel = list[Math.min(list.length - 1, i + 1)].k; draw(); }
+    else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft' && e.target.closest('.lcard')){ e.preventDefault(); sel = list[Math.max(0, i - 1)].k; draw(); }
+    else if(e.key === 'Escape' && opts.switching){ e.preventDefault(); sel = activeType; go(); }
+  };
+  const go = () => {
+    const k = sel; el.hidden = true; launching = false; document.body.classList.remove('launching'); launchKeys = null;
+    if(k !== activeType) switchBoard(k);
+    else { ui.tab = 'overview'; saveUI(); renderAll(); }
+    while(launchQ.length){ try{ launchQ.shift()(); }catch(err){ console.error(err); } }
+  };
+  draw();
+}
+var launchKeys = null;
+// while the launch screen is up, nothing else reacts to the keyboard (no command bar, shortcuts or arrow navigation underneath)
+window.addEventListener('keydown', e => { if(!launching) return; e.stopImmediatePropagation(); if(launchKeys) launchKeys(e); }, true);
+async function switchBoardFlow(){
+  if(launching) return;
+  const T = typeOf(activeType), mid = shiftIsActive() && (state.patients.length || state.admits.some(a => a.date === state.boardDate) || state.todos.some(t => !t.done));
+  if(mid){ const go = await askChoice(`<h3>Switch board?</h3><p>You have a shift in progress on <b>${T.icon} ${esc(T.label)}</b> — ${esc(boardInfo(activeType).txt.replace(/^Shift in progress · /, ''))}.</p>
+      <p class="muted">It stays exactly as it is. You can come back to it from the launch screen any time.</p>`, [['Cancel', '', false], ['Switch board…', 'primary', true]]);
+    if(!go) return; }
+  showLaunch({switching:true});
 }
 
 const CHANGELOG = [
+  {v:189, d:'2026-11-17', items:['<b>Launch screen</b> — every time Plexus opens, you choose the board first: site (Bellevue, Tisch / KP, VA), then the shift, with each board’s status (shift in progress, ended, empty). The last board is pre-selected, so it’s one tap on <b>Continue</b>.', 'The board’s context is now <b>fixed once it’s open</b>: the header shows it as a label instead of a menu, and New Shift no longer changes the shift type. To change boards on purpose: <b>Switch board…</b> (tap the label, More on iPad, or ⚙ Settings) — it warns you if a shift is in progress.']},
   {v:188, d:'2026-11-16', items:['<b>iPad &amp; touchscreens</b> — Plexus now switches to a touch layout on its own when opened on an iPad: a tab bar along the bottom, a ⌘ button for the command bar (with tap-to-start commands), bigger rows and buttons, and a More sheet for Transfers, History, End Shift, backups and Settings. Computers keep the desktop layout; Settings → Layout lets you choose.', 'On touch: <b>swipe a task right</b> to mark it done, <b>left</b> for +15 min; <b>long-press a bed</b> to change it; the Tasks entry form folds behind <b>+ New task</b>.', '<b>Back up to Files / Restore from Files</b> (More) — one file with every board, for iPad where Safari can’t save to a chosen file. A dot on More reminds you when there’s been no backup for 20 hours.', 'Plexus asks the iPad to keep its data, and suggests <b>Add to Home Screen</b> once — the Home Screen app keeps its data and opens full-screen.']},
   {v:187, d:'2026-11-15', items:['Fixed: hovering over <b>Bulk Add</b> (and other buttons with a tooltip) could make the toolbar flicker — the button’s own label turned bold on hover, which sometimes pushed it onto the next line.']},
   {v:186, d:'2026-11-15', items:['<b>Repeating tasks</b> — q30min, q1h, q2h, q3h, q4h, q6h, q8h or q12h, until the end of the shift or a set number of times (the new × box). In the command bar: <b>task ED-9 21:00 q1h FSG ×6</b>, or leave out the time to start now. Each one shows ↻ 2/6; deleting one asks whether to stop the rest.', '<b>Move older shifts out</b> — Settings, or <b>tidy</b> in the command bar. Admissions, archived patients, census snapshots and log entries older than 2 weeks (or 7/30/60 days) move into their own file, which opens under Past shift files, or are deleted if you prefer. Your current census and open tasks are never touched. Plexus offers it when you start a new shift.']},
@@ -6665,10 +6777,11 @@ document.body.insertAdjacentHTML('beforeend', '<div id="printSheet" aria-hidden=
 $('#privBtn').addEventListener('click', () => privacyOn('button'));
 $('#takeBtn').addEventListener('click', () => takeWithMe());
 tabClaim();
+if(!tabLocked) showLaunch({boot:true});
 { const tryWN = n => { if(modalEl || tabLocked || (SANDBOX && !(() => { try{ return localStorage.getItem(SEEN_KEY); }catch(e){ return ''; } })())){ if(SANDBOX && !modalEl && !tabLocked){ try{ localStorage.setItem(SEEN_KEY, APP_VERSION); }catch(e){} return; } if(n < 20) setTimeout(() => tryWN(n + 1), 1500); return; } whatsNewBoot(); };
-  setTimeout(() => tryWN(0), 900); }
+  whenLaunched(() => setTimeout(() => tryWN(0), 600)); }
 // test hook for the automated checks (sandbox only)
-if(SANDBOX) window.__wmTest = {get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
+if(SANDBOX) window.__wmTest = {get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, switchBoard, showLaunch, get launching(){ return launching; }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
 setTimeout(() => { try{ const bad = runDiagnostics().filter(r => r.lvl === 'fail'); if(bad.length) toast(`Self-check found ${bad.length} problem${bad.length===1?'':'s'}: ${bad[0].title} — see Settings → Run self-check`); }catch(e){} }, 1500);
 })();
 </script>
