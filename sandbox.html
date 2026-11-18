@@ -1428,7 +1428,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '201';
+const APP_VERSION = '202';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1502,7 +1502,21 @@ if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.demoRots`) === '1' && !
     kinds:{night:{label:'Night', base:'night', start:'19:30', end:'09:30'}}, roles:[{k:'captain', label:'Night Captain', census:false}, {k:'float', label:'Float', census:false}, {k:'id', label:'Tisch ID', census:true}, {k:'pulm', label:'Tisch Pulm', census:true}], createdAt:new Date().toISOString()};
   rotSave();
 } }catch(e){} }
-// Sandbox: your real PGY-3 rotations with their real dates (schedules only), with demo patients on each board
+// Sandbox: a practice Bellevue CCU rotation (Nov 18 – Dec 1) with 6 fictional patients — for rehearsing the data-file routine before the real block
+const PRACTICE_SEED = 'practice-ccu-1', PRACTICE_PRISTINE = `${KEY_PREFIX}.practicePristine`;
+if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.demoRots`) !== '1' && localStorage.getItem(`${KEY_PREFIX}.practiceSeed`) !== PRACTICE_SEED){
+  Object.keys(localStorage).filter(k => k.startsWith(STORE_KEY + '.')).forEach(k => localStorage.removeItem(k));   // every Sandbox board and its log
+  const pat = {'2026-11-18':'long', '2026-11-19':'long', '2026-11-21':'long', '2026-11-22':'long', '2026-11-24':'long', '2026-11-25':'long',
+    '2026-11-27':'nf', '2026-11-28':'nf', '2026-11-29':'nf', '2026-11-30':'nf', '2026-12-01':'nf'}, days = {};
+  Object.entries(pat).forEach(([d, k]) => days[d] = {k});
+  ROTS = {'r-practice-ccu':{id:'r-practice-ccu', tplKey:'bv-ccu', name:'Practice CCU', site:'bellevue', tpl:'bv-ccu-day', icon:'🫀', roles:[], practice:true,
+    start:'2026-11-18', end:'2026-12-01', days, note:'Fake rotation for practising the data-file routine',
+    kinds:{long:{label:'Long', base:'day', start:'07:00', end:'19:30'}, nf:{label:'NF', base:'night', start:'19:30', end:'10:00'}}, createdAt:new Date().toISOString()}};
+  rotSave();
+  localStorage.setItem(`${KEY_PREFIX}.rotSeeded2`, '1');
+  localStorage.setItem(`${KEY_PREFIX}.activeShiftType`, 'r-practice-ccu'); localStorage.setItem(`${KEY_PREFIX}.practiceSeed`, PRACTICE_SEED); localStorage.setItem(PRACTICE_PRISTINE, '1');
+} }catch(e){ console.error(e); } }
+// Sandbox (automated checks): your real PGY-3 rotations with their real dates (schedules only), with demo patients on each board
 var SANDBOX_ROTS = [{"id": "r-pgy3-b11-ccu", "tplKey": "bv-ccu", "name": "Bellevue CCU", "start": "2026-11-18", "end": "2026-12-01", "days": {"2026-11-21": {"k": "long"}, "2026-11-22": {"k": "long"}, "2026-11-24": {"k": "long"}, "2026-11-25": {"k": "long"}, "2026-11-27": {"k": "nf"}, "2026-11-28": {"k": "nf"}, "2026-11-29": {"k": "nf"}, "2026-11-30": {"k": "nf"}, "2026-12-01": {"k": "nf"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "bv-ccu-day", "icon": "🫀", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:30"}, "nf": {"label": "NF", "base": "night", "start": "19:30", "end": "10:00"}}, "roles": [], "block": 11}, {"id": "r-pgy3-b13-tkpulm", "tplKey": "tisch-days", "name": "Tisch Pulm (Days)", "start": "2026-12-16", "end": "2026-12-29", "days": {"2026-12-16": {"k": "long"}, "2026-12-17": {"k": "long"}, "2026-12-19": {"k": "long"}, "2026-12-21": {"k": "long"}, "2026-12-23": {"k": "long"}, "2026-12-24": {"k": "long"}, "2026-12-27": {"k": "long"}, "2026-12-28": {"k": "long"}, "2026-12-18": {"k": "short"}, "2026-12-22": {"k": "short"}, "2026-12-25": {"k": "short"}, "2026-12-29": {"k": "short"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "tisch", "tpl": "day-wards", "icon": "🫁", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:30"}, "short": {"label": "Short", "base": "day", "start": "07:00", "end": "16:30"}}, "roles": [], "block": 13}, {"id": "r-pgy3-b14-tknights", "tplKey": "tisch-nights", "name": "Tisch Nights", "start": "2026-12-30", "end": "2027-01-12", "days": {"2026-12-30": {"k": "night", "role": "captain"}, "2026-12-31": {"k": "night", "role": "captain"}, "2027-01-02": {"k": "night", "role": "captain"}, "2027-01-07": {"k": "night", "role": "captain"}, "2027-01-08": {"k": "night", "role": "captain"}, "2027-01-03": {"k": "night", "role": "pulm"}, "2027-01-04": {"k": "night", "role": "pulm"}, "2027-01-05": {"k": "night", "role": "pulm"}, "2027-01-10": {"k": "night", "role": "id"}, "2027-01-11": {"k": "night", "role": "id"}, "2027-01-12": {"k": "night", "role": "id"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "tisch", "tpl": "night-med-tisch", "icon": "🌙", "fresh": true, "kinds": {"night": {"label": "Night", "base": "night", "start": "19:30", "end": "09:30"}}, "roles": [{"k": "captain", "label": "Night Captain", "census": false}, {"k": "float", "label": "Float", "census": false}, {"k": "id", "label": "Tisch ID", "census": true}, {"k": "pulm", "label": "Tisch Pulm", "census": true}], "block": 14}, {"id": "r-pgy3-b17-jeop", "tplKey": "jeopardy", "name": "Jeopardy (Block 17)", "start": "2027-02-10", "end": "2027-02-23", "days": {}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "day-wards", "icon": "🚨", "fresh": true, "jeop": true, "kinds": {}, "roles": [], "block": 17}, {"id": "r-pgy3-b20-bvnf", "tplKey": "bv-nf", "name": "Bellevue Night Admitting", "start": "2027-03-24", "end": "2027-04-06", "days": {"2027-03-24": {"k": "nf"}, "2027-03-25": {"k": "nf"}, "2027-03-26": {"k": "nf"}, "2027-03-28": {"k": "nf"}, "2027-03-29": {"k": "nf"}, "2027-03-30": {"k": "nf"}, "2027-04-01": {"k": "nf"}, "2027-04-02": {"k": "nf"}, "2027-04-05": {"k": "nf"}, "2027-04-06": {"k": "nf"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "night-adm-bellevue", "icon": "🌙", "fresh": true, "kinds": {"nf": {"label": "Night", "base": "admit", "start": "18:00", "end": "08:00"}}, "roles": [], "block": 20}, {"id": "r-pgy3-b22-va", "tplKey": "va-days", "name": "VA Wards (Days)", "start": "2027-04-21", "end": "2027-05-04", "days": {"2027-04-21": {"k": "long"}, "2027-04-24": {"k": "long"}, "2027-04-27": {"k": "long"}, "2027-04-30": {"k": "long"}, "2027-05-03": {"k": "long"}, "2027-04-22": {"k": "short"}, "2027-04-25": {"k": "short"}, "2027-04-26": {"k": "short"}, "2027-04-28": {"k": "short"}, "2027-04-29": {"k": "short"}, "2027-05-01": {"k": "short"}, "2027-05-04": {"k": "short"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "va", "tpl": "va-wards-day", "icon": "🏥", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:30"}, "short": {"label": "Short", "base": "day", "start": "07:00", "end": "16:30"}}, "roles": [], "block": 22}, {"id": "r-pgy3-b23-jeop", "tplKey": "jeopardy", "name": "Jeopardy (Block 23)", "start": "2027-05-05", "end": "2027-05-18", "days": {}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "day-wards", "icon": "🚨", "fresh": true, "jeop": true, "kinds": {}, "roles": [], "block": 23}, {"id": "r-pgy3-b25-bvwards", "tplKey": "bv-wards", "name": "Bellevue Wards (Team 6)", "start": "2027-06-02", "end": "2027-06-15", "days": {"2027-06-02": {"k": "day"}, "2027-06-03": {"k": "day"}, "2027-06-04": {"k": "day"}, "2027-06-05": {"k": "day"}, "2027-06-07": {"k": "day"}, "2027-06-08": {"k": "day"}, "2027-06-09": {"k": "day"}, "2027-06-10": {"k": "day"}, "2027-06-11": {"k": "day"}, "2027-06-13": {"k": "day"}, "2027-06-14": {"k": "day"}, "2027-06-15": {"k": "day"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "bv-wards-day", "icon": "🏥", "kinds": {"day": {"label": "Day", "base": "day", "start": "07:00", "end": "19:00"}}, "roles": [], "block": 25}, {"id": "r-pgy3-b26-micu", "tplKey": "bv-micu", "name": "Bellevue MICU", "start": "2027-06-16", "end": "2027-06-30", "days": {"2027-06-18": {"k": "long"}, "2027-06-22": {"k": "long"}, "2027-06-26": {"k": "long"}, "2027-06-30": {"k": "long"}, "2027-06-19": {"k": "h27"}, "2027-06-23": {"k": "h27"}, "2027-06-27": {"k": "h27"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "bv-icu-day", "icon": "🫁", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:00"}, "h27": {"label": "27-hour", "base": "24h", "start": "07:00", "end": "10:00"}}, "roles": [], "block": 26}];
 if(SANDBOX){ try{ let ch = false; SANDBOX_ROTS.forEach(r => { const o = ROTS[r.id]; if(o && !o.block){ o.block = r.block; ch = true; } if(o && o.name !== r.name && /^(Jeopardy|Tisch Pulm \(days\)|VA Wards \(days\))/i.test(o.name)){ o.name = r.name; ch = true; } }); if(ch) rotSave(); }catch(e){} }
 if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.rotSeeded2`) !== '1'){
@@ -1859,7 +1873,21 @@ function load(){
 const DEFAULT_SETTINGS = {};
 function defaultSettingsFor(k){ const d = DEFAULT_SETTINGS[k]; return d ? clone(d) : null; }
 // the Sandbox's demo data for a rotation comes from its shift type, dated to the rotation's current workday
-function demoFor(k){ const r = ROTS[k]; if(!r) return sandboxDemoFor(k);
+function practiceDemo(r){
+  const d = rotWorkDate(r), fd = rotWorkdays(r)[0], bd = d < fd ? fd : d, y = addDays(bd, -1), Y = ['', 'Yes'];
+  const mk = (bed, intern, problem, status, ago, set) => { const p = {id:uid(), bed, intern, problem, status, admitDate:addDays(bd, -ago), cells:blankCells(ALL_COLS)};
+    Object.entries(set).forEach(([k, v]) => { p.cells[k] = Array.isArray(v) ? {s:v[0], t:v[1]} : (typeof v === 'object' ? Object.assign({s:'', t:''}, v) : {s:v, t:''}); }); return p; };
+  return normalize({version:1, boardDate:bd, patients:[
+      mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:'C', avatar:'C', labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'Heparin'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
+      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {vitals:'C', io:['R', 'Net −1.2 L, goal −2'], avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'Heparin'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
+      mk('CCU-3', 'Intern A', 'Complete heart block → PPM today', 'Existing', 1, {vitals:'C', io:'C', avatar:['A', 'Temp wire in R IJ'], labrev:'C', note:['', 'Progress'], diet:['', 'NPO after midnight'], dvt:['', 'HELD'], proc:['', 'PPM placement'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
+      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {vitals:['R', 'MAP 62–65'], io:'C', avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'Heparin'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
+      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {vitals:'C', io:'C', avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'Heparin'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
+      mk('CCU-6', 'Intern B', 'Severe AS, pre-TAVR workup', 'Existing', 5, {hc:Y, vitals:'C', io:'C', avatar:'C', labrev:'C', vst:Y, note:['', 'Progress'], attest:Y, bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'LMWH'], pt:['', addDays(bd, -2)], ot:['', addDays(bd, -2)], proc:['', 'CTA TAVR protocol'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
+    ], admits:[], archive:[], history:[],
+    settings:{team:'', interns:['Intern A', 'Intern B'], internCaps:{'Intern A':5, 'Intern B':5}, tsHours:72, bmDays:3, ptotDays:2, shiftType:r.id}});
+}
+function demoFor(k){ const r = ROTS[k]; if(!r) return sandboxDemoFor(k); if(r.practice) return practiceDemo(r);
   const A = activeType; let b = null; try{ activeType = r.tpl; b = sandboxDemoFor(r.tpl); }finally{ activeType = A; }
   if(b){ const w = rotWorkDate(r), fd = rotWorkdays(r)[0] || w; b.boardDate = w < fd ? fd : w > r.end ? (rotWorkdays(r).pop() || w) : w; b.settings.shiftType = k; b = normalize(b); }
   return b; }
@@ -1998,6 +2026,7 @@ function mutate(fn, {render=true, label=null, cat='system'} = {}){
   if(tabLocked){ toast('This tab is paused — the board is open in another tab'); return; }
   let nk = null; try{ nk = navFocusKey(); }catch(e){}
   pushUndo(); redoStack.length = 0; const before = undoStack[undoStack.length-1];
+  if(SANDBOX){ try{ localStorage.removeItem(PRACTICE_PRISTINE); }catch(e){} }
   fn();
   let prev = null; try{ prev = JSON.parse(before); }catch(e){}
   if(prev) syncLinked(prev);
@@ -5441,7 +5470,8 @@ async function dfLink(h, viaUser){
     const localAt = localStorage.getItem(LOCAL_SAVED_KEY) || '', fileAt = pkg.savedAt || '';
     let use = 'file';
     const sameData = (() => { try{ return JSON.stringify(collectAll().boards) === JSON.stringify(pkg.boards || {}); }catch(e){ return false; } })();
-    if(localHasData() && !sameData){
+    const pristine = SANDBOX && (() => { try{ return localStorage.getItem(PRACTICE_PRISTINE) === '1'; }catch(e){ return false; } })();
+    if(localHasData() && !sameData && !pristine){
       const fmt = iso => iso ? new Date(iso).toLocaleString() : 'unknown', newer = (x, y) => x && (!y || new Date(x) > new Date(y));
       use = await askChoice(`<h3>Which copy should the board use?</h3>
         <p>The data file and this browser both have a board, saved at different times.</p>
@@ -5451,7 +5481,8 @@ async function dfLink(h, viaUser){
         [['Use this browser’s copy', '', 'local'], ['Use the data file', 'primary', 'file']]);
       if(!use){ DF.handle = null; DF.name = ''; DF.status = 'off'; renderBackupInd(); renderDfBanner(); return false; }
     }
-    if(use === 'file'){ if(localHasData()) await autoBackup('before loading file', true); applyAll(pkg); whatsNewForFile(pkg); takeArrived(pkg); setTimeout(() => autoCheck('data file opened'), 1500); DF.status = 'ok'; DF.savedAt = fileAt; logAdd([{cat:'system', msg:`Loaded the board from data file ${h.name}`}]); toast(`Loaded from ${h.name} — changes now save to it`); }
+    if(SANDBOX){ try{ localStorage.removeItem(PRACTICE_PRISTINE); }catch(e){} }
+    if(use === 'file'){ if(localHasData() && !pristine) await autoBackup('before loading file', true); applyAll(pkg); whatsNewForFile(pkg); takeArrived(pkg); setTimeout(() => autoCheck('data file opened'), 1500); DF.status = 'ok'; DF.savedAt = fileAt; logAdd([{cat:'system', msg:`Loaded the board from data file ${h.name}`}]); toast(`Loaded from ${h.name} — changes now save to it`); }
     else { DF.status = 'ok'; await dfWrite(); toast(`Kept this browser's board — saved it to ${h.name}`); }
     renderBackupInd(); renderDfBanner(); return true;
   }catch(e){ DF.status = 'error'; DF.err = (e && (e.message || e.name)) || String(e); renderBackupInd(); renderDfBanner(); return false; }
@@ -6988,6 +7019,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:202, d:'2026-11-18', items:['Sandbox only: the Sandbox is now a single <b>Practice CCU</b> rotation (Nov 18 – Dec 1, Long days with days off, then nights from Nov 27) with 6 fictional patients — for rehearsing the data-file routine before the real block. It replaces the Sandbox’s earlier test data.']},
   {v:201, d:'2026-11-18', items:['<b>📂 Open my data file…</b> right on the launch screen. On a computer that starts fresh every time (like a remote desktop), open your data file straight away. It brings your rotations, boards and settings with it, so there’s no setup file to load again, and changes save back to it as you work.']},
   {v:200, d:'2026-11-18', items:['Fixed a false alarm: “Self-check found a problem: Saved copy differs from what is on screen” could appear after opening your data file or starting a new day. Nothing was wrong — the browser’s copy was just a step behind — and Plexus now quietly re-saves it instead of warning.']},
   {v:199, d:'2026-11-18', items:['<b>Tab icon</b> — Plexus now has its own icon in the browser tab and bookmarks: a white P on dark grey, matching the home-screen icon. The Sandbox’s has a small orange dot so you can tell the tabs apart.']},
