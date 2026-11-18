@@ -1428,7 +1428,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '200';
+const APP_VERSION = '201';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -5463,8 +5463,14 @@ async function dfCreate(){
   catch(e){ if(e && e.name !== 'AbortError') toast(`Couldn't create the file: ${e.message || e.name}`); }
 }
 async function dfOpen(){
-  try{ const [h] = await window.showOpenFilePicker({types:DF_TYPES, multiple:false}); await dfLink(h, true); }
-  catch(e){ if(e && e.name !== 'AbortError') toast(`Couldn't open the file: ${e.message || e.name}`); }
+  try{ const [h] = await window.showOpenFilePicker({types:DF_TYPES, multiple:false}); return await dfLink(h, true); }
+  catch(e){ if(e && e.name !== 'AbortError') toast(`Couldn't open the file: ${e.message || e.name}`); return false; }
+}
+// From the launch screen (e.g. a fresh remote desktop): open the data file, then show its boards with the last-used one picked
+async function launchOpenFile(opts){
+  if(dfSupported()){ const ok = await dfOpen(); if(ok && launching) showLaunch(opts); return; }
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';   // no live file saving in this browser: load a copy
+  inp.onchange = () => { const f = inp.files[0]; if(f) f.text().then(async tx => { await restoreFile(tx, f.name); if(launching) showLaunch(opts); }).catch(() => toast('Couldn’t read that file')); }; inp.click();
 }
 async function dfReconnect(){ if(DF.handle) await dfLink(DF.handle, true); if(BKF.handle && BKF.status === 'needs') bkfReconnect(true); }
 async function dfStop(){ await idbSet(null); const n = DF.name; DF.handle = null; DF.name = ''; DF.status = 'off'; renderBackupInd(); renderDfBanner(); toast(`Stopped saving to ${n || 'the data file'} — the board keeps saving in this browser`); }
@@ -6704,9 +6710,9 @@ function showLaunch(opts = {}){
       const nowR = R.filter(r => r.start <= today && r.end >= today), up = R.filter(r => r.start > today), past = R.filter(r => r.end < today).reverse();
       const Pnow = P.filter(r => r.end >= addDays(today, -1)), Ppast = P.filter(r => r.end < addDays(today, -1)).reverse(), L = legacyWithData().map(t => t.k);
       body = `${panel('Now', nowR.map(r => r.id))}${panel('Singular shifts', Pnow.map(r => r.id))}${panel('Coming up', up.map(r => r.id))}${panel('Earlier', [...past, ...Ppast].map(r => r.id))}
-        ${!R.length && !P.length ? '<section class="lpanel lempty">No rotations yet — <b>Load a setup file…</b> made from your Amion schedule, or <b>＋ New rotation</b> sets one up from a template. For a single one-off shift, use <b>＋ Singular shift</b>.</section>' : ''}
+        ${!R.length && !P.length ? '<section class="lpanel lempty"><b>Nothing on this computer yet.</b><br>Already have a data file (e.g. from OneDrive)? <b>📂 Open my data file…</b> — it brings your rotations and boards with it, so there’s no setup file to load.<br><span class="muted">Starting from scratch? <b>Load a setup file…</b> made from your Amion schedule, or <b>＋ New rotation</b>. For a single one-off shift, <b>＋ Singular shift</b>.</span></section>' : ''}
         ${panel('Older boards', L, '<span class="lph">from before rotations · shown until they’re empty</span>')}
-        <div class="lact"><button type="button" class="btn" data-lnew>＋ New rotation</button><button type="button" class="btn" data-lprn>＋ Singular shift</button><button type="button" class="btn" data-lfile>Load a setup file…</button></div>`;
+        <div class="lact"><button type="button" class="btn ${R.length || P.length ? '' : 'primary'}" data-ldf title="Pick up where you left off: your data file brings your rotations, boards and settings with it, and saves back to it as you work">📂 Open my data file…</button><span class="sp"></span><button type="button" class="btn" data-lnew>＋ New rotation</button><button type="button" class="btn" data-lprn>＋ Singular shift</button><button type="button" class="btn" data-lfile>Load a setup file…</button></div>`;
     }
     el.innerHTML = `<div class="lbox">
       <div class="lhero">
@@ -6730,6 +6736,7 @@ function showLaunch(opts = {}){
     if(e.target.closest('[data-lnew]')){ showRotSetup({launchOpts:opts}); return; }
     if(e.target.closest('[data-lprn]')){ showPrnSetup(opts); return; }
     if(e.target.closest('[data-lfile]')){ rotFilePick(); return; }
+    if(e.target.closest('[data-ldf]')){ launchOpenFile(opts); return; }
     if(e.target.closest('[data-lgo]')){ go(); return; }
     if(e.target.closest('[data-lback]')){ sel = activeType; go(); }
   };
@@ -6963,6 +6970,7 @@ function rotFilePick(){
 }
 async function rotImport(txt, fname){
   let pkg; try{ pkg = JSON.parse(txt); }catch(e){ toast('That isn’t a rotation setup file'); return; }
+  if(pkg && pkg.kind === 'wardsMatrixData'){ toast('That’s your data file, not a setup file — use 📂 Open my data file… so your changes save back to it'); return; }
   const list = pkg && pkg.kind === 'plexusRotations' && Array.isArray(pkg.rotations) ? pkg.rotations : null;
   if(!list || !list.length){ toast('That isn’t a rotation setup file'); return; }
   const fresh = list.filter(r => r && r.id && r.name && !ROTS[r.id]), dup = list.length - fresh.length;
@@ -6980,6 +6988,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:201, d:'2026-11-18', items:['<b>📂 Open my data file…</b> right on the launch screen. On a computer that starts fresh every time (like a remote desktop), open your data file straight away. It brings your rotations, boards and settings with it, so there’s no setup file to load again, and changes save back to it as you work.']},
   {v:200, d:'2026-11-18', items:['Fixed a false alarm: “Self-check found a problem: Saved copy differs from what is on screen” could appear after opening your data file or starting a new day. Nothing was wrong — the browser’s copy was just a step behind — and Plexus now quietly re-saves it instead of warning.']},
   {v:199, d:'2026-11-18', items:['<b>Tab icon</b> — Plexus now has its own icon in the browser tab and bookmarks: a white P on dark grey, matching the home-screen icon. The Sandbox’s has a small orange dot so you can tell the tabs apart.']},
   {v:198, d:'2026-11-18', items:['<b>Pre-charted ✓</b> — a tick next to each patient’s bed on the Census. The Overview shows “Pre-charted 9/12” (today’s new admissions aren’t counted), the Census has a <b>Not pre-charted</b> filter, and the command bar takes <code>pc 7W05</code>. The ticks clear by themselves when the next day starts.', '<b>Boards without a schedule are gone</b> — every board is now a rotation or a Singular shift. Older boards that still hold patients stay on the launch screen under <b>Older boards</b> until they’re empty.', 'Pre-charting a shift that hasn’t started yet: a task time like 05:00 now lands in that shift (tomorrow morning) instead of this morning.', 'Removed some unused code.']},
