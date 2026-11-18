@@ -1135,6 +1135,7 @@ body.touch .daystrip .sd{min-width:50px;padding:6px 4px}
 .lgrid.one{grid-template-columns:1fr}
 .rcard .rdots{display:flex;gap:2px;margin-top:8px;flex-wrap:wrap}.rcard .rdots i{width:9px;height:14px;border-radius:2px;background:var(--line)}
 .rdots i.b-day{background:#f4a62a}.rdots i.b-night,.rdots i.b-admit{background:#5b6bd6}.rdots i.b-24h{background:#d93025}.rdots i.now{outline:2px solid var(--ink);outline-offset:1px}
+.lprn{font-style:normal;font:800 9.5px -apple-system,sans-serif;letter-spacing:.08em;background:#7e57c2;color:#fff;border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:2px}
 .lempty{background:var(--panel);border:1.5px dashed var(--line2);border-radius:12px;padding:18px;color:var(--muted)}
 .lact{margin-top:16px;gap:8px;flex-wrap:wrap}.btn.link{border:0;background:none;color:var(--accent)}
 .lbox.wide{width:min(1100px,100%)}
@@ -1360,7 +1361,7 @@ body.touch .shiftlbl{font-size:17px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '190';
+const APP_VERSION = '191';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1373,24 +1374,24 @@ const SHIFT_TYPES = [
   ['bv-wards-day',       'bellevue', 'Bellevue Wards (Day)',      'day'],
   ['bv-night-intern',    'bellevue', 'Bellevue Night Intern',     'night'],
   ['night-adm-bellevue', 'bellevue', 'Bellevue Night Admitting',  'admit', {holds:true}],
-  ['bv-icu-24',          'bellevue', 'Bellevue ICU (24 Hr)',      '24h'],
-  ['bv-icu-day',         'bellevue', 'Bellevue ICU (Day)',        'day'],
-  ['bv-ccu-day',         'bellevue', 'Bellevue CCU (Day)',        'day'],
-  ['bv-ccu-night',       'bellevue', 'Bellevue CCU (Night)',      'night'],
+  ['bv-icu-24',          'bellevue', 'Bellevue ICU (24 Hr)',      '24h', {nocap:true}],
+  ['bv-icu-day',         'bellevue', 'Bellevue ICU (Day)',        'day', {nocap:true}],
+  ['bv-ccu-day',         'bellevue', 'Bellevue CCU (Day)',        'day', {nocap:true}],
+  ['bv-ccu-night',       'bellevue', 'Bellevue CCU (Night)',      'night', {nocap:true}],
   ['day-wards',          'tisch',    'Tisch Wards (Day)',         'day'],
   ['night-med-tisch',    'tisch',    'Tisch Wards (Night)',       'night'],
-  ['day-icu',            'tisch',    'Tisch ICU (Day)',           'day'],
-  ['ti-icu-night',       'tisch',    'Tisch ICU (Night)',         'night'],
-  ['kp-cards-day',       'tisch',    'KP Cardiology (Day)',       'day'],
-  ['kp-cards-night',     'tisch',    'KP Cardiology (Night)',     'night'],
+  ['day-icu',            'tisch',    'Tisch ICU (Day)',           'day', {nocap:true}],
+  ['ti-icu-night',       'tisch',    'Tisch ICU (Night)',         'night', {nocap:true}],
+  ['kp-cards-day',       'tisch',    'KP Cardiology (Day)',       'day', {capVaries:true}],
+  ['kp-cards-night',     'tisch',    'KP Cardiology (Night)',     'night', {capVaries:true}],
   ['kp-heme-day',        'tisch',    'KP Hematology (Day)',       'day'],
   ['kp-heme-night',      'tisch',    'KP Hematology (Night)',     'night'],
-  ['va-wards-day',       'va',       'VA Wards (Day)',            'day'],
-  ['va-night-intern',    'va',       'VA Night Intern',           'night'],
-  ['va-night-adm',       'va',       'VA Night Admitting',        'admit'],
-  ['va-icu-day',         'va',       'VA ICU (Day)',              'day'],
-  ['va-icu-night',       'va',       'VA ICU (Night)',            'night'],
-  ['va-icu-24',          'va',       'VA ICU (24 Hr)',            '24h'],
+  ['va-wards-day',       'va',       'VA Wards (Day)',            'day', {nocap:true}],
+  ['va-night-intern',    'va',       'VA Night Intern',           'night', {nocap:true}],
+  ['va-night-adm',       'va',       'VA Night Admitting',        'admit', {nocap:true}],
+  ['va-icu-day',         'va',       'VA ICU (Day)',              'day', {nocap:true}],
+  ['va-icu-night',       'va',       'VA ICU (Night)',            'night', {nocap:true}],
+  ['va-icu-24',          'va',       'VA ICU (24 Hr)',            '24h', {nocap:true}],
   ].map(([k, site, label, kind, extra]) => Object.assign({k, site, label, short:label, kind,
     icon:kind === 'day' ? '☀' : kind === '24h' ? '⏱' : '☾', night:kind !== 'day', span24:kind === '24h',
     tab:'overview', work:kind === 'admit' ? 'admits' : kind === 'night' ? 'tasks' : 'census',
@@ -2518,11 +2519,24 @@ function workloadCard(){
     </div>`).join('')}
   </div>`;
 }
+/* Census cap: set in Settings — except services with no cap (CCU, MICU/ICUs, VA wards) and KP Cardiology, whose cap moves with the flex rooms (set per day) */
+function capInfo(){ const T = typeOf(activeType);
+  if(T.nocap) return {cap:0, mode:'nocap'};
+  if(T.capVaries){ const c = state.capToday && state.capToday.date === state.boardDate ? +state.capToday.n || 0 : 0; return {cap:c, mode:'varies'}; }
+  const c = +state.settings.cap || 0; return {cap:c, mode:c ? 'set' : 'none'}; }
+function setCapToday(){
+  const ci = capInfo();
+  modal(`<h3>Today’s cap — ${esc(fmtNoYear(state.boardDate))}</h3><p class="muted">KP Cardiology’s cap depends on how the flex rooms are being used, so it’s set for today only and clears when the next day starts.</p>
+    <label class="f">Max patients today</label><input type="number" id="ctN" min="0" value="${ci.cap || ''}" placeholder="e.g. 14" style="width:120px">`,
+    [['Cancel'], ['Clear', '', () => mutate(() => { delete state.capToday; }, {label:'Cleared today’s cap'})], ['Save', 'primary', () => { const v = Math.max(0, Math.round(+$('#ctN').value || 0));
+      mutate(() => { state.capToday = {date:state.boardDate, n:v}; }, {label:`Today’s cap set to ${v}`}); }]], m => setTimeout(() => m.querySelector('#ctN').focus(), 50));
+}
+document.addEventListener('click', e => { if(e.target.closest('[data-capset]')){ e.preventDefault(); setCapToday(); } });
 function renderSummary(){
-  const ps = state.patients, d = state.boardDate, cap = state.settings.cap;
+  const ps = state.patients, d = state.boardDate, ci = capInfo(), cap = ci.cap;
   const n = ps.length, full = cap && n >= cap;
   const flagged = ps.filter(p => flagsFor(p).some(f => f[0]==='warn' || f[0]==='bad')).length;
-  const capLine = !cap ? `<a href="#" data-go="settings">Set a team cap</a>` : n > cap ? `<b class="red">Over cap by ${n-cap}</b>` : n === cap ? `<b class="red">At cap</b>` : `${cap-n} spot${cap-n===1?'':'s'} left`;
+  const capLine = ci.mode === 'nocap' ? '<span class="muted">No census cap on this service</span>' : ci.mode === 'varies' && !cap ? '<a href="#" data-capset>Set today’s cap (flex rooms)</a>' : !cap ? `<a href="#" data-go="settings">Set a team cap</a>` : n > cap ? `<b class="red">Over cap by ${n-cap}</b>` : n === cap ? `<b class="red">At cap</b>` : `${cap-n} spot${cap-n===1?'':'s'} left`;
 
   const today = ps.filter(p => dcBucket(p) === 'today'), tom = ps.filter(p => dcBucket(p) === 'tomorrow');
   const signedToday = today.reduce((x,p) => x + dcSigned(p), 0), totToday = today.length * DC_KEYS.length;
@@ -3601,7 +3615,7 @@ function newDay(target){
           if(hasOpts(nc.type) && nc.opts.length) p.cells.note.t = ((p.status === 'Discharge' && optOf(nc,'Discharge')) || optOf(nc,'Progress') || nc.opts[0]).label;
         });
         if(fresh){ state.patients = sameP ? sameP.map(p => Object.assign(p, {id:uid()})) : []; state.todos = []; }
-        state.boardDate = nd; state.settings.shift = typeOf(activeType).night ? 'night' : 'day';
+        state.boardDate = nd; state.settings.shift = typeOf(activeType).night ? 'night' : 'day'; delete state.capToday;
         delete state.shiftActive; delete state.shiftStartedAt; delete state.shiftEndedAt;
         state.todos = (state.todos || []).filter(t => !t.done && (!t.pid || state.patients.some(p => p.id === t.pid)));   // open to-dos carry over
         if(clearTasks) state.todos = state.todos.filter(t => t.pid && t.src !== 'tasks');
@@ -3692,7 +3706,7 @@ function settings(){
   modal(`<h3>Settings &amp; backup</h3>
     <div style="display:flex;gap:10px">
       <div style="flex:2"><label class="f">Team name</label><input type="text" id="sTeam" value="${esc(s.team)}"></div>
-      <div style="flex:1"><label class="f">Team cap (max patients)</label><input type="number" id="sCap" min="0" placeholder="e.g. 16" value="${s.cap || ''}"></div>
+      <div style="flex:1"><label class="f">Team cap (max patients)</label>${typeOf(activeType).nocap ? '<div class="muted small" style="padding:6px 0">No census cap on this service.</div><input type="hidden" id="sCap" value="0">' : typeOf(activeType).capVaries ? '<div class="muted small" style="padding:6px 0">Varies with the flex rooms — set it each day from the Overview or the Census panel.</div><input type="hidden" id="sCap" value="0">' : `<input type="number" id="sCap" min="0" placeholder="e.g. 16" value="${s.cap || ''}">`}</div>
       <div style="flex:1"><label class="f">Admission cap (per shift)</label><input type="number" id="sAdmitCap" min="0" placeholder="e.g. 5" value="${s.admitCap || ''}"></div>
     </div>
     <label class="f">Interns <span class="muted" style="font-weight:400">— cap = max patients for that intern (e.g. lower for a sub-intern); leave blank for no cap</span></label>
@@ -4116,7 +4130,7 @@ function modal(html, buttons, after){
   modalEl.addEventListener('mousedown', e => { if(e.target === modalEl) closeModal(); });
   modalEl.querySelector('.actions').addEventListener('click', e => {
     const b = e.target.closest('button'); if(!b) return; const fn = buttons[+b.dataset.i][2];
-    if(fn) fn(); closeModal();
+    if(fn && fn() === false) return; closeModal();
   });
   modalEl.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
   if(after) after(modalEl.querySelector('.modal'));
@@ -6220,7 +6234,7 @@ function admLane(a){
 function ovGoTab(t){ ui.tab = t; saveUI(); closePop(); renderChrome(); }
 function renderOverview(){
   const V = $('#view-overview'); if(!V || !state) return;
-  const ps = state.patients, cap = +state.settings.cap || 0, n = ps.length, d = state.boardDate, now = new Date();
+  const ps = state.patients, ci = capInfo(), cap = ci.cap, n = ps.length, d = state.boardDate, now = new Date();
   const T = typeOf(activeType), night = state.settings.shift === 'night';
   const nw = ps.filter(p => p.status === 'New').length;
   const spots = cap ? cap - n : null;
@@ -6292,7 +6306,9 @@ function renderOverview(){
   V.innerHTML = `<div class="hub">
     ${band(`
         ${kpi('census', 'Census', cap && n >= cap ? 'red' : cap && n >= cap - 2 ? 'amb' : '', `${n}${cap ? `<small>/${cap}</small>` : ''}`, `<b>${nw}</b> new · <b>${n - nw}</b> existing`, censusMini)}
-        ${kpi('census', 'Open spots', spots == null ? 'off' : spots <= 0 ? 'red' : spots <= 2 ? 'amb' : '', spots == null ? '—' : spots < 0 ? `<span style="color:#ff8a80">${spots}</span>` : spots, spots == null ? 'No team cap set' : next ? `Next up: <b>${esc(next.name)}</b>` : spots <= 0 ? '<span class="r">At cap</span>' : 'Under cap', spotMini)}
+        ${ci.mode === 'nocap' ? kpi('census', 'Census cap', 'off', 'None', next ? `No cap on this service · next up: <b>${esc(next.name)}</b>` : 'No cap on this service')
+          : ci.mode === 'varies' && !cap ? `<div class="kpi" data-capset><div class="kl"><i class="dot amb"></i>Today’s cap</div><div class="kv">?</div><div class="ks">Flex rooms — <b>tap to set today’s</b></div></div>`
+          : kpi('census', ci.mode === 'varies' ? 'Open spots (today)' : 'Open spots', spots == null ? 'off' : spots <= 0 ? 'red' : spots <= 2 ? 'amb' : '', spots == null ? '—' : spots < 0 ? `<span style="color:#ff8a80">${spots}</span>` : spots, spots == null ? 'No team cap set' : next ? `Next up: <b>${esc(next.name)}</b>${ci.mode === 'varies' ? ` · cap ${cap} <a href="#" data-capset style="color:#9fb0c8">✎</a>` : ''}` : spots <= 0 ? '<span class="r">At cap</span>' : 'Under cap', spotMini)}
         ${kpi('admits', 'Admits in progress', admDot, `${inProg}<small>/${adm.length}</small>`, `<b>${lanes.wait.length}</b> not seen${longest ? ` · longest <span class="${longest > 2*3600e3 ? 'r' : longest > 3600e3 ? 'a' : ''}">${asgHM(longest)}</span>` : ''}${holds.length ? ` · <b>${holds.length}</b> hold${holds.length === 1 ? '' : 's'}` : ''}`)}
         ${kpi('discharges', 'Discharges', dcT.length ? (dcReady === dcT.length ? '' : 'amb') : 'off', `${dcT.length}`, `<b>${dcReady}</b> ready · <b>${dcT.length - dcReady}</b> in progress · <b>${dcTm.length}</b> tmrw${xf.length ? ` · <b>${xf.length}</b> xfer` : ''}`)}
         ${kpi(T.tasks ? 'tasks' : 'census', 'Open tasks', over.length ? 'red' : in1h.length ? 'amb' : '', `${open.length}`, `${over.length ? `<span class="r">${over.length} overdue</span>` : '<b>0</b> overdue'} · <b>${in1h.length}</b> due in 1 h`)}
@@ -6589,24 +6605,26 @@ function showLaunch(opts = {}){
   const rotCard = r => { const i = boardInfo(r.id), w = rotWorkDate(r), k = rotDay(r, w), nx = (() => { for(let d = addDays(w, 1), n = 0; n < 120; d = addDays(d, 1), n++) if(rotDay(r, d)) return d; return ''; })();
     const when = r.start > today ? `Starts ${fmtNoYear(r.start)}` : r.end < today ? `Ended ${fmtNoYear(r.end)}` : k ? `Today: ${kindChip(k)}` : `Today: Off${nx ? ` · next ${fmtNoYear(nx)} · ${dayKindTxt(r.id, nx)}` : ''}`;
     const dots = []; for(let d = r.start, n = 0; d <= r.end && n < 60; d = addDays(d, 1), n++){ const x = rotDay(r, d); dots.push(`<i class="${x ? 'b-' + x.base : 'off'} ${d === w && r.start <= today && r.end >= today ? 'now' : ''}"></i>`); }
-    return `<button type="button" class="lcard rcard ${r.id === sel ? 'on' : ''} ${i.cls}" data-lk="${r.id}"><span class="lic">${esc(r.icon || '🗓')}</span><span class="lt"><b>${esc(r.name)}</b>${r.id === activeType ? '<i class="llast">LAST USED</i>' : ''}<br>
-      <span class="lk">${esc(fmtNoYear(r.start))} – ${esc(fmtNoYear(r.end))} · ${rotWorkdays(r).length} workday${rotWorkdays(r).length === 1 ? '' : 's'}</span>
-      <span class="ls">${when}</span><span class="rdots">${dots.join('')}</span>${i.cls !== 's-empty' ? `<span class="ls"><i class="lsdot ${i.cls}"></i>${esc(i.txt.replace(/^Shift in progress · |^Last used |^Shift ended · /, ''))}</span>` : ''}</span></button>`; };
+    return `<button type="button" class="lcard rcard ${r.id === sel ? 'on' : ''} ${i.cls}" data-lk="${r.id}"><span class="lic">${esc(r.icon || '🗓')}</span><span class="lt"><b>${esc(r.name)}</b>${r.prn ? '<i class="lprn">PRN</i>' : ''}${r.id === activeType ? '<i class="llast">LAST USED</i>' : ''}<br>
+      <span class="lk">${r.prn ? `${esc(r.kinds.shift.start)}–${esc(r.kinds.shift.end)}${r.note ? ' · ' + esc(r.note) : ''}` : `${esc(fmtNoYear(r.start))} – ${esc(fmtNoYear(r.end))} · ${rotWorkdays(r).length} workday${rotWorkdays(r).length === 1 ? '' : 's'}`}</span>
+      <span class="ls">${when}</span>${r.prn ? '' : `<span class="rdots">${dots.join('')}</span>`}${i.cls !== 's-empty' ? `<span class="ls"><i class="lsdot ${i.cls}"></i>${esc(i.txt.replace(/^Shift in progress · |^Last used |^Shift ended · /, ''))}</span>` : ''}</span></button>`; };
   const typeCard = t => { const i = boardInfo(t.k);
     return `<button type="button" class="lcard ${t.k === sel ? 'on' : ''} ${i.cls}" data-lk="${t.k}"><span class="lic">${t.icon}</span><span class="lt"><b>${esc(t.label)}</b>${t.k === activeType ? '<i class="llast">LAST USED</i>' : ''}<br><span class="lk">${typeKindTxt(t)}</span><span class="ls"><i class="lsdot ${i.cls}"></i>${esc(i.txt)}</span></span></button>`; };
   const draw = () => {
     const name = knownBoard(sel) ? typeOf(sel).label : '', cont = sel === activeType;
     let body = '';
     if(view === 'rot'){
-      const R = rotsSorted(), nowR = R.filter(r => r.start <= today && r.end >= today), up = R.filter(r => r.start > today), past = R.filter(r => r.end < today).reverse(), L = legacyWithData();
+      const R = rotsSorted().filter(r => !r.prn), P = rotsSorted().filter(r => r.prn), nowR = R.filter(r => r.start <= today && r.end >= today), up = R.filter(r => r.start > today), past = R.filter(r => r.end < today).reverse(), L = legacyWithData();
+      const Pnow = P.filter(r => r.end >= addDays(today, -1)), Ppast = P.filter(r => r.end < addDays(today, -1)).reverse();
       body = `<h2>${opts.switching ? 'Switch to another board' : 'Your rotations'}</h2>
         <p class="muted lsub">Each rotation keeps its own census, admissions, tasks and history for the whole block.</p>
         ${nowR.length ? `<div class="lsec">Now</div><div class="lgrid one">${nowR.map(rotCard).join('')}</div>` : ''}
         ${up.length ? `<div class="lsec">Coming up</div><div class="lgrid">${up.map(rotCard).join('')}</div>` : ''}
-        ${past.length ? `<div class="lsec">Earlier</div><div class="lgrid">${past.map(rotCard).join('')}</div>` : ''}
+        ${Pnow.length ? `<div class="lsec">One-off shifts (PRN)</div><div class="lgrid">${Pnow.map(rotCard).join('')}</div>` : ''}
+        ${past.length || Ppast.length ? `<div class="lsec">Earlier</div><div class="lgrid">${[...past, ...Ppast].map(rotCard).join('')}</div>` : ''}
         ${!R.length ? `<div class="lempty">No rotations yet. <b>+ New rotation</b> sets one up from a template, or load a setup file made from your Amion schedule.</div>` : ''}
         ${L.length ? `<div class="lsec">Boards without a schedule</div><div class="lgrid">${L.map(typeCard).join('')}</div>` : ''}
-        <div class="row lact"><button type="button" class="btn" data-lnew>＋ New rotation…</button><button type="button" class="btn" data-lfile>📄 Load a setup file…</button><button type="button" class="btn link" data-lview="types">Open a board without a schedule…</button></div>`;
+        <div class="row lact"><button type="button" class="btn" data-lnew>＋ New rotation…</button><button type="button" class="btn" data-lprn>🔁 One-off shift (PRN)…</button><button type="button" class="btn" data-lfile>📄 Load a setup file…</button><button type="button" class="btn link" data-lview="types">Open a board without a schedule…</button></div>`;
     } else {
       body = `<h2>Boards without a schedule</h2><p class="muted lsub">One board per shift type, as before rotations — no calendar, the day just rolls over.</p>
         <div class="lsites" role="tablist">${SITES.map(x => `<button type="button" role="tab" data-lsite="${x.k}" class="${x.k === site ? 'on' : ''}">${esc(x.label)}</button>`).join('')}</div>
@@ -6631,6 +6649,7 @@ function showLaunch(opts = {}){
     const s = e.target.closest('[data-lsite]'); if(s){ site = s.dataset.lsite; draw(); return; }
     const c = e.target.closest('[data-lk]'); if(c){ sel = c.dataset.lk; draw(); if(e.detail === 2) go(); return; }
     if(e.target.closest('[data-lnew]')){ showRotSetup({launchOpts:opts}); return; }
+    if(e.target.closest('[data-lprn]')){ showPrnSetup(opts); return; }
     if(e.target.closest('[data-lfile]')){ rotFilePick(); return; }
     if(e.target.closest('[data-lgo]')){ go(); return; }
     if(e.target.closest('[data-lback]')){ sel = activeType; go(); }
@@ -6708,7 +6727,7 @@ function wrapUp(){
 // the day strip: the whole block at a glance; tap a date to change it
 function renderDayStrip(){
   const el = $('#dayStrip'); if(!el) return; const r = ROTS[activeType];
-  if(!r || !r.start || !r.end){ el.hidden = true; document.body.classList.remove('has-strip'); return; }
+  if(!r || !r.start || !r.end || (r.prn && r.start === r.end)){ el.hidden = true; document.body.classList.remove('has-strip'); return; }
   el.hidden = false; document.body.classList.add('has-strip');
   const w = rotWorkDate(r), b = state.boardDate, out = [];
   for(let d = r.start, i = 0; d <= r.end && i < 120; d = addDays(d, 1), i++){
@@ -6758,6 +6777,32 @@ function rolloverPrompt(){
   modal(`<h3>Start ${esc(fmtNoYear(ns.date))}?</h3><p>${r ? `<b>${esc(r.name)}</b> · ${kindChip(k)}` : `<b>${esc(typeOf(activeType).label)}</b>`}</p>
     <p class="muted">The board is still on ${esc(fmtNoYear(state.boardDate))}. Starting the day clears the daily columns, turns New → Existing and saves ${esc(fmtNoYear(state.boardDate))} to History.</p>`,
     [['Not now'], ['Start today', 'primary', () => setTimeout(() => newDay(ns.date), 0)]]);
+}
+
+/* ---------- 🔁 PRN: a one-off shift (covering for a co-resident, a swap) — its own little board for that date ---------- */
+const TYPE_HOURS = {'bv-wards-day':['07:00', '19:00'], 'bv-icu-day':['07:00', '19:00'], 'bv-icu-24':['07:00', '10:00'], 'bv-ccu-day':['07:00', '19:30'], 'bv-ccu-night':['19:30', '10:00'],
+  'night-adm-bellevue':['18:00', '08:00'], 'day-wards':['07:00', '19:30'], 'night-med-tisch':['19:30', '09:30'], 'va-wards-day':['07:00', '19:30']};
+const typeBase = t => t.kind === 'admit' ? 'admit' : t.kind === '24h' ? '24h' : t.kind === 'day' ? 'day' : 'night';
+const typeHours = k => TYPE_HOURS[k] || LEGACY_HOURS[typeBase(typeOf(k))];
+function showPrnSetup(launchOpts){
+  const def = typeOf(isRot(activeType) ? ROTS[activeType].tpl : activeType).k, tm = addDays(todayISO(), 1);
+  modal(`<h3>🔁 One-off shift (PRN)</h3><p class="muted">Covering a shift for someone, or a swap — it gets its own board for that date, separate from your rotations.</p>
+    <label class="f">Shift</label><select id="prT" style="width:100%">${SITES.map(x => `<optgroup label="${esc(x.label)}">${SHIFT_TYPES.filter(t => t.site === x.k).map(t => `<option value="${t.k}" ${t.k === def ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</optgroup>`).join('')}</select>
+    <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap"><label>Date <input type="date" id="prD" value="${tm}"></label><label>From <input id="prS" class="hhmm" size="5"></label><label>to <input id="prE" class="hhmm" size="5"></label></div>
+    <label class="f">Covering for <span class="muted" style="font-weight:400">(optional — e.g. “Sam, swap for Jan 9”)</span></label><input id="prN" maxlength="60" style="width:100%">`,
+    [['Cancel'], ['Create', 'primary', () => {
+      const k = $('#prT').value, t = typeOf(k), d = $('#prD').value || tm, st = ($('#prS').value || '').trim(), en = ($('#prE').value || '').trim(), note = $('#prN').value.trim();
+      if(!/^\d\d:\d\d$/.test(st) || !/^\d\d:\d\d$/.test(en)){ toast('Hours as HH:MM, e.g. 18:00'); return false; }
+      const id = 'p-' + uid();
+      ROTS[id] = {id, prn:true, tplKey:'prn', name:`${t.label} · ${fmtNoYear(d)}`, note, site:t.site, tpl:k, icon:'🔁', roles:[], start:d, end:d,
+        kinds:{shift:{label:'PRN', base:typeBase(t), start:st, end:en}}, days:{[d]:{k:'shift'}}, createdAt:new Date().toISOString()};
+      rotSave(); dfQueue();
+      const el = $('#launch'); if(el && !el.hidden){ el.hidden = true; launching = false; document.body.classList.remove('launching'); launchKeys = null; }
+      switchBoard(id); logAdd([{cat:'shift', msg:`Created a one-off shift: ${t.label}, ${fmtNoYear(d)} ${st}–${en}${note ? ' — ' + note : ''}`}]);
+      while(launchQ.length){ try{ launchQ.shift()(); }catch(err){ console.error(err); } }
+      toast(`One-off board: ${t.label} · ${fmtNoYear(d)}`);
+    }]], m => { const sync = () => { const h = typeHours(m.querySelector('#prT').value); m.querySelector('#prS').value = h[0]; m.querySelector('#prE').value = h[1]; };
+      sync(); m.querySelector('#prT').addEventListener('change', sync); });
 }
 /* ---------- 🗓 New rotation / edit schedule ---------- */
 function rotNewId(){ return 'r-' + uid(); }
@@ -6855,6 +6900,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:191, d:'2026-11-17', items:['<b>One-off shifts (PRN)</b> — covering for a co-resident or a swap: on the launch screen, <b>🔁 One-off shift</b> picks the shift type, date and hours (filled in for you) and makes a separate board just for that shift.', '<b>Census caps that match the service</b>: no cap on Bellevue CCU and MICU, Tisch ICU, and VA wards and ICU — the Overview says so instead of asking you to set one. KP Cardiology’s cap moves with the flex rooms, so you set <b>today’s cap</b> from the Overview and it clears at the next day.']},
   {v:190, d:'2026-11-17', items:['<b>Rotations</b> — a board is now a whole block (e.g. Bellevue CCU · Nov 18 – Dec 1). Every date is Off or a shift kind with its own hours (Long, Short, NF, 27-hour…), optionally with a role (Night Captain, Float, Tisch ID, Tisch Pulm). A <b>day strip</b> under the header shows the block; tap a date to change it.', '<b>No more starting or ending shifts.</b> Chart any time — at work, at home, before or after. The day rolls over instead: <b>Start today</b> (offered the first time you open on a new workday) or <b>Start pre-charting for tomorrow</b> the evening before. Each rollover clears the daily columns and saves the day to History. <b>Wrap up</b> replaces End Shift: sign-out, print, backup — nothing locks.', 'Night and jeopardy blocks start each workday with fresh lists, with <b>“Start from your last Tisch ID list”</b> when you cover the same team again. Night Captain and Float nights are admissions only.', '<b>New rotation</b> from a template (CCU, MICU, Tisch days/nights, VA, Bellevue wards, night admitting, jeopardy), or <b>load a setup file</b> — Claude can make one from an Amion screenshot. The launch screen lists your rotations: now, coming up, earlier.']},
   {v:189, d:'2026-11-17', items:['<b>Launch screen</b> — every time Plexus opens, you choose the board first: site (Bellevue, Tisch / KP, VA), then the shift, with each board’s status (shift in progress, ended, empty). The last board is pre-selected, so it’s one tap on <b>Continue</b>.', 'The board’s context is now <b>fixed once it’s open</b>: the header shows it as a label instead of a menu, and New Shift no longer changes the shift type. To change boards on purpose: <b>Switch board…</b> (tap the label, More on iPad, or ⚙ Settings) — it warns you if a shift is in progress.']},
   {v:188, d:'2026-11-16', items:['<b>iPad &amp; touchscreens</b> — Plexus now switches to a touch layout on its own when opened on an iPad: a tab bar along the bottom, a ⌘ button for the command bar (with tap-to-start commands), bigger rows and buttons, and a More sheet for Transfers, History, End Shift, backups and Settings. Computers keep the desktop layout; Settings → Layout lets you choose.', 'On touch: <b>swipe a task right</b> to mark it done, <b>left</b> for +15 min; <b>long-press a bed</b> to change it; the Tasks entry form folds behind <b>+ New task</b>.', '<b>Back up to Files / Restore from Files</b> (More) — one file with every board, for iPad where Safari can’t save to a chosen file. A dot on More reminds you when there’s been no backup for 20 hours.', 'Plexus asks the iPad to keep its data, and suggests <b>Add to Home Screen</b> once — the Home Screen app keeps its data and opens full-screen.']},
