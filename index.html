@@ -1113,7 +1113,54 @@ body.touch #cmdIn{font-size:17px}
 body.touch .shiftsel{width:auto!important;max-width:none!important;field-sizing:content}
 body.touch:not(.cmd-open) .toast{bottom:calc(var(--tbarh) + env(safe-area-inset-bottom) + 14px)}
 @media (orientation:portrait){body.touch #view-census .side{display:none}body.touch #teamWrap{display:none}}
+
+/* ---------- Rotations ---------- */
+.daystrip{display:flex;align-items:center;gap:10px;padding:6px 14px;background:var(--panel);border-bottom:1px solid var(--line);overflow:hidden}
+.daystrip[hidden]{display:none}
+.sdname{font-weight:700;font-size:12.5px;white-space:nowrap;color:var(--muted)}
+.sdrow{display:flex;gap:3px;overflow-x:auto;flex:1;scrollbar-width:thin;padding:2px}
+.daystrip .sd{flex:none;min-width:42px;border:0;border-radius:6px;padding:3px 4px 4px;text-align:center;font:700 11px -apple-system,BlinkMacSystemFont,sans-serif;line-height:1.15;cursor:pointer;color:var(--muted);background:var(--head)}
+.daystrip .sd i{display:block;font-style:normal;font-size:9.5px;font-weight:600;opacity:.85;white-space:nowrap}
+.sd.b-day{background:#fff1d6;color:#8a5600}.sd.b-night,.sd.b-admit{background:#e7e9fd;color:#2f3aa8}.sd.b-24h{background:#fde4e4;color:#9b1c12}
+@media (prefers-color-scheme: dark){.sd.b-day{background:#3a2c12;color:#f7c96b}.sd.b-night,.sd.b-admit{background:#1f2448;color:#aab3ff}.sd.b-24h{background:#3d1b19;color:#f39a92}}
+.daystrip .sd.past{opacity:.5}.daystrip .sd.today{box-shadow:inset 0 -3px 0 #1e8e3e}.daystrip .sd.cur{outline:2px solid var(--accent);outline-offset:1px;opacity:1}
+body.touch .daystrip .sd{min-width:50px;padding:6px 4px}
+.shiftpill.k-day.on i{background:#f4a62a}.shiftpill.k-night.on i,.shiftpill.k-admit.on i{background:#5b6bd6}.shiftpill.k-24h.on i{background:#d93025}
+#newDayBtn.now{background:#1e8e3e;border-color:#1e8e3e}
+.ndbk[hidden]{display:none!important}
+.ndfresh{background:var(--info-bg);color:var(--info-ink);border-radius:8px;padding:8px 12px;margin:8px 0}
+.wubtns{display:flex;flex-direction:column;gap:8px;margin-top:10px}.wubtns .btn{text-align:left;padding:10px 14px}
+.dkinds{display:flex;flex-direction:column;gap:6px}
+.lsec{font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+.lgrid.one{grid-template-columns:1fr}
+.rcard .rdots{display:flex;gap:2px;margin-top:8px;flex-wrap:wrap}.rcard .rdots i{width:9px;height:14px;border-radius:2px;background:var(--line)}
+.rdots i.b-day{background:#f4a62a}.rdots i.b-night,.rdots i.b-admit{background:#5b6bd6}.rdots i.b-24h{background:#d93025}.rdots i.now{outline:2px solid var(--ink);outline-offset:1px}
+.lprn{font-style:normal;font:800 9.5px -apple-system,sans-serif;letter-spacing:.08em;background:#7e57c2;color:#fff;border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:2px}
+.lempty{background:var(--panel);border:1.5px dashed var(--line2);border-radius:12px;padding:18px;color:var(--muted)}
+.lact{margin-top:16px;gap:8px;flex-wrap:wrap}.btn.link{border:0;background:none;color:var(--accent)}
+.lbox.wide{width:min(1100px,100%)}
+.rsgrid{display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:22px;align-items:start}
+.rsgrid .f{display:block;font-weight:700;margin:12px 0 4px}.rsgrid input:not([type=date]):not(.hhmm),.rsgrid select{width:100%}
+.rsgrid input,.rsgrid select{border:1px solid var(--line2);border-radius:7px;padding:6px 8px;background:var(--panel)}
+.rsk{display:flex;align-items:center;gap:6px;margin:4px 0}.rsk .hhmm{width:64px;text-align:center}
+.kchip{display:inline-block;min-width:92px;border-radius:8px;padding:3px 8px;font-weight:700;font-size:12.5px}.kchip.b-day{background:#fff1d6;color:#8a5600}.kchip.b-night,.kchip.b-admit{background:#e7e9fd;color:#2f3aa8}.kchip.b-24h{background:#fde4e4;color:#9b1c12}
+.rscal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.rscal .dow{font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--muted);text-align:center}
+.rscal .cd{border:1.5px solid var(--line);border-radius:9px;background:var(--panel);min-height:64px;padding:5px 6px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;cursor:pointer;font:inherit;color:var(--ink);text-align:left}
+.rscal .cd .n{font-weight:700;font-size:12px}.rscal .cd .k{font-size:11.5px;font-weight:700;color:var(--muted)}
+.rscal .cd.out{opacity:.3;cursor:default}.rscal .cd.today{box-shadow:inset 0 -3px 0 #1e8e3e}
+.rscal .cd.b-day{background:#fff8e9;border-color:#f4c46a}.rscal .cd.b-day .k{color:#8a5600}
+.rscal .cd.b-night,.rscal .cd.b-admit{background:#f1f2fe;border-color:#a9b1f1}.rscal .cd.b-night .k,.rscal .cd.b-admit .k{color:#2f3aa8}
+.rscal .cd.b-24h{background:#fdf0f0;border-color:#f0a8a2}.rscal .cd.b-24h .k{color:#9b1c12}
+@media (prefers-color-scheme: dark){.rscal .cd.b-day{background:#2c2312}.rscal .cd.b-night,.rscal .cd.b-admit{background:#1b1f3a}.rscal .cd.b-24h{background:#2e1715}.kchip.b-day{background:#3a2c12;color:#f7c96b}.kchip.b-night,.kchip.b-admit{background:#1f2448;color:#aab3ff}}
+.cdrole{width:100%;font-size:11px;padding:1px 2px!important;margin-top:auto}.cdas{font-size:10.5px;color:var(--muted)}
+.rscount{margin-top:8px;font-size:12.5px}
+.rsl{margin:6px 0;padding-left:18px}
+@media (max-width:860px){.rsgrid{grid-template-columns:1fr}}
 /* ---------- Launch screen ---------- */
+body.launching .scrim{z-index:300}
+.hubnext{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:6px 0 -2px;font:600 12px -apple-system,sans-serif;color:#9fb0c8;position:relative;z-index:1}
+.hubnext .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}.hubnext .btn.primary{background:#1e8e3e;border-color:#1e8e3e}
 #launch{position:fixed;inset:0;z-index:250;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(28px,env(safe-area-inset-top)) 16px 28px}
 #launch[hidden]{display:none}
 body.launching .app,body.launching .tbar,body.launching .fab,body.launching .toast{visibility:hidden}
@@ -1150,6 +1197,60 @@ body.launching .app,body.launching .tbar,body.launching .fab,body.launching .toa
 .shiftlbl .sw{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line2);border-radius:6px;padding:1px 6px}
 .shiftlbl:hover .sw{color:var(--accent);border-color:var(--accent)}
 body.touch .shiftlbl{font-size:17px}
+/* ---------- Launch screen (v192: matches the Overview) ---------- */
+#launch .lbox:not(.wide){width:min(980px,100%)}
+.lhero{position:relative;overflow:hidden;background:linear-gradient(135deg,#0d121b 0%,#162031 60%,#1a2740 100%);color:#e7ecf4;border-radius:16px;padding:16px 22px 22px;box-shadow:0 8px 28px rgba(10,20,40,.18)}
+.lhero::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none}
+@media (prefers-color-scheme: dark){.lhero{background:linear-gradient(135deg,#0a0e15 0%,#111a28 60%,#142035 100%);border:1px solid #232c3a}}
+.lhtop{display:flex;align-items:center;gap:10px;position:relative;z-index:1}
+.lhtop .brandname{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);background:#0b0f16}
+.lhtop .lsbx{font:800 10.5px -apple-system,sans-serif;letter-spacing:.12em;background:#f57c00;color:#fff;border-radius:10px;padding:3px 9px}
+.lhtop .lclock{margin-left:auto;font:600 13px ui-monospace,"SF Mono",Menlo,monospace;color:#9fb0c8}.lhtop .lclock b{color:#fff;font-size:15px}
+.lhmain{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-top:22px;position:relative;z-index:1;flex-wrap:wrap}
+.lgreet{font:700 11.5px ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#7ee2a0}
+.lhname{font-size:28px;font-weight:700;letter-spacing:-.01em;margin-top:6px;color:#fff}
+.lhsub{color:#9fb0c8;font-size:13.5px;margin-top:3px}
+.lhst{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.lhpill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#e7ecf4}
+.lhpill::before{content:'';width:8px;height:8px;border-radius:50%;background:#8a96aa}
+.lhpill.live::before{background:#34d27b;box-shadow:0 0 0 3px rgba(52,210,123,.18)}.lhpill.soon::before{background:#60a5fa}.lhpill.off::before{background:#f5b83d}
+.lhc{font:600 12.5px ui-monospace,Menlo,monospace;color:#9fb0c8}
+.lhr{display:flex;gap:10px;align-items:center}
+.lhero .btn.lgo{background:#fff;color:#0d121b;border:0;font-size:16px;font-weight:700;padding:12px 26px;border-radius:10px;min-height:46px;margin:0}
+.lhero .btn.lgo:disabled{opacity:.4}
+.lhero .btn.ghost{background:transparent;color:#cfd8e6;border:1px solid rgba(255,255,255,.25)}
+.lpanel{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-top:14px;overflow:hidden}
+.lpanel header{display:flex;align-items:center;gap:8px;padding:11px 16px}
+.lpanel h4{margin:0;font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lpanel header .n{font:700 12.5px ui-monospace,Menlo,monospace;color:var(--ink);background:var(--head);border-radius:6px;padding:1px 7px}
+.lpanel header .lsites{margin:0 0 0 auto}
+.lpanel.lempty{padding:16px;color:var(--muted)}
+.lrow{display:grid;grid-template-columns:32px 26px minmax(0,1fr) auto auto 12px;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;padding:11px 16px;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.lrow:hover{background:var(--hover)}
+.lrow.on{background:color-mix(in srgb,var(--accent) 8%,var(--panel));box-shadow:inset 3px 0 0 var(--accent)}
+.lri{font-size:19px;text-align:center}
+.lblkw{display:flex;flex-direction:column;align-items:center;gap:2px}.lblkw i{font-style:normal;font:800 8px/1 -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.1em;color:#4a5262}
+@media (prefers-color-scheme: dark){.lblkw i{color:#8e97a8}}
+.lblk{width:30px;height:30px;border-radius:7px;background:#2b3240;color:#fff;display:flex;align-items:center;justify-content:center;font:700 13.5px ui-monospace,"SF Mono",Menlo,monospace}
+@media (prefers-color-scheme: dark){.lblk{background:#3a4252}}
+.lhname{display:flex;align-items:center;gap:12px}
+.lhblk{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;width:52px;height:52px;border-radius:11px;background:#2b3240;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);font:700 22px/1 ui-monospace,"SF Mono",Menlo,monospace;color:#fff}
+.lhblk i{font-style:normal;font:800 8.5px/1 -apple-system,sans-serif;letter-spacing:.14em;color:#9fb0c8;margin-bottom:3px}
+.lhsub b{color:#e7ecf4}
+.lrm{min-width:0;display:flex;flex-direction:column}
+.lrn{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrs{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.lrst{font-size:12.5px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap;background:var(--head);color:var(--muted)}
+.lrst.live{background:#e3f4e8;color:#156b2e}.lrst.soon{background:var(--info-bg);color:var(--info-ink)}.lrst.off{background:var(--warn-bg);color:var(--warn-ink)}
+@media (prefers-color-scheme: dark){.lrst.live{background:#16301f;color:#7ee2a0}}
+.lrc{font:600 12px ui-monospace,Menlo,monospace;color:var(--muted);white-space:nowrap}
+.lrx{color:var(--line2);font-size:18px}
+.ltag{font-style:normal;font:800 9.5px -apple-system,sans-serif;letter-spacing:.08em;color:#fff;border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:2px}
+.ltag.last{background:var(--accent)}.ltag.sg{background:#7e57c2}
+.lact{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}.lact .sp{flex:1}
+.lver{text-align:center;color:var(--muted);font-size:12px;margin-top:20px}
+@media (max-width:720px){.lrow{grid-template-columns:32px 24px minmax(0,1fr) 12px;row-gap:6px}.lrst{grid-column:3;justify-self:start}.lrc{display:none}.lhname{font-size:22px}.lhr{width:100%}.lhero .btn.lgo{flex:1}}
+body.touch .lrow{padding:14px 16px}
 </style>
 </head>
 <body>
@@ -1178,9 +1279,10 @@ body.touch .shiftlbl{font-size:17px}
     <button class="hbtn" id="privBtn" data-tip="Hide screen&#10;Ctrl+Shift+L" aria-label="Hide screen"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M1.5 8s2.4-4.5 6.5-4.5S14.5 8 14.5 8s-2.4 4.5-6.5 4.5S1.5 8 1.5 8Z" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2.5 13.5l11-11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
     <button class="hbtn backupind" id="backupInd" aria-label="Backup"></button>
     <button class="hbtn" id="settingsBtn" data-tip="Settings" aria-label="Settings"><svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M8 5.3a2.7 2.7 0 1 0 0 5.4 2.7 2.7 0 0 0 0-5.4Z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M6.9 1.5h2.2l.4 1.9 1.3.6 1.7-1 1.5 1.5-1 1.7.6 1.3 1.9.4v2.2l-1.9.4-.6 1.3 1 1.7-1.5 1.5-1.7-1-1.3.6-.4 1.9H6.9l-.4-1.9-1.3-.6-1.7 1-1.5-1.5 1-1.7-.6-1.3-1.9-.4V6.9l1.9-.4.6-1.3-1-1.7 1.5-1.5 1.7 1 1.3-.6Z" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></button>
-    <button class="btn endshift" id="endShiftBtn">■ End Shift</button>
-    <button class="btn primary" id="newDayBtn" title="Snapshot this board and start the next shift">New Shift</button>
+    <button class="btn" id="endShiftBtn">✓ Wrap up</button>
+    <button class="btn primary" id="newDayBtn">▶ Pre-chart</button>
   </header>
+  <div class="daystrip" id="dayStrip" hidden></div>
   <div class="nudge" id="nudge" hidden></div>
   <div class="nudge dfb" id="dfBanner" hidden></div>
   <div class="nudge dfb err" id="chkBanner" hidden></div>
@@ -1313,7 +1415,7 @@ body.touch .shiftlbl{font-size:17px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '189';
+const APP_VERSION = '197';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1326,24 +1428,24 @@ const SHIFT_TYPES = [
   ['bv-wards-day',       'bellevue', 'Bellevue Wards (Day)',      'day'],
   ['bv-night-intern',    'bellevue', 'Bellevue Night Intern',     'night'],
   ['night-adm-bellevue', 'bellevue', 'Bellevue Night Admitting',  'admit', {holds:true}],
-  ['bv-icu-24',          'bellevue', 'Bellevue ICU (24 Hr)',      '24h'],
-  ['bv-icu-day',         'bellevue', 'Bellevue ICU (Day)',        'day'],
-  ['bv-ccu-day',         'bellevue', 'Bellevue CCU (Day)',        'day'],
-  ['bv-ccu-night',       'bellevue', 'Bellevue CCU (Night)',      'night'],
+  ['bv-icu-24',          'bellevue', 'Bellevue ICU (24 Hr)',      '24h', {nocap:true}],
+  ['bv-icu-day',         'bellevue', 'Bellevue ICU (Day)',        'day', {nocap:true}],
+  ['bv-ccu-day',         'bellevue', 'Bellevue CCU (Day)',        'day', {nocap:true}],
+  ['bv-ccu-night',       'bellevue', 'Bellevue CCU (Night)',      'night', {nocap:true}],
   ['day-wards',          'tisch',    'Tisch Wards (Day)',         'day'],
   ['night-med-tisch',    'tisch',    'Tisch Wards (Night)',       'night'],
-  ['day-icu',            'tisch',    'Tisch ICU (Day)',           'day'],
-  ['ti-icu-night',       'tisch',    'Tisch ICU (Night)',         'night'],
-  ['kp-cards-day',       'tisch',    'KP Cardiology (Day)',       'day'],
-  ['kp-cards-night',     'tisch',    'KP Cardiology (Night)',     'night'],
+  ['day-icu',            'tisch',    'Tisch ICU (Day)',           'day', {nocap:true}],
+  ['ti-icu-night',       'tisch',    'Tisch ICU (Night)',         'night', {nocap:true}],
+  ['kp-cards-day',       'tisch',    'KP Cardiology (Day)',       'day', {capVaries:true}],
+  ['kp-cards-night',     'tisch',    'KP Cardiology (Night)',     'night', {capVaries:true}],
   ['kp-heme-day',        'tisch',    'KP Hematology (Day)',       'day'],
   ['kp-heme-night',      'tisch',    'KP Hematology (Night)',     'night'],
-  ['va-wards-day',       'va',       'VA Wards (Day)',            'day'],
-  ['va-night-intern',    'va',       'VA Night Intern',           'night'],
-  ['va-night-adm',       'va',       'VA Night Admitting',        'admit'],
-  ['va-icu-day',         'va',       'VA ICU (Day)',              'day'],
-  ['va-icu-night',       'va',       'VA ICU (Night)',            'night'],
-  ['va-icu-24',          'va',       'VA ICU (24 Hr)',            '24h'],
+  ['va-wards-day',       'va',       'VA Wards (Day)',            'day', {nocap:true}],
+  ['va-night-intern',    'va',       'VA Night Intern',           'night', {nocap:true}],
+  ['va-night-adm',       'va',       'VA Night Admitting',        'admit', {nocap:true}],
+  ['va-icu-day',         'va',       'VA ICU (Day)',              'day', {nocap:true}],
+  ['va-icu-night',       'va',       'VA ICU (Night)',            'night', {nocap:true}],
+  ['va-icu-24',          'va',       'VA ICU (24 Hr)',            '24h', {nocap:true}],
   ].map(([k, site, label, kind, extra]) => Object.assign({k, site, label, short:label, kind,
     icon:kind === 'day' ? '☀' : kind === '24h' ? '⏱' : '☾', night:kind !== 'day', span24:kind === '24h',
     tab:'overview', work:kind === 'admit' ? 'admits' : kind === 'night' ? 'tasks' : 'census',
@@ -1370,15 +1472,113 @@ function wireTypePicker(m, name, onPick){
     if(onPick) onPick(); });
 }
 const TYPE_KEY = `${KEY_PREFIX}.activeShiftType`;
-const typeOf = k => SHIFT_TYPES.find(x => x.k === k) || SHIFT_TYPES[0];
 const storeKeyFor = k => k === 'day-wards' ? STORE_KEY : `${STORE_KEY}.${k}`;      // existing data stays the Day Wards board
+
+/* ---------- 🗓 Rotations ----------
+   A rotation is a board for a whole block (e.g. “Bellevue CCU · Nov 18 – Dec 1”). Every date in it is Off or a shift kind
+   with its own hours (Long 07:00–19:30, NF 19:30–10:00, 27-hour …), optionally with a role (Night Captain, Tisch ID …).
+   What the board looks like on a date (day vs night, admissions-only, tasks) follows that date's kind and role.
+   Boards made before rotations (one per shift type) still work exactly as before, just without a schedule. */
+const ROT_KEY = `${KEY_PREFIX}.rotations`;
+var ROTS = (() => { try{ const v = JSON.parse(localStorage.getItem(ROT_KEY) || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }catch(e){ return {}; } })();
+const rotSave = () => { try{ localStorage.setItem(ROT_KEY, JSON.stringify(ROTS)); }catch(e){} };
+// Sandbox: a demo rotation around today, so the schedule, day strip and pre-charting can be tried straight away (no real schedule)
+if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.demoRots`) === '1' && !ROTS['r-demo-ccu']){   // demo rotations around today — used by the automated checks
+  const p2 = n => String(n).padStart(2, '0'), iso = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`, at = n => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
+  const pat = ['off', 'long', 'long', 'off', 'long', 'long', 'off', 'nf', 'nf', 'nf', 'nf', 'nf', 'off', 'off'], days = {};
+  pat.forEach((k, i) => { if(k !== 'off') days[at(i - 2)] = {k}; });
+  ROTS['r-demo-ccu'] = {id:'r-demo-ccu', tplKey:'bv-ccu', name:'Demo CCU (Sandbox)', site:'bellevue', tpl:'bv-ccu-day', icon:'🫀', roles:[], start:at(-2), end:at(11), days,
+    kinds:{long:{label:'Long', base:'day', start:'07:00', end:'19:30'}, nf:{label:'NF', base:'night', start:'19:30', end:'10:00'}}, createdAt:new Date().toISOString()};
+  const nd = {}, rl = ['captain', 'captain', 'pulm', 'pulm', 'pulm', 'off', 'id', 'id', 'float', 'captain'];
+  rl.forEach((k, i) => { if(k !== 'off') nd[at(i - 3)] = {k:'night', role:k}; });
+  ROTS['r-demo-tn'] = {id:'r-demo-tn', tplKey:'tisch-nights', name:'Demo Tisch Nights (Sandbox)', site:'tisch', tpl:'night-med-tisch', icon:'🌙', fresh:true, start:at(-3), end:at(6), days:nd,
+    kinds:{night:{label:'Night', base:'night', start:'19:30', end:'09:30'}}, roles:[{k:'captain', label:'Night Captain', census:false}, {k:'float', label:'Float', census:false}, {k:'id', label:'Tisch ID', census:true}, {k:'pulm', label:'Tisch Pulm', census:true}], createdAt:new Date().toISOString()};
+  rotSave();
+} }catch(e){} }
+// Sandbox: your real PGY-3 rotations with their real dates (schedules only), with demo patients on each board
+var SANDBOX_ROTS = [{"id": "r-pgy3-b11-ccu", "tplKey": "bv-ccu", "name": "Bellevue CCU", "start": "2026-11-18", "end": "2026-12-01", "days": {"2026-11-21": {"k": "long"}, "2026-11-22": {"k": "long"}, "2026-11-24": {"k": "long"}, "2026-11-25": {"k": "long"}, "2026-11-27": {"k": "nf"}, "2026-11-28": {"k": "nf"}, "2026-11-29": {"k": "nf"}, "2026-11-30": {"k": "nf"}, "2026-12-01": {"k": "nf"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "bv-ccu-day", "icon": "🫀", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:30"}, "nf": {"label": "NF", "base": "night", "start": "19:30", "end": "10:00"}}, "roles": [], "block": 11}, {"id": "r-pgy3-b13-tkpulm", "tplKey": "tisch-days", "name": "Tisch Pulm (Days)", "start": "2026-12-16", "end": "2026-12-29", "days": {"2026-12-16": {"k": "long"}, "2026-12-17": {"k": "long"}, "2026-12-19": {"k": "long"}, "2026-12-21": {"k": "long"}, "2026-12-23": {"k": "long"}, "2026-12-24": {"k": "long"}, "2026-12-27": {"k": "long"}, "2026-12-28": {"k": "long"}, "2026-12-18": {"k": "short"}, "2026-12-22": {"k": "short"}, "2026-12-25": {"k": "short"}, "2026-12-29": {"k": "short"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "tisch", "tpl": "day-wards", "icon": "🫁", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:30"}, "short": {"label": "Short", "base": "day", "start": "07:00", "end": "16:30"}}, "roles": [], "block": 13}, {"id": "r-pgy3-b14-tknights", "tplKey": "tisch-nights", "name": "Tisch Nights", "start": "2026-12-30", "end": "2027-01-12", "days": {"2026-12-30": {"k": "night", "role": "captain"}, "2026-12-31": {"k": "night", "role": "captain"}, "2027-01-02": {"k": "night", "role": "captain"}, "2027-01-07": {"k": "night", "role": "captain"}, "2027-01-08": {"k": "night", "role": "captain"}, "2027-01-03": {"k": "night", "role": "pulm"}, "2027-01-04": {"k": "night", "role": "pulm"}, "2027-01-05": {"k": "night", "role": "pulm"}, "2027-01-10": {"k": "night", "role": "id"}, "2027-01-11": {"k": "night", "role": "id"}, "2027-01-12": {"k": "night", "role": "id"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "tisch", "tpl": "night-med-tisch", "icon": "🌙", "fresh": true, "kinds": {"night": {"label": "Night", "base": "night", "start": "19:30", "end": "09:30"}}, "roles": [{"k": "captain", "label": "Night Captain", "census": false}, {"k": "float", "label": "Float", "census": false}, {"k": "id", "label": "Tisch ID", "census": true}, {"k": "pulm", "label": "Tisch Pulm", "census": true}], "block": 14}, {"id": "r-pgy3-b17-jeop", "tplKey": "jeopardy", "name": "Jeopardy (Block 17)", "start": "2027-02-10", "end": "2027-02-23", "days": {}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "day-wards", "icon": "🚨", "fresh": true, "jeop": true, "kinds": {}, "roles": [], "block": 17}, {"id": "r-pgy3-b20-bvnf", "tplKey": "bv-nf", "name": "Bellevue Night Admitting", "start": "2027-03-24", "end": "2027-04-06", "days": {"2027-03-24": {"k": "nf"}, "2027-03-25": {"k": "nf"}, "2027-03-26": {"k": "nf"}, "2027-03-28": {"k": "nf"}, "2027-03-29": {"k": "nf"}, "2027-03-30": {"k": "nf"}, "2027-04-01": {"k": "nf"}, "2027-04-02": {"k": "nf"}, "2027-04-05": {"k": "nf"}, "2027-04-06": {"k": "nf"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "night-adm-bellevue", "icon": "🌙", "fresh": true, "kinds": {"nf": {"label": "Night", "base": "admit", "start": "18:00", "end": "08:00"}}, "roles": [], "block": 20}, {"id": "r-pgy3-b22-va", "tplKey": "va-days", "name": "VA Wards (Days)", "start": "2027-04-21", "end": "2027-05-04", "days": {"2027-04-21": {"k": "long"}, "2027-04-24": {"k": "long"}, "2027-04-27": {"k": "long"}, "2027-04-30": {"k": "long"}, "2027-05-03": {"k": "long"}, "2027-04-22": {"k": "short"}, "2027-04-25": {"k": "short"}, "2027-04-26": {"k": "short"}, "2027-04-28": {"k": "short"}, "2027-04-29": {"k": "short"}, "2027-05-01": {"k": "short"}, "2027-05-04": {"k": "short"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "va", "tpl": "va-wards-day", "icon": "🏥", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:30"}, "short": {"label": "Short", "base": "day", "start": "07:00", "end": "16:30"}}, "roles": [], "block": 22}, {"id": "r-pgy3-b23-jeop", "tplKey": "jeopardy", "name": "Jeopardy (Block 23)", "start": "2027-05-05", "end": "2027-05-18", "days": {}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "day-wards", "icon": "🚨", "fresh": true, "jeop": true, "kinds": {}, "roles": [], "block": 23}, {"id": "r-pgy3-b25-bvwards", "tplKey": "bv-wards", "name": "Bellevue Wards (Team 6)", "start": "2027-06-02", "end": "2027-06-15", "days": {"2027-06-02": {"k": "day"}, "2027-06-03": {"k": "day"}, "2027-06-04": {"k": "day"}, "2027-06-05": {"k": "day"}, "2027-06-07": {"k": "day"}, "2027-06-08": {"k": "day"}, "2027-06-09": {"k": "day"}, "2027-06-10": {"k": "day"}, "2027-06-11": {"k": "day"}, "2027-06-13": {"k": "day"}, "2027-06-14": {"k": "day"}, "2027-06-15": {"k": "day"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "bv-wards-day", "icon": "🏥", "kinds": {"day": {"label": "Day", "base": "day", "start": "07:00", "end": "19:00"}}, "roles": [], "block": 25}, {"id": "r-pgy3-b26-micu", "tplKey": "bv-micu", "name": "Bellevue MICU", "start": "2027-06-16", "end": "2027-06-30", "days": {"2027-06-18": {"k": "long"}, "2027-06-22": {"k": "long"}, "2027-06-26": {"k": "long"}, "2027-06-30": {"k": "long"}, "2027-06-19": {"k": "h27"}, "2027-06-23": {"k": "h27"}, "2027-06-27": {"k": "h27"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "bv-icu-day", "icon": "🫁", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:00"}, "h27": {"label": "27-hour", "base": "24h", "start": "07:00", "end": "10:00"}}, "roles": [], "block": 26}];
+if(SANDBOX){ try{ let ch = false; SANDBOX_ROTS.forEach(r => { const o = ROTS[r.id]; if(o && !o.block){ o.block = r.block; ch = true; } if(o && o.name !== r.name && /^(Jeopardy|Tisch Pulm \(days\)|VA Wards \(days\))/i.test(o.name)){ o.name = r.name; ch = true; } }); if(ch) rotSave(); }catch(e){} }
+if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.rotSeeded2`) !== '1'){
+  Object.keys(ROTS).filter(k => /^r-demo-/.test(k) && localStorage.getItem(`${KEY_PREFIX}.demoRots`) !== '1').forEach(k => { delete ROTS[k]; try{ localStorage.removeItem(storeKeyFor(k)); localStorage.removeItem(storeKeyFor(k) + '.log'); }catch(e){} });
+  SANDBOX_ROTS.forEach(r => { if(!ROTS[r.id]) ROTS[r.id] = JSON.parse(JSON.stringify(r)); });
+  rotSave(); localStorage.setItem(`${KEY_PREFIX}.rotSeeded2`, '1');
+  const t = localStorage.getItem(`${KEY_PREFIX}.activeShiftType`); if(!t || /^r-demo-/.test(t) || SHIFT_TYPES.some(x => x.k === t)) localStorage.setItem(`${KEY_PREFIX}.activeShiftType`, 'r-pgy3-b11-ccu');
+} }catch(e){} }
+
+const isRot = k => !!(k && ROTS[k]);
+const rotBlock = r => r ? (r.block || (/-b(\d+)-/.exec(r.id || '') || [])[1] || '') : '';
+const allBoardIds = () => [...SHIFT_TYPES.map(t => t.k), ...Object.keys(ROTS)];
+const knownBoard = k => SHIFT_TYPES.some(t => t.k === k) || isRot(k);
+// how each base kind behaves (the same four the shift types use)
+const BASE = {day:{icon:'☀', night:false, span24:false, tasks:false, admitOnly:false},
+  night:{icon:'☾', night:true, span24:false, tasks:true, admitOnly:false},
+  admit:{icon:'☾', night:true, span24:false, tasks:true, admitOnly:true},
+  '24h':{icon:'⏱', night:true, span24:true, tasks:true, admitOnly:false}};
+const LEGACY_HOURS = {day:['07:00', '19:30'], night:['19:30', '07:30'], admit:['18:00', '08:00'], '24h':['07:00', '07:00']};
+// Templates for new rotations: shift kinds with default hours, roles, and whether each workday starts with fresh lists
+const ROT_TEMPLATES = [
+  {k:'bv-ccu', label:'Bellevue CCU', site:'bellevue', tpl:'bv-ccu-day', icon:'🫀', kinds:{long:{label:'Long', base:'day', start:'07:00', end:'19:30'}, nf:{label:'NF', base:'night', start:'19:30', end:'10:00'}}},
+  {k:'bv-micu', label:'Bellevue MICU', site:'bellevue', tpl:'bv-icu-day', icon:'🫁', kinds:{long:{label:'Long', base:'day', start:'07:00', end:'19:00'}, h27:{label:'27-hour', base:'24h', start:'07:00', end:'10:00'}}},
+  {k:'bv-wards', label:'Bellevue Wards', site:'bellevue', tpl:'bv-wards-day', icon:'🏥', kinds:{day:{label:'Day', base:'day', start:'07:00', end:'19:00'}}},
+  {k:'bv-nf', label:'Bellevue Night Admitting', site:'bellevue', tpl:'night-adm-bellevue', icon:'🌙', fresh:true, kinds:{nf:{label:'Night', base:'admit', start:'18:00', end:'08:00'}}},
+  {k:'tisch-days', label:'Tisch Wards (Days)', site:'tisch', tpl:'day-wards', icon:'🏥', kinds:{long:{label:'Long', base:'day', start:'07:00', end:'19:30'}, short:{label:'Short', base:'day', start:'07:00', end:'16:30'}}},
+  {k:'tisch-nights', label:'Tisch Nights', site:'tisch', tpl:'night-med-tisch', icon:'🌙', fresh:true, kinds:{night:{label:'Night', base:'night', start:'19:30', end:'09:30'}},
+    roles:[{k:'captain', label:'Night Captain', census:false}, {k:'float', label:'Float', census:false}, {k:'id', label:'Tisch ID', census:true}, {k:'pulm', label:'Tisch Pulm', census:true}]},
+  {k:'va-days', label:'VA Wards (Days)', site:'va', tpl:'va-wards-day', icon:'🏥', kinds:{long:{label:'Long', base:'day', start:'07:00', end:'19:30'}, short:{label:'Short', base:'day', start:'07:00', end:'16:30'}}},
+  {k:'jeopardy', label:'Jeopardy (Back-Up Call)', site:'bellevue', tpl:'day-wards', icon:'🚨', fresh:true, jeop:true, kinds:{}},
+];
+const rotTpl = k => ROT_TEMPLATES.find(t => t.k === k);
+// one shift kind for a whole board made from a single shift type
+function legacyKind(t){ const b = t.kind === 'admit' ? 'admit' : t.kind === '24h' ? '24h' : t.kind === 'day' ? 'day' : 'night', h = LEGACY_HOURS[b]; return {label:b === 'day' ? 'Day' : b === '24h' ? '24-hour' : 'Night', base:b, start:h[0], end:h[1]}; }
+// the kind on a date: {key, label, base, start, end, role, roleLabel, census, assign} — or null for Off / outside the rotation
+function rotDay(r, date){
+  if(!r || !date) return null;
+  const d = (r.days || {})[date]; if(!d || !d.k || d.k === 'off') return null;
+  const kd = d.k === 'custom' ? d : (r.kinds || {})[d.k]; if(!kd) return null;
+  const role = d.role && (r.roles || []).find(x => x.k === d.role);
+  return {key:d.k, label:kd.label || d.k, base:kd.base || 'day', start:d.start || kd.start, end:d.end || kd.end, role:d.role || '', roleLabel:role ? role.label : (d.roleLabel || ''),
+    census:role ? role.census !== false : true, assign:d.assign || ''};
+}
+const rotWorkdays = r => Object.keys(r.days || {}).filter(d => rotDay(r, d)).sort();
+const crossesMidnight = k => k && (k.end <= k.start || k.base === '24h');
+// the date you're working on right now: early in the morning after a night (or 27-hour) shift, that's still yesterday
+function rotWorkDate(r){
+  const today = todayISO(), y = addDays(today, -1), yk = rotDay(r, y);
+  if(yk && crossesMidnight(yk)){ const n = new Date(), hm = `${pad(n.getHours())}:${pad(n.getMinutes())}`, [eh, em] = yk.end.split(':').map(Number);
+    const cut = `${pad(Math.min(23, eh + 2))}:${pad(em)}`; if(hm < cut) return y; }
+  return today;
+}
+// the kind to show for an Off date (or when none is set): the rotation's most-used kind, so the board still works on days off
+function rotHomeDay(r){
+  const n = {}; Object.values(r.days || {}).forEach(d => { if(d && d.k && d.k !== 'off') n[d.k] = (n[d.k] || 0) + 1; });
+  const k = Object.keys(n).sort((a, b) => n[b] - n[a])[0] || Object.keys(r.kinds || {})[0];
+  const kd = k && k !== 'custom' ? (r.kinds || {})[k] : null;
+  const custom = k === 'custom' ? Object.values(r.days).find(d => d.k === 'custom') : null;
+  const src = kd || custom || legacyKind(typeOf(r.tpl));
+  return {key:k || '', label:src.label, base:src.base || 'day', start:src.start, end:src.end, role:'', roleLabel:'', census:true, assign:custom ? custom.assign : '', off:true};
+}
+function rotType(r, date){
+  const day = rotDay(r, date) || rotHomeDay(r), tplK = day.assign || r.tpl, T = SHIFT_TYPES.find(x => x.k === tplK) || SHIFT_TYPES[0], B = BASE[day.base] || BASE.day;
+  const admitOnly = B.admitOnly || (day.base !== 'day' && day.census === false);
+  return Object.assign({}, T, {k:r.id, label:r.name, short:r.name, rot:r, day, icon:r.icon || B.icon, kind:day.base === 'admit' ? 'admit' : day.base,
+    night:B.night, span24:B.span24, tasks:B.tasks || !!r.tasks || Object.values(r.kinds || {}).some(x => x.base !== 'day'), admitOnly, noAdmitIntern:B.night, tab:'overview', work:admitOnly ? 'admits' : B.tasks ? 'tasks' : 'census',
+    holds:!!(T.holds && day.base === 'admit'), site:r.site || T.site});
+}
+const typeOf = k => { const r = ROTS[k]; if(r) return rotType(r, (k === activeType && state && state.boardDate) || rotWorkDate(r));
+  return SHIFT_TYPES.find(x => x.k === k) || SHIFT_TYPES[0]; };
+// hours of the open board's date
+function boardHours(){
+  const r = ROTS[activeType];
+  if(r){ const d = rotDay(r, state.boardDate) || rotHomeDay(r); return {start:d.start, end:d.end, base:d.base, label:d.label, off:!!d.off, role:d.roleLabel}; }
+  const k = legacyKind(typeOf(activeType)); return {start:k.start, end:k.end, base:k.base, label:k.label, off:false, role:''};
+}
 const backupKeyFor = k => k === 'day-wards' ? BACKUP_KEY : `${BACKUP_KEY}.${k}`;
 const TISCH_SCENARIO = 'v2-14E';   // bump to push a refreshed Tisch scenario into the Sandbox once
 if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.tischScenario`) !== TISCH_SCENARIO){
   localStorage.removeItem(`${STORE_KEY}.night-med-tisch`); localStorage.removeItem(`${STORE_KEY}.night-med-tisch.log`);
-  localStorage.setItem(`${KEY_PREFIX}.activeShiftType`, 'night-med-tisch'); localStorage.setItem(`${KEY_PREFIX}.tischScenario`, TISCH_SCENARIO);
+  if(!ROTS[localStorage.getItem(`${KEY_PREFIX}.activeShiftType`)]) localStorage.setItem(`${KEY_PREFIX}.activeShiftType`, 'night-med-tisch'); localStorage.setItem(`${KEY_PREFIX}.tischScenario`, TISCH_SCENARIO);
   const u = JSON.parse(localStorage.getItem(UI_KEY) || '{}'); u.tab = 'tasks'; localStorage.setItem(UI_KEY, JSON.stringify(u)); } }catch(e){} }
-let activeType = (() => { try{ const t = localStorage.getItem(TYPE_KEY); return SHIFT_TYPES.some(x => x.k === t) ? t : 'day-wards'; }catch(e){ return 'day-wards'; } })();
+let activeType = (() => { try{ const t = localStorage.getItem(TYPE_KEY); return knownBoard(t) ? t : 'day-wards'; }catch(e){ return 'day-wards'; } })();
 // a clock time on a board's date: on overnight shifts times before noon are the next morning; on 24-hour shifts, times before 07:00
 const wrapsToNextDay = hm => { const t = typeOf(activeType); return t.span24 ? hm < '07:00' : (state.settings.shift === 'night' && hm < '12:00'); };
 function boardCount(k){ try{ const r = localStorage.getItem(storeKeyFor(k)); return r ? (JSON.parse(r).patients || []).length : null; }catch(e){ return null; } }
@@ -1645,17 +1845,23 @@ function load(){
     const raw = localStorage.getItem(storeKeyFor(activeType));
     if(raw){ const s = JSON.parse(raw); if(s && Array.isArray(s.patients)) return normalize(s); }
   }catch(e){ storageOK = false; }
-  return (SANDBOX && sandboxDemoFor(activeType)) || emptyBoard(null);   // portable starts empty
+  return (SANDBOX && demoFor(activeType)) || emptyBoard(null);   // portable starts empty
 }
 /* Built-in default settings per shift-type board, used whenever a board starts fresh
    (new computer, cleared browser, first time a shift type is opened). Filled from the user's exported settings. */
 const DEFAULT_SETTINGS = {};
 function defaultSettingsFor(k){ const d = DEFAULT_SETTINGS[k]; return d ? clone(d) : null; }
+// the Sandbox's demo data for a rotation comes from its shift type, dated to the rotation's current workday
+function demoFor(k){ const r = ROTS[k]; if(!r) return sandboxDemoFor(k);
+  const A = activeType; let b = null; try{ activeType = r.tpl; b = sandboxDemoFor(r.tpl); }finally{ activeType = A; }
+  if(b){ const w = rotWorkDate(r), fd = rotWorkdays(r)[0] || w; b.boardDate = w < fd ? fd : w > r.end ? (rotWorkdays(r).pop() || w) : w; b.settings.shiftType = k; b = normalize(b); }
+  return b; }
+function rotStartDate(r){ const w = rotWorkDate(r), wd = rotWorkdays(r); return wd.find(d => d >= w) || wd[wd.length - 1] || w; }
 function emptyBoard(from){
-  const d = defaultSettingsFor(activeType);
-  if(d) return normalize({ boardDate: todayISO(), patients:[], admits:[], archive:[], history:[], settings:d });
+  const d = defaultSettingsFor(isRot(activeType) ? ROTS[activeType].tpl : activeType);
+  if(d) return normalize({ boardDate: isRot(activeType) ? rotStartDate(ROTS[activeType]) : todayISO(), patients:[], admits:[], archive:[], history:[], settings:d });
   const f = (from && from.settings) || {};
-  return normalize({ boardDate: todayISO(), patients:[], admits:[], archive:[], history:[],
+  return normalize({ boardDate: isRot(activeType) ? rotStartDate(ROTS[activeType]) : todayISO(), patients:[], admits:[], archive:[], history:[],
     settings:{ team:'', interns:[], columns: clone(f.columns || {}), colOrder: clone(f.colOrder || {}), hiddenCols: clone(f.hiddenCols || []),
       autoBackup: f.autoBackup !== false, backupWarnHours: f.backupWarnHours || 12 } });
 }
@@ -1691,7 +1897,7 @@ function switchBoard(k){
   activeType = k; try{ localStorage.setItem(TYPE_KEY, k); }catch(e){}
   let next = null;
   try{ const raw = localStorage.getItem(storeKeyFor(k)); if(raw){ const s2 = JSON.parse(raw); if(s2 && Array.isArray(s2.patients)) next = normalize(s2); } }catch(e){}
-  state = next || (SANDBOX && sandboxDemoFor(k)) || emptyBoard(from);
+  state = next || (SANDBOX && demoFor(k)) || emptyBoard(from);
   undoStack.length = 0; histSel = null; pendingLeft = null; clearTimeout(leftTimer);
   loadLog(); logAdd([{cat:'shift', msg:`Opened the ${typeOf(k).label} board`}]);
   ui.tab = typeOf(k).tab; ui.filter = 'all'; ui.intern = ''; ui.search = ''; if(typeOf(k).admitOnly) ui.admitView = 'today';
@@ -2377,11 +2583,24 @@ function workloadCard(){
     </div>`).join('')}
   </div>`;
 }
+/* Census cap: set in Settings — except services with no cap (CCU, MICU/ICUs, VA wards) and KP Cardiology, whose cap moves with the flex rooms (set per day) */
+function capInfo(){ const T = typeOf(activeType);
+  if(T.nocap) return {cap:0, mode:'nocap'};
+  if(T.capVaries){ const c = state.capToday && state.capToday.date === state.boardDate ? +state.capToday.n || 0 : 0; return {cap:c, mode:'varies'}; }
+  const c = +state.settings.cap || 0; return {cap:c, mode:c ? 'set' : 'none'}; }
+function setCapToday(){
+  const ci = capInfo();
+  modal(`<h3>Today’s cap — ${esc(fmtNoYear(state.boardDate))}</h3><p class="muted">KP Cardiology’s cap depends on how the flex rooms are being used, so it’s set for today only and clears when the next day starts.</p>
+    <label class="f">Max patients today</label><input type="number" id="ctN" min="0" value="${ci.cap || ''}" placeholder="e.g. 14" style="width:120px">`,
+    [['Cancel'], ['Clear', '', () => mutate(() => { delete state.capToday; }, {label:'Cleared today’s cap'})], ['Save', 'primary', () => { const v = Math.max(0, Math.round(+$('#ctN').value || 0));
+      mutate(() => { state.capToday = {date:state.boardDate, n:v}; }, {label:`Today’s cap set to ${v}`}); }]], m => setTimeout(() => m.querySelector('#ctN').focus(), 50));
+}
+document.addEventListener('click', e => { if(e.target.closest('[data-capset]')){ e.preventDefault(); setCapToday(); } });
 function renderSummary(){
-  const ps = state.patients, d = state.boardDate, cap = state.settings.cap;
+  const ps = state.patients, d = state.boardDate, ci = capInfo(), cap = ci.cap;
   const n = ps.length, full = cap && n >= cap;
   const flagged = ps.filter(p => flagsFor(p).some(f => f[0]==='warn' || f[0]==='bad')).length;
-  const capLine = !cap ? `<a href="#" data-go="settings">Set a team cap</a>` : n > cap ? `<b class="red">Over cap by ${n-cap}</b>` : n === cap ? `<b class="red">At cap</b>` : `${cap-n} spot${cap-n===1?'':'s'} left`;
+  const capLine = ci.mode === 'nocap' ? '<span class="muted">No census cap on this service</span>' : ci.mode === 'varies' && !cap ? '<a href="#" data-capset>Set today’s cap (flex rooms)</a>' : !cap ? `<a href="#" data-go="settings">Set a team cap</a>` : n > cap ? `<b class="red">Over cap by ${n-cap}</b>` : n === cap ? `<b class="red">At cap</b>` : `${cap-n} spot${cap-n===1?'':'s'} left`;
 
   const today = ps.filter(p => dcBucket(p) === 'today'), tom = ps.filter(p => dcBucket(p) === 'tomorrow');
   const signedToday = today.reduce((x,p) => x + dcSigned(p), 0), totToday = today.length * DC_KEYS.length;
@@ -2899,7 +3118,9 @@ function fitHeader(){ const h = document.querySelector('header.top'); if(!h) ret
 { let fr = 0; window.addEventListener('resize', () => { cancelAnimationFrame(fr); fr = requestAnimationFrame(fitHeader); }); }
 function renderChrome(){ renderChromeInner(); try{ fitHeader(); }catch(e){} }
 function renderChromeInner(){
+  state.settings.shift = typeOf(activeType).night ? 'night' : 'day';
   const night = state.settings.shift === 'night';
+  renderDayStrip();
   { const night = state.settings.shift === 'night', d = state.boardDate, e = addDays(d, 1);   // compact in the header; full date in the tooltip
     $('#boardDate').textContent = night ? `${fmtNoYear(d)}–${new Date(toUTC(e)).toLocaleDateString(undefined,{day:'numeric',timeZone:'UTC'})}` : fmtNoYear(d);
     $('#boardDate').title = shiftLabel(d, state.settings.shift); }
@@ -2922,10 +3143,10 @@ function renderChromeInner(){
         + `<span class="keys">Signed or N/A counts as done · ED Course, Visit, Prob List and Sign Out are checkboxes · in a box, type the first letter to pick · arrows move · <kbd>Space</kbd> tick · <kbd>Ctrl/⌘ Z</kbd> undo · <kbd>Ctrl K</kbd> command bar · ${allSc}</span>`
       : `<span class="keys">arrows move · <kbd>Ctrl/⌘ Z</kbd> undo · <kbd>Ctrl K</kbd> command bar · ${allSc}</span>`; }
   const n = $('#nudge');
-  const stale = boardStale();
-  if(stale){
+  const nsx = nextStart();
+  if(nsx && nsx.now && nsx.date > state.boardDate){
     n.hidden = false;
-    n.innerHTML = `<b>It's ${fmtLong(todayISO())}.</b> The board is still dated ${shiftLabel(state.boardDate, state.settings.shift)}. <button class="btn sm primary" id="nudgeNewDay">Start new shift</button>`;
+    n.innerHTML = `<b>It's ${fmtLong(todayISO())}.</b> The board is still on ${esc(fmtNoYear(state.boardDate))}${isRot(activeType) ? ` — today is ${dayKindTxt(activeType, nsx.date)}` : ''}. <button class="btn sm primary" id="nudgeNewDay">${esc(startLabel(nsx, true))}</button>`;
   } else n.hidden = true;
   renderBackupInd();
   { const hasTasks = !!typeOf(activeType).tasks; $('#tabs button[data-tab="tasks"]').hidden = !hasTasks; document.body.classList.toggle('has-tasks', hasTasks); if(!hasTasks && ui.tab === 'tasks') ui.tab = typeOf(activeType).tab; }
@@ -3408,42 +3629,47 @@ $('#histGrid').addEventListener('click', e => {
   mutate(() => { const i = state.archive.findIndex(p => p.id === b.dataset.id); if(i<0) return; const [p] = state.archive.splice(i,1); delete p.leftOn; delete p.leftAt; delete p.outcome; p.status = 'Existing'; state.patients.push(p); });
   toast('Restored to census');
 });
-document.addEventListener('click', e => { if(e.target.id === 'nudgeNewDay') newDay(); });
-$('#newDayBtn').addEventListener('click', newDay);
-$('#endShiftBtn').addEventListener('click', () => { if(shiftIsActive()) shiftPillClick(); });
+document.addEventListener('click', e => { if(e.target.id === 'nudgeNewDay' || e.target.id === 'ovNext') newDay(); });
+$('#newDayBtn').addEventListener('click', () => newDay());
+$('#endShiftBtn').addEventListener('click', () => wrapUp());
 $('#settingsBtn').addEventListener('click', settings);
 
 $('#validateBtn').addEventListener('click', validation);
 
 /* ---------- new day ---------- */
-function newDay(){
-  if(shiftIsActive()){ toast('End the current shift before starting a new one'); return; }
+function newDay(target){
   const staying = state.patients.length;
   const stillHere = state.patients.filter(p => p.status === 'Discharge' || p.status === 'Transfer');
-  const next = todayISO() > state.boardDate ? todayISO() : addDays(state.boardDate, 1);
-  modal(`<h3>Start a new shift</h3>
-    <p class="ndboard">${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${esc(siteOf(activeType).label)} — a new shift on this board. For a different site or shift type, use <b>Switch board…</b></span></p>
-    <label class="f">Shift date <span class="muted" style="font-weight:400">(for overnight, the date the shift starts)</span></label><input type="date" id="ndDate" value="${next}">
+  const ns = nextStart(), next = target || (ns ? ns.date : (todayISO() > state.boardDate ? todayISO() : addDays(state.boardDate, 1)));
+  const R0 = ROTS[activeType], kNext = R0 ? rotDay(R0, next) : null, fresh = !!(R0 && R0.fresh);
+  const lastSame = role => role ? (state.history || []).find(h => h.role === role && (h.patients || []).length) : null;
+  const curRole = R0 ? ((rotDay(R0, state.boardDate) || {}).role || '') : '';
+  const sameList = fresh && kNext && kNext.census !== false ? lastSame(kNext.role) || (curRole && curRole === kNext.role && state.patients.length ? {date:state.boardDate, patients:state.patients, cur:true} : null) : null;
+  modal(`<h3>${ns && next === ns.date ? esc(startLabel(ns, true)) : 'Start a new day'}</h3>
+    <p class="ndboard">${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${kNext ? kindChip(kNext) : R0 ? 'Off on this date' : esc(siteOf(activeType).label)}</span></p>
+    <label class="f">Date <span class="muted" style="font-weight:400">(for a night, the date it starts)</span></label><input type="date" id="ndDate" value="${next}">
+    ${fresh ? `<p class="ndfresh">🌙 <b>${esc(R0.name)}</b> starts each ${R0.jeop ? 'covered day' : 'night'} with fresh lists — ${esc(fmtNoYear(state.boardDate))}’s list and tasks are kept in History.</p>
+      ${sameList ? `<label class="ndbk"><input type="checkbox" id="ndSame" checked> Start from your ${esc(kNext.roleLabel || 'last')} list from ${esc(fmtNoYear(sameList.date))} <span class="muted">(${sameList.patients.length} patient${sameList.patients.length === 1 ? '' : 's'} — edit it from sign-out)</span></label>` : ''}` : ''}
     <p>This will:</p><ul>
-      <li>Save a read-only snapshot of that board's last shift to History</li>
-      <li>Clear the <b>Daily</b> columns for every patient on that board, and reset Note to Progress (Discharge for patients with Status = Discharge)</li>
+      <li>Save ${esc(fmtNoYear(state.boardDate))} to History (read-only)</li>
+      ${fresh && !sameList ? '<li>Start the census and tasks empty</li>' : `<li>Clear the <b>Daily</b> columns for every patient, and reset Note to Progress (Discharge for patients with Status = Discharge)</li>
       <li>Change status <b>New → Existing</b></li>
-      <li>Keep Standing, EDD, Discharge and Dispo columns as they are</li></ul>
-    <p class="muted">Nobody leaves the census automatically. Use <b>Left hospital</b> on a patient's row once they've physically gone.</p>
+      <li>Keep Standing, EDD, Discharge and Dispo columns as they are</li>`}</ul>
+    ${fresh ? '' : '<p class="muted">Nobody leaves the census automatically. Use <b>Left hospital</b> on a patient’s row once they’ve physically gone.</p>'}
     ${stillHere.length ? `<p style="color:var(--warn-ink);background:var(--warn-bg);padding:6px 10px;border-radius:6px">Still on the census with Status Discharge/Transfer: ${stillHere.map(p=>esc(p.bed||'?')).join(', ')}. If they've already left, mark them as left.</p>` : ''}
-    <label class="ndbk" id="ndTasksWrap" ${SHIFT_TYPES.find(t => t.k === activeType).tasks ? '' : 'hidden'}><input type="checkbox" id="ndClearTasks" checked> Clear last shift's night task list <span class="muted">(open and done)</span></label>
-    <label class="ndbk"><input type="checkbox" id="ndBackup" ${state.settings.autoBackup ? 'checked' : ''}> Download a backup of this shift first <span class="muted">(last: ${lastBackup() ? agoText(lastBackup()) : 'never'})</span></label>
+    <label class="ndbk" id="ndTasksWrap" ${typeOf(activeType).tasks && !fresh ? '' : 'hidden'}><input type="checkbox" id="ndClearTasks" ${typeOf(activeType).night ? 'checked' : ''}> Clear the last night's task list <span class="muted">(open and done)</span></label>
+    <label class="ndbk"><input type="checkbox" id="ndBackup" ${state.settings.autoBackup ? 'checked' : ''}> Download a backup first <span class="muted">(last: ${lastBackup() ? agoText(lastBackup()) : 'never'})</span></label>
     <p class="muted">You can undo this right after if needed.</p>`,
-    [['Cancel'],['Start new shift','primary',() => {
+    [['Cancel'],[ns && next === ns.date && !ns.now ? 'Start pre-charting' : 'Start the day','primary',() => {
       const nd = $('#ndDate').value || next;
-      const chosen = activeType;
+      const chosen = activeType, useSame = !!($('#ndSame') && $('#ndSame').checked), sameP = useSame && sameList ? clone(sameList.patients) : null;
       const clearTasks = !!typeOf(chosen).tasks && !!($('#ndClearTasks') && $('#ndClearTasks').checked);
       if($('#ndBackup') && $('#ndBackup').checked) backupNow('quiet');
       autoBackup('before new shift', true); setTimeout(() => autoCheck('new shift'), 1500); setTimeout(tidyNudge, 4000);
       mutate(() => {
         if(state.patients.length){
           state.history = state.history.filter(h => h.date !== state.boardDate);
-          state.history.unshift({date:state.boardDate, shift:state.settings.shift, savedAt:new Date().toISOString(), patients:clone(state.patients)});
+          state.history.unshift({date:state.boardDate, shift:state.settings.shift, role:curRole, savedAt:new Date().toISOString(), patients:clone(state.patients)});
           if(state.history.length > 120) state.history.length = 120;
         }
         state.patients.forEach(p => {
@@ -3452,8 +3678,9 @@ function newDay(){
           const nc = colCfg('note');
           if(hasOpts(nc.type) && nc.opts.length) p.cells.note.t = ((p.status === 'Discharge' && optOf(nc,'Discharge')) || optOf(nc,'Progress') || nc.opts[0]).label;
         });
-        state.boardDate = nd;
-        state.shiftActive = true; state.shiftStartedAt = new Date().toISOString(); delete state.shiftEndedAt;
+        if(fresh){ state.patients = sameP ? sameP.map(p => Object.assign(p, {id:uid()})) : []; state.todos = []; }
+        state.boardDate = nd; state.settings.shift = typeOf(activeType).night ? 'night' : 'day'; delete state.capToday;
+        delete state.shiftActive; delete state.shiftStartedAt; delete state.shiftEndedAt;
         state.todos = (state.todos || []).filter(t => !t.done && (!t.pid || state.patients.some(p => p.id === t.pid)));   // open to-dos carry over
         if(clearTasks) state.todos = state.todos.filter(t => t.pid && t.src !== 'tasks');
       }, {label:`Started new shift — ${typeOf(activeType).label}, ${shiftLabel(nd, state.settings.shift)}`, cat:'shift'});
@@ -3467,25 +3694,26 @@ function newDay(){
 }
 
 /* ---------- shift active / ended ---------- */
-function boardStale(){
-  const night = state.settings.shift === 'night', endISO = addDays(state.boardDate, 1);
-  return night ? (todayISO() > endISO || (todayISO() === endISO && new Date().getHours() >= 12)) : todayISO() > state.boardDate;
-}
-const shiftIsActive = () => state.shiftActive === true && !boardStale();   // a shift is only active once you start one with New Shift
+// the board's date has passed: after midnight for a day shift, a couple of hours after a night or 27-hour shift ends
+function boardStale(){ const [y, m, d] = state.boardDate.split('-').map(Number), eod = new Date(y, m - 1, d, 23, 59, 59).getTime();
+  return Date.now() > Math.max(eod, shiftEndDate().getTime() + 2 * 3600e3); }
+const shiftIsActive = () => !!state && !boardStale();   // no starting or ending any more: the board is “current” until its date has passed
 const hhmm = iso => { const d = new Date(iso); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 function renderShiftPill(){
   const el = $('#shiftPill'); if(!el) return;
-  const on = shiftIsActive();
-  el.className = `shiftpill ${on ? 'on' : 'off'}`;
-  el.innerHTML = on ? '<i></i>Active' : '<i></i>No active shift';
-  el.title = on ? `Shift active${state.shiftStartedAt ? ' since ' + new Date(state.shiftStartedAt).toLocaleString() : ''} — click to end the shift`
-    : (state.shiftActive === false ? `Shift ended${state.shiftEndedAt ? ' at ' + new Date(state.shiftEndedAt).toLocaleString() : ''}` : 'The board date has passed') + ' — click to start a new shift';
-  const es = $('#endShiftBtn'), ns = $('#newDayBtn');
-  if(es){ es.disabled = !on; es.title = on ? 'End the current shift (nothing on the board is cleared)' : 'No shift in progress'; }
-  if(ns){ ns.disabled = on; ns.title = on ? 'End the current shift first, then start a new one' : 'Snapshot this board and start the next shift'; }
+  const h = boardHours(), cur = !boardStale();
+  el.className = `shiftpill ${h.off ? 'off' : 'on'} k-${h.base}`;
+  el.innerHTML = h.off ? '<i></i>Off' : `<i></i>${esc(h.label)}${h.role ? ' · ' + esc(h.role) : ''}`;
+  el.title = h.off ? 'No shift scheduled on this date — you can still chart' : `${h.label}${h.role ? ' · ' + h.role : ''} · ${h.start}–${h.end}${isRot(activeType) ? ' — click to change this date' : ''}`;
+  const es = $('#endShiftBtn'), ns = $('#newDayBtn'), nx = nextStart();
+  if(es){ es.disabled = false; es.textContent = '✓ Wrap up'; es.title = 'Copy the sign-out, print, back up — nothing is ended or locked'; }
+  if(ns){ ns.hidden = !nx; ns.disabled = false; ns.textContent = nx ? (nx.now ? `▶ ${startLabel(nx)}` : nx.date === addDays(todayISO(), 1) ? '▶ Pre-chart tomorrow' : `▶ Pre-chart ${fmtShort(nx.date)}`) : ''; ns.title = nx ? `${startLabel(nx, true)} — clears the daily columns, New → Existing, saves ${fmtNoYear(state.boardDate)} to History` : ''; ns.classList.toggle('now', !!(nx && nx.now)); }
 }
 function shiftPillClick(){
-  if(!shiftIsActive()){ newDay(); return; }
+  if(isRot(activeType)){ dayEdit(state.boardDate); return; }
+  if(boardStale()){ newDay(); return; }
+}
+function endShiftLegacy(){
   modal(`<h3>End this shift?</h3>
     <p><b>${esc(typeOf(activeType).label)}</b> · ${esc(shiftLabel(state.boardDate, state.settings.shift))}${state.shiftStartedAt ? ` · started ${hhmm(state.shiftStartedAt)}` : ''}</p>
     <p class="muted">Ending the shift turns the pill grey. Nothing on the board is cleared or changed. Start the next one with <b>New Shift</b> whenever you're ready.</p>
@@ -3542,7 +3770,7 @@ function settings(){
   modal(`<h3>Settings &amp; backup</h3>
     <div style="display:flex;gap:10px">
       <div style="flex:2"><label class="f">Team name</label><input type="text" id="sTeam" value="${esc(s.team)}"></div>
-      <div style="flex:1"><label class="f">Team cap (max patients)</label><input type="number" id="sCap" min="0" placeholder="e.g. 16" value="${s.cap || ''}"></div>
+      <div style="flex:1"><label class="f">Team cap (max patients)</label>${typeOf(activeType).nocap ? '<div class="muted small" style="padding:6px 0">No census cap on this service.</div><input type="hidden" id="sCap" value="0">' : typeOf(activeType).capVaries ? '<div class="muted small" style="padding:6px 0">Varies with the flex rooms — set it each day from the Overview or the Census panel.</div><input type="hidden" id="sCap" value="0">' : `<input type="number" id="sCap" min="0" placeholder="e.g. 16" value="${s.cap || ''}">`}</div>
       <div style="flex:1"><label class="f">Admission cap (per shift)</label><input type="number" id="sAdmitCap" min="0" placeholder="e.g. 5" value="${s.admitCap || ''}"></div>
     </div>
     <label class="f">Interns <span class="muted" style="font-weight:400">— cap = max patients for that intern (e.g. lower for a sub-intern); leave blank for no cap</span></label>
@@ -3560,7 +3788,7 @@ function settings(){
     <div style="margin-top:12px;display:flex;gap:8px;align-items:center"><button class="btn" id="bKeys">⌨ Keyboard shortcuts…</button><span class="muted">See and change every shortcut (press <kbd>?</kbd> on the board to view them).</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button class="btn" id="bDiag">🩺 Run self-check</button><span class="muted">Checks storage, saved boards, data integrity, backups and shortcuts.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Command bar <select id="sCmdDock"><option value="bottom" ${CMDDOCK.side === 'bottom' ? 'selected' : ''}>Strip along the bottom</option><option value="right" ${CMDDOCK.side === 'right' ? 'selected' : ''}>Panel on the right</option></select></label><span class="muted" id="cmdDockNote">Switch any time with ⇆ in the bar. The side panel can be resized by dragging its left edge, and it moves to the bottom when the window is too narrow. Saved on this computer.</span></div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>Board: ${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${esc(siteOf(activeType).label)}</span></span><button class="btn sm" id="bSwitchBoard">⇆ Switch board…</button><span class="muted">Opens the launch screen. Plexus also shows it every time it opens.</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>Board: ${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${esc(siteOf(activeType).label)}</span></span><button class="btn sm" id="bSwitchBoard">⇆ Switch board…</button>${isRot(activeType) ? '<button class="btn sm" id="bSched">🗓 Edit schedule…</button>' : ''}<button class="btn sm" id="bRotExp" ${Object.keys(ROTS).length ? '' : 'hidden'}>Save rotation schedules…</button><span class="muted">Opens the launch screen. Plexus also shows it every time it opens.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Layout <select id="sLayout"><option value="auto" ${LAYOUT === 'auto' ? 'selected' : ''}>Automatic (${touchMQ.matches ? 'touch on this device' : 'desktop on this device'})</option><option value="touch" ${LAYOUT === 'touch' ? 'selected' : ''}>Touch — iPad style</option><option value="desktop" ${LAYOUT === 'desktop' ? 'selected' : ''}>Desktop</option></select></label><span class="muted">Touch: tab bar at the bottom, ⌘ button for the command bar, swipe tasks, long-press a bed to change it.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Older shifts: move out anything older than <select id="sTidyDays">${TIDY_DAYS.map(d => `<option value="${d}" ${TIDY.days === d ? 'selected' : ''}>${d} days</option>`).join('')}</select></label><button class="btn sm" id="bTidy">🗄 Move older shifts out…</button><span class="muted">Keeps the data file small. Plexus also offers this when you start a new shift.</span></div>
     <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
@@ -3571,7 +3799,7 @@ function settings(){
       <button class="btn sm" id="mvGo">Move board</button><span class="muted small">For when a board was filed under the wrong shift type — patients, tasks, history and log all move.</span></div>
     <hr>
     <b>Data file <span class="muted" style="font-weight:500">— USB drive or network folder</span></b>
-    <p class="muted" style="margin:4px 0 8px">Keep your whole board (all four shift types, settings and shortcuts) in one file you carry with you. Every change saves to it automatically. On another computer, open this board and choose <b>Open my data file</b>. Works in Chrome and Edge. Use an encrypted, hospital-approved drive or folder.</p>
+    <p class="muted" style="margin:4px 0 8px">Keep everything (your rotations and boards, settings and shortcuts) in one file you carry with you. Every change saves to it automatically. On another computer, open this board and choose <b>Open my data file</b>. Works in Chrome and Edge. Use an encrypted, hospital-approved drive or folder.</p>
     <div class="dfstat ${DF.handle ? DF.status : 'off'}">${esc(dfStatusText())}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${dfSupported() ? `
       ${DF.handle && DF.status === 'needs' ? '<button class="btn primary" data-df="reconnect">Reconnect</button>' : ''}
@@ -3659,6 +3887,8 @@ function settings(){
       m.querySelector('#sCmdDock').onchange = e => cmdDockSet(e.target.value);
       m.querySelector('#sLayout').onchange = e => layoutSet(e.target.value);
       m.querySelector('#bSwitchBoard').onclick = () => { closeModal(); setTimeout(switchBoardFlow, 0); };
+      if(m.querySelector('#bSched')) m.querySelector('#bSched').onclick = () => { closeModal(); setTimeout(() => showRotSetup({edit:activeType}), 0); };
+      m.querySelector('#bRotExp').onclick = () => rotExport();
       m.querySelector('#sTidyDays').onchange = e => { TIDY.days = +e.target.value; tidySave(); };
       m.querySelector('#bTidy').onclick = () => { closeModal(); setTimeout(tidyRun, 0); };
       m.querySelector('#sIdle').onchange = e => { PRIV.idle = +e.target.value || 0; privSave(); toast(PRIV.idle ? `The screen hides after ${PRIV.idle} min without activity` : 'Automatic hiding is off'); };
@@ -3964,7 +4194,7 @@ function modal(html, buttons, after){
   modalEl.addEventListener('mousedown', e => { if(e.target === modalEl) closeModal(); });
   modalEl.querySelector('.actions').addEventListener('click', e => {
     const b = e.target.closest('button'); if(!b) return; const fn = buttons[+b.dataset.i][2];
-    if(fn) fn(); closeModal();
+    if(fn && fn() === false) return; closeModal();
   });
   modalEl.addEventListener('keydown', e => { if(e.key === 'Escape') closeModal(); });
   if(after) after(modalEl.querySelector('.modal'));
@@ -4574,8 +4804,9 @@ function timeInText(t){
   return null;
 }
 function dueFromTime(hhmm){ if(!/^\d\d:\d\d$/.test(hhmm || '')) return ''; return localISO(nearestDue(+hhmm.slice(0,2), +hhmm.slice(3,5))); }
-function shiftEndDate(){ const night = state.settings.shift === 'night', d = night ? addDays(state.boardDate, 1) : state.boardDate;
-  const [y, mo, da] = d.split('-').map(Number); return new Date(y, mo - 1, da, night ? 7 : 19, 30); }
+// the open board's shift, from its date's kind (rotations) or the shift type's usual hours
+function shiftStartDate(){ const h = boardHours(), [y, mo, da] = state.boardDate.split('-').map(Number), [a, b] = h.start.split(':').map(Number); return new Date(y, mo - 1, da, a, b); }
+function shiftEndDate(){ const h = boardHours(), st = shiftStartDate(), [a, b] = h.end.split(':').map(Number), e = new Date(st); e.setHours(a, b, 0, 0); if(e <= st || h.base === '24h') e.setDate(e.getDate() + 1); return e; }
 const taskList = () => (state.todos || []).filter(t => !t.pid || todoPatient(t));
 const bedKey = t => (todoWhere(t) || '').trim().toUpperCase();
 const admitByBed = bed => { const b = (bed || '').trim().toUpperCase(); if(!b) return null;
@@ -4633,24 +4864,23 @@ function flipSetOld(box, text){
 }
 const hms = ms => { const t = Math.max(0, Math.floor(ms / 1000)), h = Math.min(99, Math.floor(t / 3600)); return `${pad(h)}:${pad(Math.floor(t / 60) % 60)}:${pad(t % 60)}`; };
 const hm = ms => { const t = Math.max(0, Math.floor(ms / 60000)), h = Math.min(99, Math.floor(t / 60)); return `${pad(h)}:${pad(t % 60)}`; };
+const end0 = () => shiftEndDate();
 function tickClocks(){
   if(!$('#fcNow') || !state) return;
   try{ tickAsg(); }catch(e){}
   const n = new Date(); flipSet($('#fcNow'), `${pad(n.getHours())}:${pad(n.getMinutes())}`);
   $('#hcNow').dataset.tip = `Current time\n${n.toLocaleDateString(undefined, {weekday:'short', month:'short', day:'numeric'})}`;
-  const started = state.shiftStartedAt ? new Date(state.shiftStartedAt) : null, active = shiftIsActive(), end = shiftEndDate(), left = end - n, sh = $('#hcShift');
+  const started = shiftStartDate(), active = shiftIsActive() && n <= end0(), end = shiftEndDate(), left = end - n, sh = $('#hcShift');
   const t2 = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const lab = $('#hcShiftLab');
   if(started && active && n >= started){ lab.textContent = 'Shift Time'; flipSet($('#fcShift'), hm(n - started)); sh.className = 'hcl el'; sh.dataset.tip = `Shift elapsed\nstarted ${t2(started)} · ends ${t2(end)}${left > 0 ? ` · ${Math.floor(left / 3600000)}h ${pad(Math.floor(left / 60000) % 60)}m left` : ''}`; }
   else if(started && active){ lab.textContent = 'Starts In'; flipSet($('#fcShift'), hm(started - n)); sh.className = 'hcl el pre'; sh.dataset.tip = `Shift starts in\n(at ${t2(started)})`; }
-  else { lab.textContent = 'No Shift'; flipSet($('#fcShift'), '00:00'); sh.className = 'hcl el off'; sh.dataset.tip = 'No active shift\nstart one with New Shift'; }
+  else { lab.textContent = boardHours().off ? 'Off Today' : 'Shift Over'; flipSet($('#fcShift'), '00:00'); sh.className = 'hcl el off'; sh.dataset.tip = boardHours().off ? 'No shift on this date' : 'This date’s shift is over'; }
 }
 setInterval(tickClocks, 1000);
 /* Timeline view: one lane per bed across the shift, tasks placed at their times */
 function shiftWindow(timed){
-  const night = state.settings.shift === 'night', [y, m, d] = state.boardDate.split('-').map(Number);
-  const t24 = typeOf(activeType).span24;
-  let a = night && !t24 ? new Date(y, m - 1, d, 19, 0) : new Date(y, m - 1, d, 6, 0), b = night ? new Date(y, m - 1, d + 1, 8, 0) : new Date(y, m - 1, d, 20, 0);
+  let a = shiftStartDate(), b = shiftEndDate(); a = new Date(a.getTime() - 3600e3); a.setMinutes(0, 0, 0); b = new Date(b.getTime() + 3600e3); b.setMinutes(0, 0, 0);
   timed.forEach(t => { const x = new Date(t.due); if(x < a){ a = new Date(x); a.setMinutes(0, 0, 0); } if(x >= b){ b = new Date(x); b.setMinutes(0, 0, 0); b.setHours(b.getHours() + 1); } });
   return [a, b];
 }
@@ -5173,20 +5403,23 @@ async function idbSet(v){ try{ const db = await idb(); await new Promise((res, r
 async function idbGetHandle(){ try{ const db = await idb(); return await new Promise(res => { const r = db.transaction('h').objectStore('h').get('data'); r.onsuccess = () => res(r.result || null); r.onerror = () => res(null); }); }catch(e){ return null; } }
 function collectAll(){
   const boards = {}, logs = {};
-  SHIFT_TYPES.forEach(t => { try{
-    if(t.k === activeType){ boards[t.k] = JSON.parse(JSON.stringify(state)); logs[t.k] = actLog.slice(); return; }   // the open board straight from memory
-    const b = localStorage.getItem(storeKeyFor(t.k)); if(b) boards[t.k] = JSON.parse(b); const l = localStorage.getItem(logKeyFor(t.k)); if(l) logs[t.k] = JSON.parse(l); }catch(e){} });
-  return {kind:'wardsMatrixData', appVersion:APP_VERSION, edition:EDITION, savedAt:new Date().toISOString(), writer:TAB_ID, activeType, boards, logs, shortcuts:scOverrides, colWidths:ui.colW || {}};
+  allBoardIds().forEach(k => { try{
+    if(k === activeType){ boards[k] = JSON.parse(JSON.stringify(state)); logs[k] = actLog.slice(); return; }   // the open board straight from memory
+    const b = localStorage.getItem(storeKeyFor(k)); if(b) boards[k] = JSON.parse(b); const l = localStorage.getItem(logKeyFor(k)); if(l) logs[k] = JSON.parse(l); }catch(e){} });
+  return {kind:'wardsMatrixData', appVersion:APP_VERSION, edition:EDITION, savedAt:new Date().toISOString(), writer:TAB_ID, activeType, boards, logs, rotations:JSON.parse(JSON.stringify(ROTS)), shortcuts:scOverrides, colWidths:ui.colW || {}};
 }
 const pkgPatients = pkg => Object.values(pkg.boards || {}).reduce((n, b) => n + ((b && b.patients) || []).length, 0);
-function localHasData(){ return SHIFT_TYPES.some(t => { try{ const b = JSON.parse(localStorage.getItem(storeKeyFor(t.k)) || 'null'); return b && ((b.patients || []).length || (b.admits || []).length || (b.todos || []).length || (b.archive || []).length); }catch(e){ return false; } }); }
-function localPatients(){ return SHIFT_TYPES.reduce((n, t) => { try{ const b = JSON.parse(localStorage.getItem(storeKeyFor(t.k)) || 'null'); return n + ((b && b.patients) || []).length; }catch(e){ return n; } }, 0); }
+function localHasData(){ return allBoardIds().some(k => { try{ const b = JSON.parse(localStorage.getItem(storeKeyFor(k)) || 'null'); return b && ((b.patients || []).length || (b.admits || []).length || (b.todos || []).length || (b.archive || []).length); }catch(e){ return false; } }); }
+function localPatients(){ return allBoardIds().reduce((n, k) => { try{ const b = JSON.parse(localStorage.getItem(storeKeyFor(k)) || 'null'); return n + ((b && b.patients) || []).length; }catch(e){ return n; } }, 0); }
 function applyAll(pkg){
-  SHIFT_TYPES.forEach(t => { try{ if(pkg.boards && pkg.boards[t.k]) localStorage.setItem(storeKeyFor(t.k), JSON.stringify(pkg.boards[t.k])); else localStorage.removeItem(storeKeyFor(t.k));
-    if(pkg.logs && pkg.logs[t.k]) localStorage.setItem(logKeyFor(t.k), JSON.stringify(pkg.logs[t.k])); }catch(e){} });
+  // rotations travel with the data file; an older file without them leaves this device's rotations alone
+  const ids = [...SHIFT_TYPES.map(t => t.k)];
+  if(pkg.rotations && typeof pkg.rotations === 'object'){ Object.keys(ROTS).forEach(k => ids.push(k)); ROTS = JSON.parse(JSON.stringify(pkg.rotations)); rotSave(); Object.keys(ROTS).forEach(k => ids.push(k)); }
+  [...new Set(ids)].forEach(k => { try{ if(pkg.boards && pkg.boards[k]) localStorage.setItem(storeKeyFor(k), JSON.stringify(pkg.boards[k])); else localStorage.removeItem(storeKeyFor(k));
+    if(pkg.logs && pkg.logs[k]) localStorage.setItem(logKeyFor(k), JSON.stringify(pkg.logs[k])); }catch(e){} });
   if(pkg.shortcuts && typeof pkg.shortcuts === 'object'){ scOverrides = pkg.shortcuts; try{ localStorage.setItem(SC_KEY, JSON.stringify(scOverrides)); }catch(e){} }
   if(pkg.colWidths && typeof pkg.colWidths === 'object'){ ui.colW = pkg.colWidths; saveUI(); widthCSS(); }
-  if(pkg.activeType && SHIFT_TYPES.some(t => t.k === pkg.activeType)){ activeType = pkg.activeType; try{ localStorage.setItem(TYPE_KEY, activeType); }catch(e){} }
+  if(pkg.activeType && knownBoard(pkg.activeType)){ activeType = pkg.activeType; try{ localStorage.setItem(TYPE_KEY, activeType); }catch(e){} }
   state = load(); loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(activeType).tab; saveUI();
   try{ localStorage.setItem(LOCAL_SAVED_KEY, pkg.savedAt || new Date().toISOString()); }catch(e){}
   renderAll();
@@ -5390,28 +5623,35 @@ document.addEventListener('click', e => {
    Patients, admissions, tasks, archive and history start empty; settings, interns, columns and shortcuts carry over. */
 function newFileModal(){
   if(!dfSupported()){ toast('Saving to a file needs Chrome or Edge'); return; }
-  const def = activeType, today = todayISO(), hasData = localHasData();
-  const nameFor = (k, d) => { const t = typeOf(k); return `Plexus${SANDBOX ? ' SANDBOX' : ''} - ${t.short}${t.night ? '' : ' block'} - ${d}.json`; };
-  modal(`<h3>Start a new file</h3>
-    <p class="muted" style="margin-top:-4px">A clean board saved in its own file — one per night shift, or one for a whole day block. Your settings, interns, columns and shortcuts come along; patients, tasks and history start empty.</p>
-    <label class="f">Shift type</label>
-    ${typePickerHTML('nfType', def)}
-    <label class="f" id="nfDateLab">Shift date</label><input type="date" id="nfDate" value="${today}">
-    <label class="f">File name</label><input type="text" id="nfName">
-    <label class="ndbk"><input type="checkbox" id="nfStart" checked> Start the shift now (shows as Active)</label>
-    ${hasData ? `<label class="ndbk"><input type="checkbox" id="nfBackup" checked> First download a backup of what's on this computer now <span class="muted">(${localPatients()} patient${localPatients() === 1 ? '' : 's'})</span></label>` : ''}
-    <p class="muted small">Next you'll pick where to save it — choose your flash drive.</p>`,
-    [['Cancel'], ['Choose where to save…', 'primary', () => {
-      const k = (document.querySelector('input[name="nfType"]:checked') || {}).value || def, d = isISO($('#nfDate').value) ? $('#nfDate').value : today;
-      const name = ($('#nfName').value.trim() || nameFor(k, d)).replace(/[\\/:*?"<>|]+/g, '-').replace(/(\.json)?$/i, '.json');
-      const start = $('#nfStart').checked, bk = $('#nfBackup') && $('#nfBackup').checked;
-      setTimeout(() => dfStartNew(k, d, name, start, bk), 0);
+  const today = todayISO(), hasData = localHasData();
+  const R = Object.values(ROTS).sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+  const cur = R.find(r => !r.prn && r.start <= today && r.end >= today) || R.find(r => !r.prn && r.start > today);
+  const def = isRot(activeType) ? activeType : cur ? cur.id : activeType;
+  const nameFor = k => { const r = ROTS[k], t = typeOf(k);
+    if(r) return `Plexus${SANDBOX ? ' SANDBOX' : ''} - ${rotBlock(r) ? 'Block ' + rotBlock(r) + ' ' : ''}${r.name}${r.prn ? '' : ''}.json`.replace(/[\\/:*?"<>|]/g, '-');
+    return `Plexus${SANDBOX ? ' SANDBOX' : ''} - ${t.short}${t.night ? '' : ' block'} - ${today}.json`; };
+  modal(`<h3>Start a new data file</h3>
+    <p class="muted" style="margin-top:-4px">A clean file for one rotation (or a singular shift). Patients, tasks and history start empty; your rotation schedules, settings, interns, columns and shortcuts come along. Chrome or Edge saves every change to it.</p>
+    <label class="f">For</label>
+    <select id="nfBoard" style="width:100%">
+      ${R.length ? `<optgroup label="Rotations">${R.map(r => `<option value="${r.id}" ${r.id === def ? 'selected' : ''}>${rotBlock(r) ? 'Block ' + rotBlock(r) + ' · ' : ''}${esc(r.name)} · ${esc(fmtNoYear(r.start))} – ${esc(fmtNoYear(r.end))}</option>`).join('')}</optgroup>` : ''}
+      <optgroup label="Board without a schedule">${SHIFT_TYPES.map(t => `<option value="${t.k}" ${t.k === def ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</optgroup>
+    </select>
+    ${R.length ? '' : '<p class="muted small">No rotations yet — load your setup file from the launch screen first (Switch board… → Load a setup file…) and they’ll be listed here.</p>'}
+    <div id="nfDateW"><label class="f">Board date</label><input type="date" id="nfDate" value="${today}"></div>
+    <p class="muted small" id="nfRotNote"></p>
+    <label class="f">File name</label><input type="text" id="nfName" style="width:100%">
+    ${hasData ? `<label class="ndbk"><input type="checkbox" id="nfBackup" checked> Download a backup of what’s on this computer first</label>` : ''}`,
+    [['Cancel'], ['Create file…', 'primary', () => {
+      const k = $('#nfBoard').value, r = ROTS[k], d = r ? rotStartDate(r) : ($('#nfDate').value || today);
+      const name = ($('#nfName').value.trim() || nameFor(k)).replace(/(\.json)?$/i, '.json'), bk = $('#nfBackup') && $('#nfBackup').checked;
+      setTimeout(() => dfStartNew(k, d, name, false, bk), 0);
     }]], m => {
       m.classList.add('wide');
-      wireTypePicker(m, 'nfType', () => upd());
-      const upd = () => { const k = (m.querySelector('input[name="nfType"]:checked') || {}).value || def; $('#nfDateLab').textContent = typeOf(k).span24 ? 'Shift date (the morning it starts)' : typeOf(k).night ? 'Shift date (the evening it starts)' : 'Block start date'; $('#nfName').value = nameFor(k, $('#nfDate').value || today); };
-      m.addEventListener('change', e => { if(e.target.name === 'nfType' || e.target.id === 'nfDate') upd(); });
-      upd();
+      const upd = () => { const k = m.querySelector('#nfBoard').value, r = ROTS[k];
+        m.querySelector('#nfName').value = nameFor(k); m.querySelector('#nfDateW').hidden = !!r;
+        m.querySelector('#nfRotNote').innerHTML = r ? `Opens on <b>${esc(fmtNoYear(rotStartDate(r)))}</b>${rotDay(r, rotStartDate(r)) ? ' · ' + kindChip(rotDay(r, rotStartDate(r))) : ''} — pre-chart from there.` : ''; };
+      m.querySelector('#nfBoard').addEventListener('change', upd); upd();
     });
 }
 async function dfStartNew(k, d, name, start, bk){
@@ -5422,15 +5662,14 @@ async function dfStartNew(k, d, name, start, bk){
   if(localHasData()) await autoBackup('before new file', true);
   const keepSettings = t => { try{ const b = t === activeType ? state : JSON.parse(localStorage.getItem(storeKeyFor(t)) || 'null'); return b && b.settings ? JSON.parse(JSON.stringify(b.settings)) : null; }catch(e){ return null; } };
   const base = keepSettings(activeType) || {};
-  SHIFT_TYPES.forEach(t => {
-    const st = keepSettings(t.k) || {...JSON.parse(JSON.stringify(base)), team: t.k === activeType ? base.team : (base.team || '')};
-    const board = {version:1, boardDate: t.k === k ? d : todayISO(), patients:[], admits:[], archive:[], history:[], todos:[], settings:st};
-    if(t.k === k && start){ board.shiftActive = true; board.shiftStartedAt = new Date().toISOString(); }
-    try{ localStorage.setItem(storeKeyFor(t.k), JSON.stringify(board)); localStorage.setItem(logKeyFor(t.k), '[]'); }catch(e){}
+  allBoardIds().forEach(bid => {
+    const st = keepSettings(bid) || {...JSON.parse(JSON.stringify(base)), team: bid === activeType ? base.team : (base.team || '')};
+    const board = {version:1, boardDate: bid === k ? d : isRot(bid) ? rotStartDate(ROTS[bid]) : todayISO(), patients:[], admits:[], archive:[], history:[], todos:[], settings:st};
+    try{ localStorage.setItem(storeKeyFor(bid), JSON.stringify(board)); localStorage.setItem(logKeyFor(bid), '[]'); }catch(e){}
   });
   activeType = k; try{ localStorage.setItem(TYPE_KEY, k); }catch(e){}
   state = load(); loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(k).tab; if(typeOf(k).admitOnly) ui.admitView = 'today'; saveUI();
-  logAdd([{cat:'shift', msg:`Started a new file ${h.name} — ${typeOf(k).label}, ${shiftLabel(d, typeOf(k).night ? 'night' : 'day')}${start ? ' (shift started)' : ''}`}]);
+  logAdd([{cat:'shift', msg:`Started a new data file ${h.name} — ${typeOf(k).label}, from ${fmtNoYear(d)}`}]);
   DF.handle = h; DF.name = h.name; DF.status = 'ok'; DF.lastMod = 0; await idbSet(h);
   renderAll(); await dfWrite();
   if(DF.status === 'ok') toast(`New file ${h.name} — saving to it now`);
@@ -5659,8 +5898,9 @@ function cmdParse(input){
     backup:['Back up now (download + automatic copy)', () => { backupNow(); autoBackup('manual', true); return ''; }],
     print:['Print the sign-out sheet', () => { printSheet(); return ''; }], take:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], leaving:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], hide:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }], lock:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }],
     whatsnew:['What’s new in this version', () => { whatsNew(null); return ''; }], changes:['What’s new in this version', () => { whatsNew(null); return ''; }],
-    newshift:['Start a new shift…', () => { newDay(); return ''; }], endshift:['End this shift…', () => { if(!shiftIsActive()) return 'No active shift'; shiftPillClick(); return ''; }]};
-  if(simple[v] && !rest.length) return {html:simple[v][0], run:simple[v][1], nav:['validate','full','rounds','newshift','endshift','print','hide','lock','whatsnew','changes','take','leaving','tidy'].includes(v)};
+    newshift:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], start:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], precharting:['Start pre-charting for the next day…', () => { newDay(); return ''; }],
+    endshift:['Wrap up — sign-out, print, backup', () => { wrapUp(); return ''; }], wrapup:['Wrap up — sign-out, print, backup', () => { wrapUp(); return ''; }], schedule:['Edit this rotation’s schedule', () => { if(!isRot(activeType)) return 'This board has no schedule'; showRotSetup({edit:activeType}); return ''; }]};
+  if(simple[v] && !rest.length) return {html:simple[v][0], run:simple[v][1], nav:['validate','full','rounds','newshift','endshift','start','precharting','wrapup','schedule','print','hide','lock','whatsnew','changes','take','leaving','tidy'].includes(v)};
   if(v === 'admit' || v === 'hold'){
     const hold = v === 'hold';
     if(hold && !typeOf(activeType).holds) return {err:'Moonlighter holds are for Bellevue Night Admitting'};
@@ -5932,7 +6172,7 @@ function tabLock(){
 }
 async function tabTakeOver(){
   tabLocked = false; $('#tabLock').hidden = true;
-  try{ const k = localStorage.getItem(TYPE_KEY); if(SHIFT_TYPES.some(x => x.k === k)) activeType = k; }catch(e){}
+  try{ const k = localStorage.getItem(TYPE_KEY); if(knownBoard(k)) activeType = k; }catch(e){}
   state = load(); loadLog(); undoStack.length = 0; redoStack.length = 0; tabClaim(); renderAll();
   if(DF.handle && DF.status === 'ok'){ try{ const f = await DF.handle.getFile(); DF.lastMod = f.lastModified; }catch(e){} }
   toast('This tab is now the active one');
@@ -6064,7 +6304,7 @@ function admLane(a){
 function ovGoTab(t){ ui.tab = t; saveUI(); closePop(); renderChrome(); }
 function renderOverview(){
   const V = $('#view-overview'); if(!V || !state) return;
-  const ps = state.patients, cap = +state.settings.cap || 0, n = ps.length, d = state.boardDate, now = new Date();
+  const ps = state.patients, ci = capInfo(), cap = ci.cap, n = ps.length, d = state.boardDate, now = new Date();
   const T = typeOf(activeType), night = state.settings.shift === 'night';
   const nw = ps.filter(p => p.status === 'New').length;
   const spots = cap ? cap - n : null;
@@ -6089,7 +6329,7 @@ function renderOverview(){
     .sort((x, y) => y.f.filter(f => f[0] === 'bad').length - x.f.filter(f => f[0] === 'bad').length || y.f.length - x.f.length);
   const panic = att.filter(x => x.f.some(f => /panic/i.test(f[1]))).length;
   // shift clock
-  const end = shiftEndDate(), start = state.shiftStartedAt ? new Date(state.shiftStartedAt) : new Date(end - 12.5*3600e3);
+  const end = shiftEndDate(), start = shiftStartDate();
   const pct = Math.max(0, Math.min(100, (now - start) / (end - start) * 100)), left = Math.max(0, end - now);
   const t2 = x => `${pad(x.getHours())}:${pad(x.getMinutes())}`;
   const kpi = (go, label, dot, val, sub, extra = '') => `<div class="kpi" data-ovgo="${go}"><div class="kl"><i class="dot ${dot}"></i>${label}</div><div class="kv">${val}</div><div class="ks">${sub}</div>${extra}</div>`;
@@ -6115,7 +6355,8 @@ function renderOverview(){
 
   const band = kp => `<div class="hubband">
       <div class="hubtop"><span class="hublive"><i></i>LIVE</span><span><b>${esc(T.label)}</b>${state.settings.team ? ' · ' + esc(state.settings.team) : ''}</span><span>${esc(shiftLabel(d, state.settings.shift))}</span><span class="hubclock" id="ovClock">${t2(now)}</span></div>
-      <div class="hubprog"><span>${t2(start)}</span><span class="bar"><i style="width:${pct.toFixed(1)}%"></i></span><span>${t2(end)}</span><span style="color:#cfd8e6">${Math.floor(left/3600e3)}h ${pad(Math.floor(left/60000) % 60)}m left</span></div>
+      ${(() => { const nx = nextStart(); return nx ? `<div class="hubnext"><span>${nx.now ? 'The board is still on ' + esc(fmtNoYear(state.boardDate)) : 'Next: ' + (dayKindTxt(activeType, nx.date) || esc(fmtNoYear(nx.date)))}</span><button class="btn sm ${nx.now ? 'primary' : ''}" id="ovNext">▶ ${esc(startLabel(nx, true))}</button></div>` : ''; })()}
+      <div class="hubprog"><span>${t2(start)}</span><span class="bar"><i style="width:${pct.toFixed(1)}%"></i></span><span>${t2(end)}</span><span style="color:#cfd8e6">${boardHours().off ? 'off this date' : now < start ? (() => { const m = Math.round((start - now) / 60000); return m >= 1440 ? `starts ${fmtNoYear(state.boardDate)}` : `starts in ${Math.floor(m / 60)}h ${pad(m % 60)}m`; })() : left > 0 ? `${Math.floor(left/3600e3)}h ${pad(Math.floor(left/60000) % 60)}m left` : 'shift over'}</span></div>
       <div class="kpis">${kp}</div></div>`;
   if(T.admitOnly){   // admitting shift: the whole page is the admissions pipeline
     const acap = +state.settings.admitCap || 0, ph = k => lanes[k].length;
@@ -6135,7 +6376,9 @@ function renderOverview(){
   V.innerHTML = `<div class="hub">
     ${band(`
         ${kpi('census', 'Census', cap && n >= cap ? 'red' : cap && n >= cap - 2 ? 'amb' : '', `${n}${cap ? `<small>/${cap}</small>` : ''}`, `<b>${nw}</b> new · <b>${n - nw}</b> existing`, censusMini)}
-        ${kpi('census', 'Open spots', spots == null ? 'off' : spots <= 0 ? 'red' : spots <= 2 ? 'amb' : '', spots == null ? '—' : spots < 0 ? `<span style="color:#ff8a80">${spots}</span>` : spots, spots == null ? 'No team cap set' : next ? `Next up: <b>${esc(next.name)}</b>` : spots <= 0 ? '<span class="r">At cap</span>' : 'Under cap', spotMini)}
+        ${ci.mode === 'nocap' ? kpi('census', 'Census cap', 'off', 'None', next ? `No cap on this service · next up: <b>${esc(next.name)}</b>` : 'No cap on this service')
+          : ci.mode === 'varies' && !cap ? `<div class="kpi" data-capset><div class="kl"><i class="dot amb"></i>Today’s cap</div><div class="kv">?</div><div class="ks">Flex rooms — <b>tap to set today’s</b></div></div>`
+          : kpi('census', ci.mode === 'varies' ? 'Open spots (today)' : 'Open spots', spots == null ? 'off' : spots <= 0 ? 'red' : spots <= 2 ? 'amb' : '', spots == null ? '—' : spots < 0 ? `<span style="color:#ff8a80">${spots}</span>` : spots, spots == null ? 'No team cap set' : next ? `Next up: <b>${esc(next.name)}</b>${ci.mode === 'varies' ? ` · cap ${cap} <a href="#" data-capset style="color:#9fb0c8">✎</a>` : ''}` : spots <= 0 ? '<span class="r">At cap</span>' : 'Under cap', spotMini)}
         ${kpi('admits', 'Admits in progress', admDot, `${inProg}<small>/${adm.length}</small>`, `<b>${lanes.wait.length}</b> not seen${longest ? ` · longest <span class="${longest > 2*3600e3 ? 'r' : longest > 3600e3 ? 'a' : ''}">${asgHM(longest)}</span>` : ''}${holds.length ? ` · <b>${holds.length}</b> hold${holds.length === 1 ? '' : 's'}` : ''}`)}
         ${kpi('discharges', 'Discharges', dcT.length ? (dcReady === dcT.length ? '' : 'amb') : 'off', `${dcT.length}`, `<b>${dcReady}</b> ready · <b>${dcT.length - dcReady}</b> in progress · <b>${dcTm.length}</b> tmrw${xf.length ? ` · <b>${xf.length}</b> xfer` : ''}`)}
         ${kpi(T.tasks ? 'tasks' : 'census', 'Open tasks', over.length ? 'red' : in1h.length ? 'amb' : '', `${open.length}`, `${over.length ? `<span class="r">${over.length} overdue</span>` : '<b>0</b> overdue'} · <b>${in1h.length}</b> due in 1 h`)}
@@ -6341,14 +6584,15 @@ function moreSheet(){
     ${$('#tabs button[data-tab=census]').hidden ? '' : ''}
     <h5>Shift</h5>
     <button class="row" data-do="switch"><span class="ic">⇆</span>Switch board…<span class="sub">${esc(typeOf(activeType).label)}</span></button>
-    ${$('#newDayBtn').disabled ? '' : '<button class="row" data-do="newDayBtn"><span class="ic">▶</span>New Shift</button>'}
-    <button class="row red" data-do="endShiftBtn"><span class="ic">■</span>End Shift</button>
+    ${nextStart() ? `<button class="row" data-do="newDayBtn"><span class="ic">▶</span>${esc(startLabel(nextStart()))}</button>` : ''}
+    <button class="row" data-do="endShiftBtn"><span class="ic">✓</span>Wrap up</button>
+    ${isRot(activeType) ? '<button class="row" data-do="sched"><span class="ic">🗓</span>Edit schedule</button>' : ''}
     <h5>This ${/iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'device'}</h5>
     <button class="row" data-do="files"><span class="ic">⬇</span>Back up to Files<span class="sub ${due ? 'due' : ''}">${at ? 'last ' + agoText(at) : 'not yet'}</span></button>
     <button class="row" data-do="restore"><span class="ic">↺</span>Restore from Files…</button>
     <button class="row" data-do="privBtn"><span class="ic">👁</span>Hide screen</button>
     <button class="row" data-do="settingsBtn"><span class="ic">⚙</span>Settings</button>`,
-  d => { if(d.startsWith('tab:')) touchTab(d.slice(4)); else if(d === 'files') filesBackup(); else if(d === 'restore') filesRestorePick(); else if(d === 'switch') switchBoardFlow(); else { const b = document.getElementById(d); if(b) b.click(); } });
+  d => { if(d.startsWith('tab:')) touchTab(d.slice(4)); else if(d === 'files') filesBackup(); else if(d === 'restore') filesRestorePick(); else if(d === 'switch') switchBoardFlow(); else if(d === 'sched') showRotSetup({edit:activeType}); else { const b = document.getElementById(d); if(b) b.click(); } });
 }
 // ---- command bar: tappable starters ----
 function cmdChips(){
@@ -6416,71 +6660,344 @@ function boardInfo(k){
   const stale = b.boardDate && b.boardDate < addDays(todayISO(), -1);
   const counts = [n && `${n} patient${n === 1 ? '' : 's'}`, a && `${a} admission${a === 1 ? '' : 's'}`, t && `${t} open task${t === 1 ? '' : 's'}`].filter(Boolean).join(' · ');
   if(!any && !(b.history || []).length) return {n, a, t, txt:'Empty', cls:'s-empty'};
-  if(b.shiftActive === false) return {n, a, t, txt:`Shift ended · ${sh}${counts ? ' · ' + counts : ''}`, cls:'s-ended'};
   if(stale) return {n, a, t, txt:`Last used ${sh}${counts ? ' · ' + counts : ''}`, cls:'s-ended'};
-  return {n, a, t, txt:`Shift in progress · ${sh}${counts ? ' · ' + counts : ''}`, cls:'s-live'};
+  return {n, a, t, txt:`On ${sh}${counts ? ' · ' + counts : ''}`, cls:'s-live'};
 }
 function showLaunch(opts = {}){
   closeModal(); try{ cmdClose(false); }catch(e){}
   launching = true; document.body.classList.add('launching');
-  let sel = activeType, site = typeOf(sel).site;
+  let view = opts.view || 'rot', sel = activeType, site = isRot(activeType) ? (ROTS[activeType].site || 'tisch') : typeOf(activeType).site;
   let el = $('#launch'); if(!el){ el = document.createElement('div'); el.id = 'launch'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Choose your board'); document.body.appendChild(el); }
   el.hidden = false;
-  const now = new Date();
+  const today = todayISO();
+  const legacyWithData = () => SHIFT_TYPES.filter(t => t.k === activeType || boardInfo(t.k).cls !== 's-empty');
+  const rotsSorted = () => Object.values(ROTS).sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+  const nextWork = (r, from) => { for(let d = from, n = 0; n < 180; d = addDays(d, 1), n++) if(rotDay(r, d)) return d; return ''; };
+  // one line of status for a board: today's shift, the next one, or when it starts / ended
+  const status = (k, full) => { const r = ROTS[k];
+    if(!r){ const i = boardInfo(k); return {txt:i.cls === 's-empty' ? 'Empty' : 'Last on ' + i.txt.replace(/^On /, '').split(' · ')[0].replace(/, \d{4}$/, ''), cls:i.cls === 's-empty' ? 'mute' : 'off'}; }
+    const w = rotWorkDate(r), kd = rotDay(r, w);
+    if(r.start > today){ const f = nextWork(r, r.start); return {txt:`Starts ${fmtNoYear(f || r.start)}${f && full ? ' · ' + dayKindTxt(k, f) : ''}`, cls:'soon'}; }
+    if(r.end < today) return {txt:`Ended ${fmtNoYear(r.end)}`, cls:'mute'};
+    if(kd) return {txt:`Today · ${kindChip(kd)}`, cls:'live'};
+    const nx = nextWork(r, addDays(w, 1)); return {txt:`Off today${nx ? ` · next ${fmtNoYear(nx)} · ${dayKindTxt(k, nx)}` : ''}`, cls:'off'}; };
+  const counts = k => { const i = boardInfo(k); return i.cls === 's-empty' ? '' : [i.n && `${i.n} pt${i.n === 1 ? '' : 's'}`, i.a && `${i.a} adm`, i.t && `${i.t} task${i.t === 1 ? '' : 's'}`].filter(Boolean).join(' · '); };
+  const sub = k => { const r = ROTS[k]; if(!r) return typeKindTxt(typeOf(k));
+    if(r.prn) return `${r.kinds.shift.start}–${r.kinds.shift.end}${r.note ? ' · ' + r.note : ''}`;
+    const n = rotWorkdays(r).length; return `${fmtNoYear(r.start)} – ${fmtNoYear(r.end)} · ${r.jeop ? 'back-up call' : n + ' shift' + (n === 1 ? '' : 's')}`; };
+  const row = k => { const T = typeOf(k), r = ROTS[k], st = status(k), c = counts(k);
+    return `<button type="button" class="lrow ${k === sel ? 'on' : ''}" data-lk="${k}">
+      <span class="lblkw">${rotBlock(r) ? `<i>BLOCK</i><span class="lblk" title="Block ${rotBlock(r)}">${rotBlock(r)}</span>` : ''}</span><span class="lri">${esc(r ? (r.icon || '🗓') : T.icon)}</span>
+      <span class="lrm"><span class="lrn">${esc(T.label)}${r && r.prn ? '<i class="ltag sg">SINGULAR</i>' : ''}${k === activeType ? '<i class="ltag last">LAST USED</i>' : ''}</span><span class="lrs">${esc(sub(k))}</span></span>
+      <span class="lrst ${st.cls}">${st.txt}</span>
+      <span class="lrc">${esc(c)}</span><span class="lrx">›</span></button>`; };
+  const panel = (title, ids, extra = '') => ids.length ? `<section class="lpanel"><header><h4>${title}</h4><span class="n">${ids.length}</span>${extra}</header>${ids.map(row).join('')}</section>` : '';
+  // what the board up top is: the current rotation (by date), the next one, a later or earlier one, a singular shift…
+  const kicker = k => { const r = ROTS[k]; if(!r) return knownBoard(k) ? 'Board without a schedule' : '';
+    if(r.prn) return r.end < today ? 'Past singular shift' : 'Singular shift';
+    if(r.start <= today && r.end >= today) return 'Current rotation';
+    if(r.end < today) return 'Past rotation';
+    const nx = Object.values(ROTS).filter(x => !x.prn && x.start > today).sort((a, b) => a.start.localeCompare(b.start))[0];
+    return nx && nx.id === r.id ? 'Next rotation' : 'Upcoming rotation'; };
   const draw = () => {
-    const T = typeOf(sel), cont = sel === activeType;
+    const okSel = knownBoard(sel), T = okSel ? typeOf(sel) : null, cont = sel === activeType, st = okSel ? status(sel, true) : null, c = okSel ? counts(sel) : '';
+    const now = new Date();
+    let body = '';
+    if(view === 'rot'){
+      const R = rotsSorted().filter(r => !r.prn), P = rotsSorted().filter(r => r.prn);
+      const nowR = R.filter(r => r.start <= today && r.end >= today), up = R.filter(r => r.start > today), past = R.filter(r => r.end < today).reverse();
+      const Pnow = P.filter(r => r.end >= addDays(today, -1)), Ppast = P.filter(r => r.end < addDays(today, -1)).reverse(), L = legacyWithData().map(t => t.k);
+      body = `${panel('Now', nowR.map(r => r.id))}${panel('Singular shifts', Pnow.map(r => r.id))}${panel('Coming up', up.map(r => r.id))}${panel('Earlier', [...past, ...Ppast].map(r => r.id))}
+        ${!R.length && !P.length ? '<section class="lpanel lempty">No rotations yet — <b>New rotation</b> sets one up from a template, or load a setup file made from your Amion schedule.</section>' : ''}
+        ${panel('Boards without a schedule', L)}
+        <div class="lact"><button type="button" class="btn" data-lnew>＋ New rotation</button><button type="button" class="btn" data-lprn>＋ Singular shift</button><button type="button" class="btn" data-lfile>Load a setup file…</button><span class="sp"></span><button type="button" class="btn link" data-lview="types">Board without a schedule…</button></div>`;
+    } else {
+      body = `<section class="lpanel"><header><h4>Boards without a schedule</h4><div class="lsites">${SITES.map(x => `<button type="button" data-lsite="${x.k}" class="${x.k === site ? 'on' : ''}">${esc(x.label)}</button>`).join('')}</div></header>
+        ${SHIFT_TYPES.filter(t => t.site === site).map(t => row(t.k)).join('')}</section>
+        <div class="lact"><button type="button" class="btn link" data-lview="rot">← Rotations</button></div>`;
+    }
     el.innerHTML = `<div class="lbox">
-      <div class="lhead"><span class="brandname">PLEXUS</span>${SANDBOX ? '<span class="lsbx">SANDBOX · demo data</span>' : ''}<span class="lclock">${now.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'})} · ${pad(now.getHours())}:${pad(now.getMinutes())}</span></div>
-      <h2>${opts.switching ? 'Switch to another board' : 'Choose your board'}</h2>
-      <p class="muted lsub">Each board keeps its own patients, admissions and tasks. Once it’s open, the board stays fixed until you come back here.</p>
-      <div class="lsites" role="tablist">${SITES.map(x => `<button type="button" role="tab" data-lsite="${x.k}" class="${x.k === site ? 'on' : ''}">${esc(x.label)}</button>`).join('')}</div>
-      <div class="lgrid">${SHIFT_TYPES.filter(t => t.site === site).map(t => { const i = boardInfo(t.k);
-        return `<button type="button" class="lcard ${t.k === sel ? 'on' : ''} ${i.cls}" data-lk="${t.k}">
-          <span class="lic">${t.icon}</span><span class="lt"><b>${esc(t.label)}</b>${t.k === activeType ? '<i class="llast">LAST USED</i>' : ''}<br><span class="lk">${typeKindTxt(t)}</span><span class="ls"><i class="lsdot ${i.cls}"></i>${esc(i.txt)}</span></span></button>`; }).join('')}</div>
-      <div class="lfoot">
-        ${opts.switching ? `<button type="button" class="btn" data-lback>← Back to ${esc(typeOf(activeType).label)}</button>` : ''}
-        <span class="lsel">${T.icon} <b>${esc(T.label)}</b> <span class="muted">· ${esc(siteOf(sel).label)}</span></span>
-        <button type="button" class="btn primary lgo" data-lgo>${cont ? 'Continue' : 'Load board'} →</button>
+      <div class="lhero">
+        <div class="lhtop"><span class="brandname">PLEXUS</span>${SANDBOX ? '<span class="lsbx">SANDBOX</span>' : ''}<span class="lclock">${now.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'})} · <b>${pad(now.getHours())}:${pad(now.getMinutes())}</b></span></div>
+        <div class="lhmain">
+          <div class="lhl"><div class="lgreet">${kicker(sel)}</div>
+            ${okSel ? `<div class="lhname">${rotBlock(ROTS[sel]) ? `<span class="lhblk"><i>BLOCK</i>${rotBlock(ROTS[sel])}</span>` : ''}<span>${esc(ROTS[sel] ? (ROTS[sel].icon || '') : T.icon)}</span><span>${esc(T.label)}</span></div><div class="lhsub">${esc(sub(sel))}</div>
+              <div class="lhst"><span class="lhpill ${st.cls}">${st.txt}</span>${c ? `<span class="lhc">${esc(c)}</span>` : ''}</div>` : '<div class="lhname">Pick a board</div>'}</div>
+          <div class="lhr">${opts.switching ? `<button type="button" class="btn ghost" data-lback>← Back to ${esc(typeOf(activeType).label)}</button>` : ''}
+            <button type="button" class="btn lgo" data-lgo ${okSel ? '' : 'disabled'}>${cont ? 'Continue' : 'Open'} →</button></div>
+        </div>
       </div>
-      <div class="lver muted">Plexus v${APP_VERSION}${SANDBOX ? ' · Sandbox (test data only)' : ''}</div>
+      ${body}
+      <div class="lver">Plexus v${APP_VERSION}${SANDBOX ? ' · Sandbox — test data only' : ''}</div>
     </div>`;
-    if(!isTouch()) setTimeout(() => { const g = el.querySelector('[data-lgo]'); if(g) g.focus({preventScroll:true}); }, 0);
+    if(!isTouch()) setTimeout(() => { const g = el.querySelector('[data-lgo]'); if(g && !g.disabled) g.focus({preventScroll:true}); }, 0);
   };
-  const pickSite = s => { site = s; if(typeOf(sel).site !== s) sel = (SHIFT_TYPES.find(t => t.site === s && t.k === activeType) || SHIFT_TYPES.find(t => t.site === s)).k; draw(); };
+  el.onchange = null;
   el.onclick = e => {
-    const s = e.target.closest('[data-lsite]'); if(s){ pickSite(s.dataset.lsite); return; }
+    const v = e.target.closest('[data-lview]'); if(v){ view = v.dataset.lview; draw(); return; }
+    const s = e.target.closest('[data-lsite]'); if(s){ site = s.dataset.lsite; draw(); return; }
     const c = e.target.closest('[data-lk]'); if(c){ sel = c.dataset.lk; draw(); if(e.detail === 2) go(); return; }
+    if(e.target.closest('[data-lnew]')){ showRotSetup({launchOpts:opts}); return; }
+    if(e.target.closest('[data-lprn]')){ showPrnSetup(opts); return; }
+    if(e.target.closest('[data-lfile]')){ rotFilePick(); return; }
     if(e.target.closest('[data-lgo]')){ go(); return; }
     if(e.target.closest('[data-lback]')){ sel = activeType; go(); }
   };
-  el.onkeydown = null;
   launchKeys = e => {
-    const list = SHIFT_TYPES.filter(t => t.site === site), i = list.findIndex(t => t.k === sel);
-    if(e.key === 'ArrowDown' || e.key === 'ArrowRight' && e.target.closest('.lcard')){ e.preventDefault(); sel = list[Math.min(list.length - 1, i + 1)].k; draw(); }
-    else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft' && e.target.closest('.lcard')){ e.preventDefault(); sel = list[Math.max(0, i - 1)].k; draw(); }
+    const list = [...el.querySelectorAll('[data-lk]')].map(x => x.dataset.lk), i = list.indexOf(sel);
+    if(e.key === 'ArrowDown' || e.key === 'ArrowRight' && e.target.closest('.lrow')){ e.preventDefault(); if(list.length){ sel = list[Math.min(list.length - 1, i + 1)]; draw(); } }
+    else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft' && e.target.closest('.lrow')){ e.preventDefault(); if(list.length){ sel = list[Math.max(0, i - 1)]; draw(); } }
     else if(e.key === 'Escape' && opts.switching){ e.preventDefault(); sel = activeType; go(); }
   };
   const go = () => {
-    const k = sel; el.hidden = true; launching = false; document.body.classList.remove('launching'); launchKeys = null;
+    const k = sel; if(!knownBoard(k)) return;
+    el.hidden = true; launching = false; document.body.classList.remove('launching'); launchKeys = null;
     if(k !== activeType) switchBoard(k);
     else { ui.tab = 'overview'; saveUI(); renderAll(); }
     while(launchQ.length){ try{ launchQ.shift()(); }catch(err){ console.error(err); } }
+    setTimeout(rolloverPrompt, 400);
   };
   draw();
 }
 var launchKeys = null;
 // while the launch screen is up, nothing else reacts to the keyboard (no command bar, shortcuts or arrow navigation underneath)
-window.addEventListener('keydown', e => { if(!launching) return; e.stopImmediatePropagation(); if(launchKeys) launchKeys(e); }, true);
+window.addEventListener('keydown', e => { if(!launching || (modalEl && e.target.closest && e.target.closest('.scrim'))) return; e.stopImmediatePropagation(); if(launchKeys) launchKeys(e); }, true);
 async function switchBoardFlow(){
   if(launching) return;
-  const T = typeOf(activeType), mid = shiftIsActive() && (state.patients.length || state.admits.some(a => a.date === state.boardDate) || state.todos.some(t => !t.done));
-  if(mid){ const go = await askChoice(`<h3>Switch board?</h3><p>You have a shift in progress on <b>${T.icon} ${esc(T.label)}</b> — ${esc(boardInfo(activeType).txt.replace(/^Shift in progress · /, ''))}.</p>
+  const T = typeOf(activeType), mid = !boardStale() && (state.patients.length || state.admits.some(a => a.date === state.boardDate) || state.todos.some(t => !t.done));
+  if(mid){ const go = await askChoice(`<h3>Switch board?</h3><p>You’re working on <b>${T.icon} ${esc(T.label)}</b> — ${esc(boardInfo(activeType).txt.replace(/^On /, ''))}.</p>
       <p class="muted">It stays exactly as it is. You can come back to it from the launch screen any time.</p>`, [['Cancel', '', false], ['Switch board…', 'primary', true]]);
     if(!go) return; }
   showLaunch({switching:true});
 }
 
+
+/* ---------- 🗓 Rotations: the day rolls over instead of shifts starting and ending ---------- */
+// What “Start …” means right now: today's workday if the board hasn't started it, otherwise the next scheduled workday (pre-charting)
+function nextStart(){
+  const r = ROTS[activeType], b = state.boardDate;
+  if(!r) return boardStale() ? {date:todayISO(), now:true} : b > todayISO() ? null : {date:addDays(b, 1), now:false};
+  const w = rotWorkDate(r);
+  if(b > w) return null;                                   // already pre-charting ahead
+  if(w > b && rotDay(r, w)) return {date:w, now:true};
+  let d = w > b ? w : addDays(b, 1);
+  for(let i = 0; i < 120; i++, d = addDays(d, 1)) if(rotDay(r, d)) return {date:d, now:d <= w};
+  if(r.jeop) return {date:w > b ? w : addDays(b, 1), now:w > b};
+  return null;
+}
+function startLabel(ns, long){
+  if(!ns) return ''; const t = todayISO();
+  if(ns.now || ns.date <= t) return long ? `Start today — ${fmtNoYear(ns.date)}` : `Start today`;
+  if(ns.date === addDays(t, 1)) return 'Start pre-charting for tomorrow';
+  return `Start pre-charting for ${fmtNoYear(ns.date)}`;
+}
+const kindChip = d => d ? `${(BASE[d.base] || BASE.day).icon} ${esc(d.label)}${d.roleLabel ? ' · ' + esc(d.roleLabel) : ''} · ${d.start}–${d.end}` : 'Off';
+function dayKindTxt(k, date){ const r = ROTS[k]; if(!r) return ''; const d = rotDay(r, date); return d ? kindChip(d) : 'Off'; }
+// Wrap up: what End Shift used to do, minus ending anything — sign-out, backup, carry it home. Nothing locks.
+function wrapUp(){
+  const T = typeOf(activeType), h = boardHours();
+  modal(`<h3>✓ Wrap up</h3><p><b>${esc(T.label)}</b> · ${esc(fmtNoYear(state.boardDate))} · ${esc(h.label)}${h.role ? ' · ' + esc(h.role) : ''}</p>
+    <p class="muted">Nothing is ended or locked — you can keep charting here, at home, or tomorrow morning. The board moves on when you start the next day.</p>
+    <div class="wubtns">
+      ${T.tasks ? '<button class="btn" data-wu="sb">📋 Copy the night-task sign-back</button>' : ''}
+      ${state.admits.some(a => a.date === state.boardDate) ? '<button class="btn" data-wu="so">📋 Copy the admissions sign-out</button>' : ''}
+      <button class="btn" data-wu="pr">🖨 Print the board</button>
+      <button class="btn" data-wu="bk">⬇ Download a backup</button>
+      <button class="btn" data-wu="take">🧳 Take with me…</button>
+    </div>`, [['Done', 'primary', () => logAdd([{cat:'shift', msg:`Wrapped up ${fmtNoYear(state.boardDate)}`}])]], m => {
+    m.addEventListener('click', e => { const b = e.target.closest('[data-wu]'); if(!b) return; const w = b.dataset.wu;
+      if(w === 'sb'){ copyText(signBackText()); toast('Sign-back copied'); }
+      else if(w === 'so'){ copyText(soText(state.boardDate)); toast('Sign-out copied'); }
+      else if(w === 'pr'){ closeModal(); setTimeout(() => window.print(), 50); }
+      else if(w === 'bk'){ backupNow(); }
+      else if(w === 'take'){ closeModal(); setTimeout(takeWithMe, 0); } });
+  });
+}
+// the day strip: the whole block at a glance; tap a date to change it
+function renderDayStrip(){
+  const el = $('#dayStrip'); if(!el) return; const r = ROTS[activeType];
+  if(!r || !r.start || !r.end || (r.prn && r.start === r.end)){ el.hidden = true; document.body.classList.remove('has-strip'); return; }
+  el.hidden = false; document.body.classList.add('has-strip');
+  const w = rotWorkDate(r), b = state.boardDate, out = [];
+  for(let d = r.start, i = 0; d <= r.end && i < 120; d = addDays(d, 1), i++){
+    const k = rotDay(r, d), dt = new Date(toUTC(d)), lab = dt.toLocaleDateString(undefined, {weekday:'short', timeZone:'UTC'}).slice(0, 2) + ' ' + dt.getUTCDate();
+    out.push(`<button type="button" class="sd ${k ? 'b-' + k.base : 'off'} ${d === b ? 'cur' : ''} ${d < b ? 'past' : ''} ${d === w ? 'today' : ''}" data-sd="${d}" title="${esc(fmtNoYear(d))} — ${k ? esc(k.label + (k.roleLabel ? ' · ' + k.roleLabel : '') + ' · ' + k.start + '–' + k.end) : 'Off'}${d === b ? ' (this board)' : ''}">${lab}<i>${k ? esc(k.roleLabel ? k.roleLabel.replace(/^Tisch |^Night /, '') : k.label) : 'Off'}</i></button>`);
+  }
+  el.innerHTML = `<span class="sdname">${esc(r.icon || '')} ${esc(r.name)}</span><div class="sdrow">${out.join('')}</div><button type="button" class="btn sm" data-sdedit>Edit schedule</button>`;
+}
+document.addEventListener('click', e => {
+  const s = e.target.closest('#dayStrip [data-sd]'); if(s){ dayEdit(s.dataset.sd); return; }
+  if(e.target.closest('#dayStrip [data-sdedit]')) showRotSetup({edit:activeType});
+});
+// change one date: Off / a kind (with its hours) / a role — or, on jeopardy, what you're covering
+function dayEdit(date){
+  const r = ROTS[activeType]; if(!r) return;
+  const cur = (r.days || {})[date] || {k:'off'}, kinds = Object.entries(r.kinds || {});
+  const tplOpts = SHIFT_TYPES.map(t => `<option value="${t.k}" ${cur.assign === t.k ? 'selected' : ''}>${esc(t.label)}</option>`).join('');
+  const kd = cur.k === 'custom' ? cur : (r.kinds || {})[cur.k] || {};
+  modal(`<h3>${esc(fmtNoYear(date))} <span class="muted" style="font-weight:500">· ${esc(r.name)}</span></h3>
+    <label class="f">This day is</label>
+    <div class="dkinds">${[['off', 'Off'], ...kinds.map(([k, v]) => [k, `${(BASE[v.base] || BASE.day).icon} ${v.label} · ${v.start}–${v.end}`]), ...(r.jeop ? [['custom', '🚨 Covering a shift…']] : [])].map(([k, l]) =>
+      `<label class="ndtype"><input type="radio" name="dk" value="${k}" ${cur.k === k ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div>
+    <div id="dkCustom" ${cur.k === 'custom' ? '' : 'hidden'}><label class="f">Covering</label><select id="dkAssign">${tplOpts}</select>
+      <div class="row" style="margin-top:6px;gap:8px"><label>From <input id="dkS" class="hhmm" value="${esc(kd.start || '07:00')}" size="5"></label><label>to <input id="dkE" class="hhmm" value="${esc(kd.end || '19:30')}" size="5"></label></div></div>
+    ${(r.roles || []).length ? `<div id="dkRoleW" ${cur.k === 'off' ? 'hidden' : ''}><label class="f">Role</label><select id="dkRole"><option value="">—</option>${r.roles.map(x => `<option value="${x.k}" ${cur.role === x.k ? 'selected' : ''}>${esc(x.label)}${x.census ? '' : ' (admissions only)'}</option>`).join('')}</select></div>` : ''}
+    ${date === state.boardDate ? '<p class="muted small">This is the date the board is on now — the change applies straight away.</p>' : ''}`,
+    [['Cancel'], ['Save', 'primary', () => {
+      const k = (document.querySelector('input[name="dk"]:checked') || {}).value || 'off';
+      const d = {k}; if(k !== 'off' && $('#dkRole') && $('#dkRole').value) d.role = $('#dkRole').value;
+      if(k === 'custom'){ const t = typeOf($('#dkAssign').value); d.assign = $('#dkAssign').value; d.label = t.label; d.base = t.kind === 'admit' ? 'admit' : t.kind === '24h' ? '24h' : t.kind === 'day' ? 'day' : 'night';
+        d.start = ($('#dkS').value || '07:00').trim(); d.end = ($('#dkE').value || '19:30').trim(); }
+      r.days = r.days || {}; if(k === 'off') delete r.days[date]; else r.days[date] = d;
+      if(date < r.start) r.start = date; if(date > r.end) r.end = date;
+      rotSave(); dfQueue(); logAdd([{cat:'shift', msg:`Schedule: ${fmtNoYear(date)} → ${k === 'off' ? 'Off' : (d.label || r.kinds[k].label)}${d.role ? ' · ' + r.roles.find(x => x.k === d.role).label : ''}`}]);
+      state.settings.shift = typeOf(activeType).night ? 'night' : 'day'; save(); renderAll();
+    }]], m => {
+      m.querySelectorAll('input[name="dk"]').forEach(x => x.addEventListener('change', () => { const v = x.value;
+        if($('#dkCustom')) $('#dkCustom').hidden = v !== 'custom'; if($('#dkRoleW')) $('#dkRoleW').hidden = v === 'off'; }));
+      const as = m.querySelector('#dkAssign'); if(as) as.addEventListener('change', () => { const t = typeOf(as.value), b = t.kind === 'admit' ? 'admit' : t.kind === '24h' ? '24h' : t.kind === 'day' ? 'day' : 'night', h = LEGACY_HOURS[b]; $('#dkS').value = h[0]; $('#dkE').value = h[1]; });
+    });
+}
+// Morning (or the first open on a new date): offer to start today's workday
+function rolloverPrompt(){
+  if(modalEl || tabLocked || launching) return;
+  const ns = nextStart(); if(!ns || !ns.now || ns.date <= state.boardDate) return;
+  const r = ROTS[activeType], k = r ? rotDay(r, ns.date) : null;
+  modal(`<h3>Start ${esc(fmtNoYear(ns.date))}?</h3><p>${r ? `<b>${esc(r.name)}</b> · ${kindChip(k)}` : `<b>${esc(typeOf(activeType).label)}</b>`}</p>
+    <p class="muted">The board is still on ${esc(fmtNoYear(state.boardDate))}. Starting the day clears the daily columns, turns New → Existing and saves ${esc(fmtNoYear(state.boardDate))} to History.</p>`,
+    [['Not now'], ['Start today', 'primary', () => setTimeout(() => newDay(ns.date), 0)]]);
+}
+
+/* ---------- Singular shifts: covering a single shift for a co-resident, or a swap — its own board for that date ---------- */
+const TYPE_HOURS = {'bv-wards-day':['07:00', '19:00'], 'bv-icu-day':['07:00', '19:00'], 'bv-icu-24':['07:00', '10:00'], 'bv-ccu-day':['07:00', '19:30'], 'bv-ccu-night':['19:30', '10:00'],
+  'night-adm-bellevue':['18:00', '08:00'], 'day-wards':['07:00', '19:30'], 'night-med-tisch':['19:30', '09:30'], 'va-wards-day':['07:00', '19:30']};
+const typeBase = t => t.kind === 'admit' ? 'admit' : t.kind === '24h' ? '24h' : t.kind === 'day' ? 'day' : 'night';
+const typeHours = k => TYPE_HOURS[k] || LEGACY_HOURS[typeBase(typeOf(k))];
+function showPrnSetup(launchOpts){
+  const def = typeOf(isRot(activeType) ? ROTS[activeType].tpl : activeType).k, tm = addDays(todayISO(), 1);
+  modal(`<h3>Singular shift</h3><p class="muted">Covering a single shift for a co-resident, or a swap — it gets its own board for that date, separate from your rotations.</p>
+    <label class="f">Shift</label><select id="prT" style="width:100%">${SITES.map(x => `<optgroup label="${esc(x.label)}">${SHIFT_TYPES.filter(t => t.site === x.k).map(t => `<option value="${t.k}" ${t.k === def ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</optgroup>`).join('')}</select>
+    <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap"><label>Date <input type="date" id="prD" value="${tm}"></label><label>From <input id="prS" class="hhmm" size="5"></label><label>to <input id="prE" class="hhmm" size="5"></label></div>
+    <label class="f">Covering for <span class="muted" style="font-weight:400">(optional — e.g. “Sam, swap for Jan 9”)</span></label><input id="prN" maxlength="60" style="width:100%">`,
+    [['Cancel'], ['Create', 'primary', () => {
+      const k = $('#prT').value, t = typeOf(k), d = $('#prD').value || tm, st = ($('#prS').value || '').trim(), en = ($('#prE').value || '').trim(), note = $('#prN').value.trim();
+      if(!/^\d\d:\d\d$/.test(st) || !/^\d\d:\d\d$/.test(en)){ toast('Hours as HH:MM, e.g. 18:00'); return false; }
+      const id = 'p-' + uid();
+      ROTS[id] = {id, prn:true, tplKey:'prn', name:`${t.label} · ${fmtNoYear(d)}`, note, site:t.site, tpl:k, icon:'◆', roles:[], start:d, end:d,
+        kinds:{shift:{label:'PRN', base:typeBase(t), start:st, end:en}}, days:{[d]:{k:'shift'}}, createdAt:new Date().toISOString()};
+      rotSave(); dfQueue();
+      const el = $('#launch'); if(el && !el.hidden){ el.hidden = true; launching = false; document.body.classList.remove('launching'); launchKeys = null; }
+      switchBoard(id); logAdd([{cat:'shift', msg:`Created a singular shift: ${t.label}, ${fmtNoYear(d)} ${st}–${en}${note ? ' — ' + note : ''}`}]);
+      while(launchQ.length){ try{ launchQ.shift()(); }catch(err){ console.error(err); } }
+      toast(`Singular shift: ${t.label} · ${fmtNoYear(d)}`);
+    }]], m => { const sync = () => { const h = typeHours(m.querySelector('#prT').value); m.querySelector('#prS').value = h[0]; m.querySelector('#prE').value = h[1]; };
+      sync(); m.querySelector('#prT').addEventListener('change', sync); });
+}
+/* ---------- 🗓 New rotation / edit schedule ---------- */
+function rotNewId(){ return 'r-' + uid(); }
+function showRotSetup(opts = {}){
+  const editing = opts.edit && ROTS[opts.edit] ? JSON.parse(JSON.stringify(ROTS[opts.edit])) : null;
+  const t0 = editing ? null : rotTpl(opts.tpl || 'bv-ccu');
+  let R = editing || {id:rotNewId(), tplKey:t0.k, name:t0.label, site:t0.site, tpl:t0.tpl, icon:t0.icon, fresh:!!t0.fresh, jeop:!!t0.jeop, roles:t0.roles ? JSON.parse(JSON.stringify(t0.roles)) : [],
+    kinds:JSON.parse(JSON.stringify(t0.kinds)), start:todayISO(), end:addDays(todayISO(), 13), days:{}, createdAt:new Date().toISOString()};
+  closeModal(); try{ cmdClose(false); }catch(e){}
+  launching = true; document.body.classList.add('launching');
+  let el = $('#launch'); if(!el){ el = document.createElement('div'); el.id = 'launch'; document.body.appendChild(el); } el.hidden = false;
+  const kindKeys = () => Object.keys(R.kinds || {});
+  const cycle = d => { const order = ['off', ...kindKeys()], cur = (R.days[d] && R.days[d].k) || 'off'; const nx = order[(order.indexOf(cur) + 1) % order.length];
+    if(nx === 'off') delete R.days[d]; else R.days[d] = Object.assign({}, R.days[d] && R.days[d].role ? {role:R.days[d].role} : {}, {k:nx}); };
+  const draw = () => {
+    const days = []; let d0 = R.start; const dow = new Date(toUTC(d0)).getUTCDay(); d0 = addDays(d0, -dow);
+    for(let d = d0; d <= R.end || new Date(toUTC(d)).getUTCDay() !== 0; d = addDays(d, 1)){ days.push(d); if(days.length > 130) break; }
+    const cnt = {}; days.forEach(d => { if(d < R.start || d > R.end) return; const k = rotDay(R, d); const lab = k ? k.label : 'Off'; cnt[lab] = (cnt[lab] || 0) + 1; });
+    el.innerHTML = `<div class="lbox wide">
+      <div class="lhead"><span class="brandname">PLEXUS</span>${SANDBOX ? '<span class="lsbx">SANDBOX · demo data</span>' : ''}</div>
+      <h2>${editing ? 'Edit schedule' : 'New rotation'}</h2>
+      ${editing ? '' : `<p class="muted lsub">Pick the kind of rotation, set the dates, then tap each date to make it Off or a shift. Or load a setup file (Claude can make one from an Amion screenshot).</p>`}
+      <div class="rsgrid">
+        <div>
+          ${editing ? '' : `<label class="f">Rotation</label><select id="rsTpl">${ROT_TEMPLATES.map(t => `<option value="${t.k}" ${R.tplKey === t.k ? 'selected' : ''}>${t.icon} ${esc(t.label)}</option>`).join('')}</select>`}
+          <div class="row" style="gap:10px;align-items:flex-end"><div style="flex:1"><label class="f">Name</label><input id="rsName" value="${esc(R.name)}" maxlength="60"></div><div style="width:84px"><label class="f">Block #</label><input id="rsBlock" inputmode="numeric" maxlength="3" value="${esc(String(R.block || ''))}" placeholder="—"></div></div>
+          <div class="row" style="gap:10px;margin-top:4px"><label class="f2">From <input type="date" id="rsStart" value="${R.start}"></label><label class="f2">to <input type="date" id="rsEnd" value="${R.end}"></label></div>
+          ${R.jeop ? '<p class="muted small">Jeopardy starts empty. When you’re called in, tap the date and pick what you’re covering — each covered day gets its own lists.</p>' : `
+          <label class="f">Shift kinds &amp; hours</label>
+          <div class="rskinds">${Object.entries(R.kinds).map(([k, v]) => `<div class="rsk"><span class="kchip b-${v.base}">${(BASE[v.base] || BASE.day).icon} ${esc(v.label)}</span><input class="hhmm" data-ks="${k}" value="${v.start}" size="5"> – <input class="hhmm" data-ke="${k}" value="${v.end}" size="5"></div>`).join('')}</div>`}
+          ${(R.roles || []).length ? `<label class="f">Roles</label><p class="muted small" style="margin:0">${R.roles.map(x => esc(x.label) + (x.census ? '' : ' <i>(admissions only)</i>')).join(' · ')} — set per night by tapping a date on the board, or below with the role menu.</p>` : ''}
+          <label class="f">Quick fill</label>
+          <div class="row" style="gap:6px">${kindKeys().map(k => `<button type="button" class="btn sm" data-fill="${k}">All ${esc(R.kinds[k].label)}</button>`).join('')}<button type="button" class="btn sm" data-fill="off">All Off</button></div>
+          ${editing ? '' : '<label class="f">Or</label><button type="button" class="btn" data-rsfile>📄 Load a setup file…</button>'}
+        </div>
+        <div>
+          <div class="rscal">${['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(x => `<div class="dow">${x}</div>`).join('')}${days.map(d => { const inb = d >= R.start && d <= R.end, k = inb ? rotDay(R, d) : null;
+            return `<button type="button" class="cd ${inb ? (k ? 'b-' + k.base : 'off') : 'out'} ${d === todayISO() ? 'today' : ''}" ${inb ? `data-cd="${d}"` : 'disabled'}><span class="n">${d.slice(8) === '01' || d === days[0] ? new Date(toUTC(d)).toLocaleDateString(undefined, {month:'short', day:'numeric', timeZone:'UTC'}) : +d.slice(8)}</span>${inb ? `<span class="k">${k ? `${(BASE[k.base] || BASE.day).icon} ${esc(k.label)}` : 'Off'}</span>${k && (R.roles || []).length ? `<select class="cdrole" data-cdrole="${d}"><option value="">role…</option>${R.roles.map(x => `<option value="${x.k}" ${k.role === x.k ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select>` : ''}${k && R.jeop ? `<span class="cdas">${esc(k.label)}</span>` : ''}` : ''}</button>`; }).join('')}</div>
+          <div class="rscount muted">${Object.entries(cnt).map(([l, n]) => `${esc(l)} ${n}`).join(' · ')}</div>
+        </div>
+      </div>
+      <div class="lfoot"><button type="button" class="btn" data-rscancel>${editing ? 'Cancel' : '← Back'}</button><span class="muted" style="font-size:12.5px">${R.jeop ? 'Tap a date to add a covered shift' : 'Tap a date: Off → ' + kindKeys().map(k => esc(R.kinds[k].label)).join(' → ')}</span>
+        <button type="button" class="btn primary lgo" data-rsgo>${editing ? 'Save schedule' : 'Create rotation →'}</button></div></div>`;
+  };
+  const readForm = () => { const n = el.querySelector('#rsName'); if(n) R.name = n.value.trim() || R.name;
+    const bk = el.querySelector('#rsBlock'); if(bk){ const v = parseInt(bk.value, 10); if(v > 0) R.block = v; else delete R.block; }
+    const s = el.querySelector('#rsStart').value, e2 = el.querySelector('#rsEnd').value; if(s) R.start = s; if(e2 && e2 >= R.start) R.end = e2;
+    el.querySelectorAll('[data-ks]').forEach(i => { if(/^\d\d:\d\d$/.test(i.value)) R.kinds[i.dataset.ks].start = i.value; });
+    el.querySelectorAll('[data-ke]').forEach(i => { if(/^\d\d:\d\d$/.test(i.value)) R.kinds[i.dataset.ke].end = i.value; }); };
+  const jeopPick = d => { const cur = R.days[d];
+    modal(`<h3>${esc(fmtNoYear(d))} — covering</h3><select id="jpT" style="width:100%">${'<option value="">— Off —</option>' + SHIFT_TYPES.map(t => `<option value="${t.k}" ${cur && cur.assign === t.k ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</select>`,
+      [['Cancel'], ['OK', 'primary', () => { const v = $('#jpT').value; if(!v) delete R.days[d]; else { const t = typeOf(v), b = t.kind === 'admit' ? 'admit' : t.kind === '24h' ? '24h' : t.kind === 'day' ? 'day' : 'night', h = LEGACY_HOURS[b];
+        R.days[d] = {k:'custom', assign:v, label:t.label, base:b, start:h[0], end:h[1]}; } setTimeout(draw, 0); }]]); };
+  el.onchange = e => { if(e.target.id === 'rsTpl'){ const t = rotTpl(e.target.value); Object.assign(R, {tplKey:t.k, name:t.label, site:t.site, tpl:t.tpl, icon:t.icon, fresh:!!t.fresh, jeop:!!t.jeop, roles:t.roles ? JSON.parse(JSON.stringify(t.roles)) : [], kinds:JSON.parse(JSON.stringify(t.kinds)), days:{}}); draw(); return; }
+    if(e.target.dataset.cdrole){ const d = e.target.dataset.cdrole; if(R.days[d]){ if(e.target.value) R.days[d].role = e.target.value; else delete R.days[d].role; } return; }
+    readForm(); draw(); };
+  el.onclick = e => {
+    if(e.target.closest('select')) return;
+    const c = e.target.closest('[data-cd]'); if(c){ readForm(); if(R.jeop) jeopPick(c.dataset.cd); else { cycle(c.dataset.cd); draw(); } return; }
+    const f = e.target.closest('[data-fill]'); if(f){ readForm(); for(let d = R.start; d <= R.end; d = addDays(d, 1)){ if(f.dataset.fill === 'off') delete R.days[d]; else R.days[d] = {k:f.dataset.fill}; } draw(); return; }
+    if(e.target.closest('[data-rsfile]')){ rotFilePick(); return; }
+    if(e.target.closest('[data-rscancel]')){ if(editing){ el.hidden = true; launching = false; document.body.classList.remove('launching'); renderAll(); } else showLaunch(opts.launchOpts || {}); return; }
+    if(e.target.closest('[data-rsgo]')){ readForm();
+      Object.keys(R.days).forEach(d => { if(d < R.start || d > R.end) delete R.days[d]; });
+      ROTS[R.id] = R; rotSave(); dfQueue();
+      el.hidden = true; launching = false; document.body.classList.remove('launching'); launchKeys = null;
+      if(editing){ logAdd([{cat:'shift', msg:`Edited the schedule of ${R.name}`}]); state.settings.shift = typeOf(activeType).night ? 'night' : 'day'; save(); renderAll(); toast('Schedule saved'); }
+      else { switchBoard(R.id); const fd = rotWorkdays(R)[0]; if(fd && !state.patients.length) mutate(() => { state.boardDate = fd <= todayISO() ? (rotWorkDate(R) >= fd ? rotWorkDate(R) : fd) : fd; state.settings.shift = typeOf(activeType).night ? 'night' : 'day'; }, {label:`Created rotation ${R.name}`, cat:'shift'});
+        toast(`${R.name} created`); }
+      while(launchQ.length){ try{ launchQ.shift()(); }catch(err){ console.error(err); } }
+    }
+  };
+  draw();
+}
+// setup files: {kind:'plexusRotations', rotations:[…]} — made by Claude from an Amion screenshot, or exported from another device
+function rotFilePick(){
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+  inp.onchange = () => { const f = inp.files[0]; if(f) f.text().then(tx => rotImport(tx, f.name)).catch(() => toast('Couldn’t read that file')); }; inp.click();
+}
+async function rotImport(txt, fname){
+  let pkg; try{ pkg = JSON.parse(txt); }catch(e){ toast('That isn’t a rotation setup file'); return; }
+  const list = pkg && pkg.kind === 'plexusRotations' && Array.isArray(pkg.rotations) ? pkg.rotations : null;
+  if(!list || !list.length){ toast('That isn’t a rotation setup file'); return; }
+  const fresh = list.filter(r => r && r.id && r.name && !ROTS[r.id]), dup = list.length - fresh.length;
+  const go = await askChoice(`<h3>📄 ${esc(fname)}</h3><p>${fresh.length ? `Add <b>${fresh.length}</b> rotation${fresh.length === 1 ? '' : 's'}:` : 'Every rotation in this file is already here.'}</p>
+    <ul class="rsl">${fresh.map(r => `<li>${esc(r.icon || '')} <b>${esc(r.name)}</b> <span class="muted">· ${esc(fmtNoYear(r.start))} – ${esc(fmtNoYear(r.end))} · ${rotWorkdays(r).length} workdays</span></li>`).join('')}</ul>
+    ${dup ? `<p class="muted small">${dup} already here — left as they are.</p>` : ''}`, fresh.length ? [['Cancel', '', false], ['Add', 'primary', true]] : [['OK', 'primary', false]]);
+  if(!go) return;
+  fresh.forEach(r => { ROTS[r.id] = Object.assign({days:{}, kinds:{}, roles:[]}, r); }); rotSave(); dfQueue();
+  logAdd([{cat:'shift', msg:`Added ${fresh.length} rotation(s) from ${fname}`}]); toast(`${fresh.length} rotation${fresh.length === 1 ? '' : 's'} added`);
+  showLaunch($('#launch [data-lback]') ? {switching:true} : {});
+}
+function rotExport(){
+  const pkg = {kind:'plexusRotations', appVersion:APP_VERSION, exportedAt:new Date().toISOString(), rotations:Object.values(ROTS)};
+  download(`Plexus rotations ${todayISO()}.json`, JSON.stringify(pkg, null, 1), 'application/json'); toast('Rotation schedules saved (no patient data)');
+}
+
 const CHANGELOG = [
+  {v:197, d:'2026-11-17', items:['<b>Start a new data file</b> (⚙ → Data file) now starts a file for a rotation — e.g. “Plexus - Block 11 Bellevue CCU.json”, opening on its first shift — with your schedules, settings and interns carried over.']},
+  {v:196, d:'2026-11-17', items:['The launch screen labels the board up top by date: Current rotation, Next rotation, Upcoming or Past rotation, or Singular shift.']},
+  {v:195, d:'2026-11-17', items:['Launch screen rows: the block number (with BLOCK above it), then the rotation’s emoji, then its name.']},
+  {v:194, d:'2026-11-17', items:['Rotation names capitalised: Tisch Pulm (Days), VA Wards (Days), Jeopardy (Block 17) and Jeopardy (Block 23).']},
+  {v:193, d:'2026-11-17', items:['<b>Block numbers</b> on the launch screen: each rotation shows its block in a dark square, and the board up top shows it too (e.g. Block 11). Set or change it under New rotation / Edit schedule.']},
+  {v:192, d:'2026-11-17', items:['A cleaner <b>launch screen</b> in the style of the Overview: the board you’re about to open up top with today’s shift, then your rotations as a simple list — Now, Singular shifts, Coming up, Earlier.', 'The Sandbox now carries your real PGY-3 rotations and dates (with demo patients), so you can try each block as it will look.']},
+  {v:191, d:'2026-11-17', items:['<b>Singular shifts</b> — covering a single shift for a co-resident, or a swap: on the launch screen, <b>+ Singular shift</b> picks the shift type, date and hours (filled in for you) and makes a separate board just for that shift.', '<b>Census caps that match the service</b>: no cap on Bellevue CCU and MICU, Tisch ICU, and VA wards and ICU — the Overview says so instead of asking you to set one. KP Cardiology’s cap moves with the flex rooms, so you set <b>today’s cap</b> from the Overview and it clears at the next day.']},
+  {v:190, d:'2026-11-17', items:['<b>Rotations</b> — a board is now a whole block (e.g. Bellevue CCU · Nov 18 – Dec 1). Every date is Off or a shift kind with its own hours (Long, Short, NF, 27-hour…), optionally with a role (Night Captain, Float, Tisch ID, Tisch Pulm). A <b>day strip</b> under the header shows the block; tap a date to change it.', '<b>No more starting or ending shifts.</b> Chart any time — at work, at home, before or after. The day rolls over instead: <b>Start today</b> (offered the first time you open on a new workday) or <b>Start pre-charting for tomorrow</b> the evening before. Each rollover clears the daily columns and saves the day to History. <b>Wrap up</b> replaces End Shift: sign-out, print, backup — nothing locks.', 'Night and jeopardy blocks start each workday with fresh lists, with <b>“Start from your last Tisch ID list”</b> when you cover the same team again. Night Captain and Float nights are admissions only.', '<b>New rotation</b> from a template (CCU, MICU, Tisch days/nights, VA, Bellevue wards, night admitting, jeopardy), or <b>load a setup file</b> — Claude can make one from an Amion screenshot. The launch screen lists your rotations: now, coming up, earlier.']},
   {v:189, d:'2026-11-17', items:['<b>Launch screen</b> — every time Plexus opens, you choose the board first: site (Bellevue, Tisch / KP, VA), then the shift, with each board’s status (shift in progress, ended, empty). The last board is pre-selected, so it’s one tap on <b>Continue</b>.', 'The board’s context is now <b>fixed once it’s open</b>: the header shows it as a label instead of a menu, and New Shift no longer changes the shift type. To change boards on purpose: <b>Switch board…</b> (tap the label, More on iPad, or ⚙ Settings) — it warns you if a shift is in progress.']},
   {v:188, d:'2026-11-16', items:['<b>iPad &amp; touchscreens</b> — Plexus now switches to a touch layout on its own when opened on an iPad: a tab bar along the bottom, a ⌘ button for the command bar (with tap-to-start commands), bigger rows and buttons, and a More sheet for Transfers, History, End Shift, backups and Settings. Computers keep the desktop layout; Settings → Layout lets you choose.', 'On touch: <b>swipe a task right</b> to mark it done, <b>left</b> for +15 min; <b>long-press a bed</b> to change it; the Tasks entry form folds behind <b>+ New task</b>.', '<b>Back up to Files / Restore from Files</b> (More) — one file with every board, for iPad where Safari can’t save to a chosen file. A dot on More reminds you when there’s been no backup for 20 hours.', 'Plexus asks the iPad to keep its data, and suggests <b>Add to Home Screen</b> once — the Home Screen app keeps its data and opens full-screen.']},
   {v:187, d:'2026-11-15', items:['Fixed: hovering over <b>Bulk Add</b> (and other buttons with a tooltip) could make the toolbar flicker — the button’s own label turned bold on hover, which sometimes pushed it onto the next line.']},
@@ -6542,7 +7059,7 @@ const pastSupported = () => typeof window.showDirectoryPicker === 'function';
 function pastEntries(name, pkg, mod, src){
   const out = [];
   Object.entries(pkg.boards || {}).forEach(([k, b]) => {
-    if(!b || !SHIFT_TYPES.some(x => x.k === k)) return;
+    if(!b || !(knownBoard(k) || (pkg.rotations && pkg.rotations[k]))) return;
     const p = (b.patients || []).length, a = (b.admits || []).filter(x => !x.hold).length, h = (b.admits || []).filter(x => x.hold).length, t = (b.todos || []).length;
     if(!p && !a && !h && !t && !(b.archive || []).length && !(b.history || []).length) return;
     out.push({id:`${name}|${k}|${pkg.savedAt || mod}`, name, k, pkg, savedAt:pkg.savedAt || new Date(mod || Date.now()).toISOString(), date:b.boardDate || '', shift:(b.settings && b.shiftType) || '', p, a, h, t, src, ver:pkg.appVersion || ''});
@@ -6577,9 +7094,10 @@ function pastOpenFiles(){
 }
 // Run fn with one board from a past file standing in for the live one — read-only: nothing here can save
 function withPastBoard(e, fn){
-  const S = state, A = activeType, L = actLog, sc = ui.anScope;
+  const S = state, A = activeType, L = actLog, sc = ui.anScope, addR = !ROTS[e.k] && e.pkg.rotations && e.pkg.rotations[e.k];
+  if(addR) ROTS[e.k] = e.pkg.rotations[e.k];
   try{ state = normalize(JSON.parse(JSON.stringify(e.pkg.boards[e.k]))); activeType = e.k; actLog = Array.isArray(e.pkg.logs && e.pkg.logs[e.k]) ? e.pkg.logs[e.k] : []; return fn(); }
-  finally{ state = S; activeType = A; actLog = L; ui.anScope = sc; }
+  finally{ state = S; activeType = A; actLog = L; ui.anScope = sc; if(addR) delete ROTS[e.k]; }
 }
 const pastShift = e => withPastBoard(e, () => shiftLabel(state.boardDate, state.settings.shift));
 function renderPast(G){
@@ -6781,7 +7299,7 @@ if(!tabLocked) showLaunch({boot:true});
 { const tryWN = n => { if(modalEl || tabLocked || (SANDBOX && !(() => { try{ return localStorage.getItem(SEEN_KEY); }catch(e){ return ''; } })())){ if(SANDBOX && !modalEl && !tabLocked){ try{ localStorage.setItem(SEEN_KEY, APP_VERSION); }catch(e){} return; } if(n < 20) setTimeout(() => tryWN(n + 1), 1500); return; } whatsNewBoot(); };
   whenLaunched(() => setTimeout(() => tryWN(0), 600)); }
 // test hook for the automated checks (sandbox only)
-if(SANDBOX) window.__wmTest = {get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, switchBoard, showLaunch, get launching(){ return launching; }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
+if(SANDBOX) window.__wmTest = {get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, switchBoard, showLaunch, get launching(){ return launching; }, get rots(){ return ROTS; }, typeOf, addDays, renderAll, shiftStartDate, shiftEndDate, dayGo(d){ mutate(() => { state.boardDate = d; }); }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
 setTimeout(() => { try{ const bad = runDiagnostics().filter(r => r.lvl === 'fail'); if(bad.length) toast(`Self-check found ${bad.length} problem${bad.length===1?'':'s'}: ${bad[0].title} — see Settings → Run self-check`); }catch(e){} }, 1500);
 })();
 </script>
