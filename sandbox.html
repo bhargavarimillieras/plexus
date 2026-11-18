@@ -1225,10 +1225,12 @@ body.touch .shiftlbl{font-size:17px}
 .lpanel header .n{font:700 12.5px ui-monospace,Menlo,monospace;color:var(--ink);background:var(--head);border-radius:6px;padding:1px 7px}
 .lpanel header .lsites{margin:0 0 0 auto}
 .lpanel.lempty{padding:16px;color:var(--muted)}
-.lrow{display:grid;grid-template-columns:30px minmax(0,1fr) auto auto 12px;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;padding:11px 16px;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.lrow{display:grid;grid-template-columns:32px 26px minmax(0,1fr) auto auto 12px;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;padding:11px 16px;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
 .lrow:hover{background:var(--hover)}
 .lrow.on{background:color-mix(in srgb,var(--accent) 8%,var(--panel));box-shadow:inset 3px 0 0 var(--accent)}
-.lri{font-size:20px;text-align:center}
+.lri{font-size:19px;text-align:center}
+.lblkw{display:flex;flex-direction:column;align-items:center;gap:2px}.lblkw i{font-style:normal;font:800 8px/1 -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:.1em;color:#4a5262}
+@media (prefers-color-scheme: dark){.lblkw i{color:#8e97a8}}
 .lblk{width:30px;height:30px;border-radius:7px;background:#2b3240;color:#fff;display:flex;align-items:center;justify-content:center;font:700 13.5px ui-monospace,"SF Mono",Menlo,monospace}
 @media (prefers-color-scheme: dark){.lblk{background:#3a4252}}
 .lhname{display:flex;align-items:center;gap:12px}
@@ -1247,7 +1249,7 @@ body.touch .shiftlbl{font-size:17px}
 .ltag.last{background:var(--accent)}.ltag.sg{background:#7e57c2}
 .lact{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}.lact .sp{flex:1}
 .lver{text-align:center;color:var(--muted);font-size:12px;margin-top:20px}
-@media (max-width:720px){.lrow{grid-template-columns:26px minmax(0,1fr) 12px;row-gap:6px}.lrst{grid-column:2;justify-self:start}.lrc{display:none}.lhname{font-size:22px}.lhr{width:100%}.lhero .btn.lgo{flex:1}}
+@media (max-width:720px){.lrow{grid-template-columns:32px 24px minmax(0,1fr) 12px;row-gap:6px}.lrst{grid-column:3;justify-self:start}.lrc{display:none}.lhname{font-size:22px}.lhr{width:100%}.lhero .btn.lgo{flex:1}}
 body.touch .lrow{padding:14px 16px}
 </style>
 </head>
@@ -1413,7 +1415,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '194';
+const APP_VERSION = '195';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6679,7 +6681,7 @@ function showLaunch(opts = {}){
     const n = rotWorkdays(r).length; return `${fmtNoYear(r.start)} – ${fmtNoYear(r.end)} · ${r.jeop ? 'back-up call' : n + ' shift' + (n === 1 ? '' : 's')}`; };
   const row = k => { const T = typeOf(k), r = ROTS[k], st = status(k), c = counts(k);
     return `<button type="button" class="lrow ${k === sel ? 'on' : ''}" data-lk="${k}">
-      ${rotBlock(r) ? `<span class="lblk" title="Block ${rotBlock(r)}">${rotBlock(r)}</span>` : `<span class="lri">${esc(r ? (r.icon || '🗓') : T.icon)}</span>`}
+      <span class="lblkw">${rotBlock(r) ? `<i>BLOCK</i><span class="lblk" title="Block ${rotBlock(r)}">${rotBlock(r)}</span>` : ''}</span><span class="lri">${esc(r ? (r.icon || '🗓') : T.icon)}</span>
       <span class="lrm"><span class="lrn">${esc(T.label)}${r && r.prn ? '<i class="ltag sg">SINGULAR</i>' : ''}${k === activeType ? '<i class="ltag last">LAST USED</i>' : ''}</span><span class="lrs">${esc(sub(k))}</span></span>
       <span class="lrst ${st.cls}">${st.txt}</span>
       <span class="lrc">${esc(c)}</span><span class="lrx">›</span></button>`; };
@@ -6706,7 +6708,7 @@ function showLaunch(opts = {}){
         <div class="lhtop"><span class="brandname">PLEXUS</span>${SANDBOX ? '<span class="lsbx">SANDBOX</span>' : ''}<span class="lclock">${now.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'})} · <b>${pad(now.getHours())}:${pad(now.getMinutes())}</b></span></div>
         <div class="lhmain">
           <div class="lhl"><div class="lgreet">${opts.switching ? 'Switch board' : greet}</div>
-            ${okSel ? `<div class="lhname">${rotBlock(ROTS[sel]) ? `<span class="lhblk"><i>BLOCK</i>${rotBlock(ROTS[sel])}</span>` : esc(ROTS[sel] ? (ROTS[sel].icon || '') : T.icon)} ${esc(T.label)}</div><div class="lhsub">${esc(sub(sel))}</div>
+            ${okSel ? `<div class="lhname">${rotBlock(ROTS[sel]) ? `<span class="lhblk"><i>BLOCK</i>${rotBlock(ROTS[sel])}</span>` : ''}<span>${esc(ROTS[sel] ? (ROTS[sel].icon || '') : T.icon)}</span><span>${esc(T.label)}</span></div><div class="lhsub">${esc(sub(sel))}</div>
               <div class="lhst"><span class="lhpill ${st.cls}">${st.txt}</span>${c ? `<span class="lhc">${esc(c)}</span>` : ''}</div>` : '<div class="lhname">Pick a board</div>'}</div>
           <div class="lhr">${opts.switching ? `<button type="button" class="btn ghost" data-lback>← Back to ${esc(typeOf(activeType).label)}</button>` : ''}
             <button type="button" class="btn lgo" data-lgo ${okSel ? '' : 'disabled'}>${cont ? 'Continue' : 'Open'} →</button></div>
@@ -6975,6 +6977,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:195, d:'2026-11-17', items:['Launch screen rows: the block number (with BLOCK above it), then the rotation’s emoji, then its name.']},
   {v:194, d:'2026-11-17', items:['Rotation names capitalised: Tisch Pulm (Days), VA Wards (Days), Jeopardy (Block 17) and Jeopardy (Block 23).']},
   {v:193, d:'2026-11-17', items:['<b>Block numbers</b> on the launch screen: each rotation shows its block in a dark square, and the board up top shows it too (e.g. Block 11). Set or change it under New rotation / Edit schedule.']},
   {v:192, d:'2026-11-17', items:['A cleaner <b>launch screen</b> in the style of the Overview: the board you’re about to open up top with today’s shift, then your rotations as a simple list — Now, Singular shifts, Coming up, Earlier.', 'The Sandbox now carries your real PGY-3 rotations and dates (with demo patients), so you can try each block as it will look.']},
