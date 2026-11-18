@@ -1197,6 +1197,52 @@ body.launching .app,body.launching .tbar,body.launching .fab,body.launching .toa
 .shiftlbl .sw{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line2);border-radius:6px;padding:1px 6px}
 .shiftlbl:hover .sw{color:var(--accent);border-color:var(--accent)}
 body.touch .shiftlbl{font-size:17px}
+/* ---------- Launch screen (v192: matches the Overview) ---------- */
+#launch .lbox:not(.wide){width:min(980px,100%)}
+.lhero{position:relative;overflow:hidden;background:linear-gradient(135deg,#0d121b 0%,#162031 60%,#1a2740 100%);color:#e7ecf4;border-radius:16px;padding:16px 22px 22px;box-shadow:0 8px 28px rgba(10,20,40,.18)}
+.lhero::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0 1px,transparent 1px 3px);pointer-events:none}
+@media (prefers-color-scheme: dark){.lhero{background:linear-gradient(135deg,#0a0e15 0%,#111a28 60%,#142035 100%);border:1px solid #232c3a}}
+.lhtop{display:flex;align-items:center;gap:10px;position:relative;z-index:1}
+.lhtop .brandname{box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);background:#0b0f16}
+.lhtop .lsbx{font:800 10.5px -apple-system,sans-serif;letter-spacing:.12em;background:#f57c00;color:#fff;border-radius:10px;padding:3px 9px}
+.lhtop .lclock{margin-left:auto;font:600 13px ui-monospace,"SF Mono",Menlo,monospace;color:#9fb0c8}.lhtop .lclock b{color:#fff;font-size:15px}
+.lhmain{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-top:22px;position:relative;z-index:1;flex-wrap:wrap}
+.lgreet{font:700 11.5px ui-monospace,"SF Mono",Menlo,monospace;letter-spacing:.14em;text-transform:uppercase;color:#7ee2a0}
+.lhname{font-size:28px;font-weight:700;letter-spacing:-.01em;margin-top:6px;color:#fff}
+.lhsub{color:#9fb0c8;font-size:13.5px;margin-top:3px}
+.lhst{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap}
+.lhpill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#e7ecf4}
+.lhpill::before{content:'';width:8px;height:8px;border-radius:50%;background:#8a96aa}
+.lhpill.live::before{background:#34d27b;box-shadow:0 0 0 3px rgba(52,210,123,.18)}.lhpill.soon::before{background:#60a5fa}.lhpill.off::before{background:#f5b83d}
+.lhc{font:600 12.5px ui-monospace,Menlo,monospace;color:#9fb0c8}
+.lhr{display:flex;gap:10px;align-items:center}
+.lhero .btn.lgo{background:#fff;color:#0d121b;border:0;font-size:16px;font-weight:700;padding:12px 26px;border-radius:10px;min-height:46px;margin:0}
+.lhero .btn.lgo:disabled{opacity:.4}
+.lhero .btn.ghost{background:transparent;color:#cfd8e6;border:1px solid rgba(255,255,255,.25)}
+.lpanel{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-top:14px;overflow:hidden}
+.lpanel header{display:flex;align-items:center;gap:8px;padding:11px 16px}
+.lpanel h4{margin:0;font-size:11.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lpanel header .n{font:700 12.5px ui-monospace,Menlo,monospace;color:var(--ink);background:var(--head);border-radius:6px;padding:1px 7px}
+.lpanel header .lsites{margin:0 0 0 auto}
+.lpanel.lempty{padding:16px;color:var(--muted)}
+.lrow{display:grid;grid-template-columns:30px minmax(0,1fr) auto auto 12px;align-items:center;gap:12px;width:100%;border:0;border-top:1px solid var(--line);background:none;padding:11px 16px;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.lrow:hover{background:var(--hover)}
+.lrow.on{background:color-mix(in srgb,var(--accent) 8%,var(--panel));box-shadow:inset 3px 0 0 var(--accent)}
+.lri{font-size:20px;text-align:center}
+.lrm{min-width:0;display:flex;flex-direction:column}
+.lrn{font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrs{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.lrst{font-size:12.5px;font-weight:600;border-radius:999px;padding:3px 10px;white-space:nowrap;background:var(--head);color:var(--muted)}
+.lrst.live{background:#e3f4e8;color:#156b2e}.lrst.soon{background:var(--info-bg);color:var(--info-ink)}.lrst.off{background:var(--warn-bg);color:var(--warn-ink)}
+@media (prefers-color-scheme: dark){.lrst.live{background:#16301f;color:#7ee2a0}}
+.lrc{font:600 12px ui-monospace,Menlo,monospace;color:var(--muted);white-space:nowrap}
+.lrx{color:var(--line2);font-size:18px}
+.ltag{font-style:normal;font:800 9.5px -apple-system,sans-serif;letter-spacing:.08em;color:#fff;border-radius:6px;padding:2px 6px;margin-left:8px;vertical-align:2px}
+.ltag.last{background:var(--accent)}.ltag.sg{background:#7e57c2}
+.lact{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;align-items:center}.lact .sp{flex:1}
+.lver{text-align:center;color:var(--muted);font-size:12px;margin-top:20px}
+@media (max-width:720px){.lrow{grid-template-columns:26px minmax(0,1fr) 12px;row-gap:6px}.lrst{grid-column:2;justify-self:start}.lrc{display:none}.lhname{font-size:22px}.lhr{width:100%}.lhero .btn.lgo{flex:1}}
+body.touch .lrow{padding:14px 16px}
 </style>
 </head>
 <body>
@@ -1361,7 +1407,7 @@ body.touch .shiftlbl{font-size:17px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '191';
+const APP_VERSION = '192';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1429,7 +1475,7 @@ const ROT_KEY = `${KEY_PREFIX}.rotations`;
 var ROTS = (() => { try{ const v = JSON.parse(localStorage.getItem(ROT_KEY) || '{}'); return v && typeof v === 'object' && !Array.isArray(v) ? v : {}; }catch(e){ return {}; } })();
 const rotSave = () => { try{ localStorage.setItem(ROT_KEY, JSON.stringify(ROTS)); }catch(e){} };
 // Sandbox: a demo rotation around today, so the schedule, day strip and pre-charting can be tried straight away (no real schedule)
-if(SANDBOX){ try{ if(!localStorage.getItem(`${KEY_PREFIX}.rotSeeded`) && !Object.keys(ROTS).length){
+if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.demoRots`) === '1' && !ROTS['r-demo-ccu']){   // demo rotations around today — used by the automated checks
   const p2 = n => String(n).padStart(2, '0'), iso = d => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`, at = n => { const d = new Date(); d.setDate(d.getDate() + n); return iso(d); };
   const pat = ['off', 'long', 'long', 'off', 'long', 'long', 'off', 'nf', 'nf', 'nf', 'nf', 'nf', 'off', 'off'], days = {};
   pat.forEach((k, i) => { if(k !== 'off') days[at(i - 2)] = {k}; });
@@ -1439,7 +1485,15 @@ if(SANDBOX){ try{ if(!localStorage.getItem(`${KEY_PREFIX}.rotSeeded`) && !Object
   rl.forEach((k, i) => { if(k !== 'off') nd[at(i - 3)] = {k:'night', role:k}; });
   ROTS['r-demo-tn'] = {id:'r-demo-tn', tplKey:'tisch-nights', name:'Demo Tisch Nights (Sandbox)', site:'tisch', tpl:'night-med-tisch', icon:'🌙', fresh:true, start:at(-3), end:at(6), days:nd,
     kinds:{night:{label:'Night', base:'night', start:'19:30', end:'09:30'}}, roles:[{k:'captain', label:'Night Captain', census:false}, {k:'float', label:'Float', census:false}, {k:'id', label:'Tisch ID', census:true}, {k:'pulm', label:'Tisch Pulm', census:true}], createdAt:new Date().toISOString()};
-  rotSave(); localStorage.setItem(`${KEY_PREFIX}.rotSeeded`, '1'); localStorage.setItem(`${KEY_PREFIX}.activeShiftType`, 'r-demo-ccu');
+  rotSave();
+} }catch(e){} }
+// Sandbox: your real PGY-3 rotations with their real dates (schedules only), with demo patients on each board
+var SANDBOX_ROTS = [{"id": "r-pgy3-b11-ccu", "tplKey": "bv-ccu", "name": "Bellevue CCU", "start": "2026-11-18", "end": "2026-12-01", "days": {"2026-11-21": {"k": "long"}, "2026-11-22": {"k": "long"}, "2026-11-24": {"k": "long"}, "2026-11-25": {"k": "long"}, "2026-11-27": {"k": "nf"}, "2026-11-28": {"k": "nf"}, "2026-11-29": {"k": "nf"}, "2026-11-30": {"k": "nf"}, "2026-12-01": {"k": "nf"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "bv-ccu-day", "icon": "🫀", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:30"}, "nf": {"label": "NF", "base": "night", "start": "19:30", "end": "10:00"}}, "roles": []}, {"id": "r-pgy3-b13-tkpulm", "tplKey": "tisch-days", "name": "Tisch Pulm (days)", "start": "2026-12-16", "end": "2026-12-29", "days": {"2026-12-16": {"k": "long"}, "2026-12-17": {"k": "long"}, "2026-12-19": {"k": "long"}, "2026-12-21": {"k": "long"}, "2026-12-23": {"k": "long"}, "2026-12-24": {"k": "long"}, "2026-12-27": {"k": "long"}, "2026-12-28": {"k": "long"}, "2026-12-18": {"k": "short"}, "2026-12-22": {"k": "short"}, "2026-12-25": {"k": "short"}, "2026-12-29": {"k": "short"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "tisch", "tpl": "day-wards", "icon": "🫁", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:30"}, "short": {"label": "Short", "base": "day", "start": "07:00", "end": "16:30"}}, "roles": []}, {"id": "r-pgy3-b14-tknights", "tplKey": "tisch-nights", "name": "Tisch Nights", "start": "2026-12-30", "end": "2027-01-12", "days": {"2026-12-30": {"k": "night", "role": "captain"}, "2026-12-31": {"k": "night", "role": "captain"}, "2027-01-02": {"k": "night", "role": "captain"}, "2027-01-07": {"k": "night", "role": "captain"}, "2027-01-08": {"k": "night", "role": "captain"}, "2027-01-03": {"k": "night", "role": "pulm"}, "2027-01-04": {"k": "night", "role": "pulm"}, "2027-01-05": {"k": "night", "role": "pulm"}, "2027-01-10": {"k": "night", "role": "id"}, "2027-01-11": {"k": "night", "role": "id"}, "2027-01-12": {"k": "night", "role": "id"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "tisch", "tpl": "night-med-tisch", "icon": "🌙", "fresh": true, "kinds": {"night": {"label": "Night", "base": "night", "start": "19:30", "end": "09:30"}}, "roles": [{"k": "captain", "label": "Night Captain", "census": false}, {"k": "float", "label": "Float", "census": false}, {"k": "id", "label": "Tisch ID", "census": true}, {"k": "pulm", "label": "Tisch Pulm", "census": true}]}, {"id": "r-pgy3-b17-jeop", "tplKey": "jeopardy", "name": "Jeopardy (block 17)", "start": "2027-02-10", "end": "2027-02-23", "days": {}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "day-wards", "icon": "🚨", "fresh": true, "jeop": true, "kinds": {}, "roles": []}, {"id": "r-pgy3-b20-bvnf", "tplKey": "bv-nf", "name": "Bellevue Night Admitting", "start": "2027-03-24", "end": "2027-04-06", "days": {"2027-03-24": {"k": "nf"}, "2027-03-25": {"k": "nf"}, "2027-03-26": {"k": "nf"}, "2027-03-28": {"k": "nf"}, "2027-03-29": {"k": "nf"}, "2027-03-30": {"k": "nf"}, "2027-04-01": {"k": "nf"}, "2027-04-02": {"k": "nf"}, "2027-04-05": {"k": "nf"}, "2027-04-06": {"k": "nf"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "night-adm-bellevue", "icon": "🌙", "fresh": true, "kinds": {"nf": {"label": "Night", "base": "admit", "start": "18:00", "end": "08:00"}}, "roles": []}, {"id": "r-pgy3-b22-va", "tplKey": "va-days", "name": "VA Wards (days)", "start": "2027-04-21", "end": "2027-05-04", "days": {"2027-04-21": {"k": "long"}, "2027-04-24": {"k": "long"}, "2027-04-27": {"k": "long"}, "2027-04-30": {"k": "long"}, "2027-05-03": {"k": "long"}, "2027-04-22": {"k": "short"}, "2027-04-25": {"k": "short"}, "2027-04-26": {"k": "short"}, "2027-04-28": {"k": "short"}, "2027-04-29": {"k": "short"}, "2027-05-01": {"k": "short"}, "2027-05-04": {"k": "short"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "va", "tpl": "va-wards-day", "icon": "🏥", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:30"}, "short": {"label": "Short", "base": "day", "start": "07:00", "end": "16:30"}}, "roles": []}, {"id": "r-pgy3-b23-jeop", "tplKey": "jeopardy", "name": "Jeopardy (block 23)", "start": "2027-05-05", "end": "2027-05-18", "days": {}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "day-wards", "icon": "🚨", "fresh": true, "jeop": true, "kinds": {}, "roles": []}, {"id": "r-pgy3-b25-bvwards", "tplKey": "bv-wards", "name": "Bellevue Wards (Team 6)", "start": "2027-06-02", "end": "2027-06-15", "days": {"2027-06-02": {"k": "day"}, "2027-06-03": {"k": "day"}, "2027-06-04": {"k": "day"}, "2027-06-05": {"k": "day"}, "2027-06-07": {"k": "day"}, "2027-06-08": {"k": "day"}, "2027-06-09": {"k": "day"}, "2027-06-10": {"k": "day"}, "2027-06-11": {"k": "day"}, "2027-06-13": {"k": "day"}, "2027-06-14": {"k": "day"}, "2027-06-15": {"k": "day"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "bv-wards-day", "icon": "🏥", "kinds": {"day": {"label": "Day", "base": "day", "start": "07:00", "end": "19:00"}}, "roles": []}, {"id": "r-pgy3-b26-micu", "tplKey": "bv-micu", "name": "Bellevue MICU", "start": "2027-06-16", "end": "2027-06-30", "days": {"2027-06-18": {"k": "long"}, "2027-06-22": {"k": "long"}, "2027-06-26": {"k": "long"}, "2027-06-30": {"k": "long"}, "2027-06-19": {"k": "h27"}, "2027-06-23": {"k": "h27"}, "2027-06-27": {"k": "h27"}}, "createdAt": "2026-11-17T21:30:00.000Z", "site": "bellevue", "tpl": "bv-icu-day", "icon": "🫁", "kinds": {"long": {"label": "Long", "base": "day", "start": "07:00", "end": "19:00"}, "h27": {"label": "27-hour", "base": "24h", "start": "07:00", "end": "10:00"}}, "roles": []}];
+if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.rotSeeded2`) !== '1'){
+  Object.keys(ROTS).filter(k => /^r-demo-/.test(k) && localStorage.getItem(`${KEY_PREFIX}.demoRots`) !== '1').forEach(k => { delete ROTS[k]; try{ localStorage.removeItem(storeKeyFor(k)); localStorage.removeItem(storeKeyFor(k) + '.log'); }catch(e){} });
+  SANDBOX_ROTS.forEach(r => { if(!ROTS[r.id]) ROTS[r.id] = JSON.parse(JSON.stringify(r)); });
+  rotSave(); localStorage.setItem(`${KEY_PREFIX}.rotSeeded2`, '1');
+  const t = localStorage.getItem(`${KEY_PREFIX}.activeShiftType`); if(!t || /^r-demo-/.test(t) || SHIFT_TYPES.some(x => x.k === t)) localStorage.setItem(`${KEY_PREFIX}.activeShiftType`, 'r-pgy3-b11-ccu');
 } }catch(e){} }
 
 const isRot = k => !!(k && ROTS[k]);
@@ -1512,7 +1566,7 @@ const backupKeyFor = k => k === 'day-wards' ? BACKUP_KEY : `${BACKUP_KEY}.${k}`;
 const TISCH_SCENARIO = 'v2-14E';   // bump to push a refreshed Tisch scenario into the Sandbox once
 if(SANDBOX){ try{ if(localStorage.getItem(`${KEY_PREFIX}.tischScenario`) !== TISCH_SCENARIO){
   localStorage.removeItem(`${STORE_KEY}.night-med-tisch`); localStorage.removeItem(`${STORE_KEY}.night-med-tisch.log`);
-  localStorage.setItem(`${KEY_PREFIX}.activeShiftType`, 'night-med-tisch'); localStorage.setItem(`${KEY_PREFIX}.tischScenario`, TISCH_SCENARIO);
+  if(!ROTS[localStorage.getItem(`${KEY_PREFIX}.activeShiftType`)]) localStorage.setItem(`${KEY_PREFIX}.activeShiftType`, 'night-med-tisch'); localStorage.setItem(`${KEY_PREFIX}.tischScenario`, TISCH_SCENARIO);
   const u = JSON.parse(localStorage.getItem(UI_KEY) || '{}'); u.tab = 'tasks'; localStorage.setItem(UI_KEY, JSON.stringify(u)); } }catch(e){} }
 let activeType = (() => { try{ const t = localStorage.getItem(TYPE_KEY); return knownBoard(t) ? t : 'day-wards'; }catch(e){ return 'day-wards'; } })();
 // a clock time on a board's date: on overnight shifts times before noon are the next morning; on 24-hour shifts, times before 07:00
@@ -6599,47 +6653,59 @@ function showLaunch(opts = {}){
   let view = opts.view || 'rot', sel = activeType, site = isRot(activeType) ? (ROTS[activeType].site || 'tisch') : typeOf(activeType).site;
   let el = $('#launch'); if(!el){ el = document.createElement('div'); el.id = 'launch'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'Choose your board'); document.body.appendChild(el); }
   el.hidden = false;
-  const now = new Date(), today = todayISO();
+  const today = todayISO();
   const legacyWithData = () => SHIFT_TYPES.filter(t => t.k === activeType || boardInfo(t.k).cls !== 's-empty');
   const rotsSorted = () => Object.values(ROTS).sort((a, b) => (a.start || '').localeCompare(b.start || ''));
-  const rotCard = r => { const i = boardInfo(r.id), w = rotWorkDate(r), k = rotDay(r, w), nx = (() => { for(let d = addDays(w, 1), n = 0; n < 120; d = addDays(d, 1), n++) if(rotDay(r, d)) return d; return ''; })();
-    const when = r.start > today ? `Starts ${fmtNoYear(r.start)}` : r.end < today ? `Ended ${fmtNoYear(r.end)}` : k ? `Today: ${kindChip(k)}` : `Today: Off${nx ? ` · next ${fmtNoYear(nx)} · ${dayKindTxt(r.id, nx)}` : ''}`;
-    const dots = []; for(let d = r.start, n = 0; d <= r.end && n < 60; d = addDays(d, 1), n++){ const x = rotDay(r, d); dots.push(`<i class="${x ? 'b-' + x.base : 'off'} ${d === w && r.start <= today && r.end >= today ? 'now' : ''}"></i>`); }
-    return `<button type="button" class="lcard rcard ${r.id === sel ? 'on' : ''} ${i.cls}" data-lk="${r.id}"><span class="lic">${esc(r.icon || '🗓')}</span><span class="lt"><b>${esc(r.name)}</b>${r.prn ? '<i class="lprn">PRN</i>' : ''}${r.id === activeType ? '<i class="llast">LAST USED</i>' : ''}<br>
-      <span class="lk">${r.prn ? `${esc(r.kinds.shift.start)}–${esc(r.kinds.shift.end)}${r.note ? ' · ' + esc(r.note) : ''}` : `${esc(fmtNoYear(r.start))} – ${esc(fmtNoYear(r.end))} · ${rotWorkdays(r).length} workday${rotWorkdays(r).length === 1 ? '' : 's'}`}</span>
-      <span class="ls">${when}</span>${r.prn ? '' : `<span class="rdots">${dots.join('')}</span>`}${i.cls !== 's-empty' ? `<span class="ls"><i class="lsdot ${i.cls}"></i>${esc(i.txt.replace(/^Shift in progress · |^Last used |^Shift ended · /, ''))}</span>` : ''}</span></button>`; };
-  const typeCard = t => { const i = boardInfo(t.k);
-    return `<button type="button" class="lcard ${t.k === sel ? 'on' : ''} ${i.cls}" data-lk="${t.k}"><span class="lic">${t.icon}</span><span class="lt"><b>${esc(t.label)}</b>${t.k === activeType ? '<i class="llast">LAST USED</i>' : ''}<br><span class="lk">${typeKindTxt(t)}</span><span class="ls"><i class="lsdot ${i.cls}"></i>${esc(i.txt)}</span></span></button>`; };
+  const nextWork = (r, from) => { for(let d = from, n = 0; n < 180; d = addDays(d, 1), n++) if(rotDay(r, d)) return d; return ''; };
+  // one line of status for a board: today's shift, the next one, or when it starts / ended
+  const status = (k, full) => { const r = ROTS[k];
+    if(!r){ const i = boardInfo(k); return {txt:i.cls === 's-empty' ? 'Empty' : 'Last on ' + i.txt.replace(/^On /, '').split(' · ')[0].replace(/, \d{4}$/, ''), cls:i.cls === 's-empty' ? 'mute' : 'off'}; }
+    const w = rotWorkDate(r), kd = rotDay(r, w);
+    if(r.start > today){ const f = nextWork(r, r.start); return {txt:`Starts ${fmtNoYear(f || r.start)}${f && full ? ' · ' + dayKindTxt(k, f) : ''}`, cls:'soon'}; }
+    if(r.end < today) return {txt:`Ended ${fmtNoYear(r.end)}`, cls:'mute'};
+    if(kd) return {txt:`Today · ${kindChip(kd)}`, cls:'live'};
+    const nx = nextWork(r, addDays(w, 1)); return {txt:`Off today${nx ? ` · next ${fmtNoYear(nx)} · ${dayKindTxt(k, nx)}` : ''}`, cls:'off'}; };
+  const counts = k => { const i = boardInfo(k); return i.cls === 's-empty' ? '' : [i.n && `${i.n} pt${i.n === 1 ? '' : 's'}`, i.a && `${i.a} adm`, i.t && `${i.t} task${i.t === 1 ? '' : 's'}`].filter(Boolean).join(' · '); };
+  const sub = k => { const r = ROTS[k]; if(!r) return typeKindTxt(typeOf(k));
+    if(r.prn) return `${r.kinds.shift.start}–${r.kinds.shift.end}${r.note ? ' · ' + r.note : ''}`;
+    const n = rotWorkdays(r).length; return `${fmtNoYear(r.start)} – ${fmtNoYear(r.end)} · ${r.jeop ? 'back-up call' : n + ' shift' + (n === 1 ? '' : 's')}`; };
+  const row = k => { const T = typeOf(k), r = ROTS[k], st = status(k), c = counts(k);
+    return `<button type="button" class="lrow ${k === sel ? 'on' : ''}" data-lk="${k}">
+      <span class="lri">${esc(r ? (r.icon || '🗓') : T.icon)}</span>
+      <span class="lrm"><span class="lrn">${esc(T.label)}${r && r.prn ? '<i class="ltag sg">SINGULAR</i>' : ''}${k === activeType ? '<i class="ltag last">LAST USED</i>' : ''}</span><span class="lrs">${esc(sub(k))}</span></span>
+      <span class="lrst ${st.cls}">${st.txt}</span>
+      <span class="lrc">${esc(c)}</span><span class="lrx">›</span></button>`; };
+  const panel = (title, ids, extra = '') => ids.length ? `<section class="lpanel"><header><h4>${title}</h4><span class="n">${ids.length}</span>${extra}</header>${ids.map(row).join('')}</section>` : '';
   const draw = () => {
-    const name = knownBoard(sel) ? typeOf(sel).label : '', cont = sel === activeType;
+    const okSel = knownBoard(sel), T = okSel ? typeOf(sel) : null, cont = sel === activeType, st = okSel ? status(sel, true) : null, c = okSel ? counts(sel) : '';
+    const now = new Date(), hr = now.getHours(), greet = hr < 5 ? 'Up late' : hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
     let body = '';
     if(view === 'rot'){
-      const R = rotsSorted().filter(r => !r.prn), P = rotsSorted().filter(r => r.prn), nowR = R.filter(r => r.start <= today && r.end >= today), up = R.filter(r => r.start > today), past = R.filter(r => r.end < today).reverse(), L = legacyWithData();
-      const Pnow = P.filter(r => r.end >= addDays(today, -1)), Ppast = P.filter(r => r.end < addDays(today, -1)).reverse();
-      body = `<h2>${opts.switching ? 'Switch to another board' : 'Your rotations'}</h2>
-        <p class="muted lsub">Each rotation keeps its own census, admissions, tasks and history for the whole block.</p>
-        ${nowR.length ? `<div class="lsec">Now</div><div class="lgrid one">${nowR.map(rotCard).join('')}</div>` : ''}
-        ${up.length ? `<div class="lsec">Coming up</div><div class="lgrid">${up.map(rotCard).join('')}</div>` : ''}
-        ${Pnow.length ? `<div class="lsec">One-off shifts (PRN)</div><div class="lgrid">${Pnow.map(rotCard).join('')}</div>` : ''}
-        ${past.length || Ppast.length ? `<div class="lsec">Earlier</div><div class="lgrid">${[...past, ...Ppast].map(rotCard).join('')}</div>` : ''}
-        ${!R.length ? `<div class="lempty">No rotations yet. <b>+ New rotation</b> sets one up from a template, or load a setup file made from your Amion schedule.</div>` : ''}
-        ${L.length ? `<div class="lsec">Boards without a schedule</div><div class="lgrid">${L.map(typeCard).join('')}</div>` : ''}
-        <div class="row lact"><button type="button" class="btn" data-lnew>＋ New rotation…</button><button type="button" class="btn" data-lprn>🔁 One-off shift (PRN)…</button><button type="button" class="btn" data-lfile>📄 Load a setup file…</button><button type="button" class="btn link" data-lview="types">Open a board without a schedule…</button></div>`;
+      const R = rotsSorted().filter(r => !r.prn), P = rotsSorted().filter(r => r.prn);
+      const nowR = R.filter(r => r.start <= today && r.end >= today), up = R.filter(r => r.start > today), past = R.filter(r => r.end < today).reverse();
+      const Pnow = P.filter(r => r.end >= addDays(today, -1)), Ppast = P.filter(r => r.end < addDays(today, -1)).reverse(), L = legacyWithData().map(t => t.k);
+      body = `${panel('Now', nowR.map(r => r.id))}${panel('Singular shifts', Pnow.map(r => r.id))}${panel('Coming up', up.map(r => r.id))}${panel('Earlier', [...past, ...Ppast].map(r => r.id))}
+        ${!R.length && !P.length ? '<section class="lpanel lempty">No rotations yet — <b>New rotation</b> sets one up from a template, or load a setup file made from your Amion schedule.</section>' : ''}
+        ${panel('Boards without a schedule', L)}
+        <div class="lact"><button type="button" class="btn" data-lnew>＋ New rotation</button><button type="button" class="btn" data-lprn>＋ Singular shift</button><button type="button" class="btn" data-lfile>Load a setup file…</button><span class="sp"></span><button type="button" class="btn link" data-lview="types">Board without a schedule…</button></div>`;
     } else {
-      body = `<h2>Boards without a schedule</h2><p class="muted lsub">One board per shift type, as before rotations — no calendar, the day just rolls over.</p>
-        <div class="lsites" role="tablist">${SITES.map(x => `<button type="button" role="tab" data-lsite="${x.k}" class="${x.k === site ? 'on' : ''}">${esc(x.label)}</button>`).join('')}</div>
-        <div class="lgrid">${SHIFT_TYPES.filter(t => t.site === site).map(typeCard).join('')}</div>
-        <div class="row lact"><button type="button" class="btn link" data-lview="rot">← Rotations</button></div>`;
+      body = `<section class="lpanel"><header><h4>Boards without a schedule</h4><div class="lsites">${SITES.map(x => `<button type="button" data-lsite="${x.k}" class="${x.k === site ? 'on' : ''}">${esc(x.label)}</button>`).join('')}</div></header>
+        ${SHIFT_TYPES.filter(t => t.site === site).map(t => row(t.k)).join('')}</section>
+        <div class="lact"><button type="button" class="btn link" data-lview="rot">← Rotations</button></div>`;
     }
     el.innerHTML = `<div class="lbox">
-      <div class="lhead"><span class="brandname">PLEXUS</span>${SANDBOX ? '<span class="lsbx">SANDBOX · demo data</span>' : ''}<span class="lclock">${now.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'})} · ${pad(now.getHours())}:${pad(now.getMinutes())}</span></div>
-      ${body}
-      <div class="lfoot">
-        ${opts.switching ? `<button type="button" class="btn" data-lback>← Back to ${esc(typeOf(activeType).label)}</button>` : ''}
-        <span class="lsel">${name ? `<b>${esc(name)}</b>` : '<span class="muted">Pick a board</span>'}</span>
-        <button type="button" class="btn primary lgo" data-lgo ${name ? '' : 'disabled'}>${cont ? 'Continue' : 'Open'} →</button>
+      <div class="lhero">
+        <div class="lhtop"><span class="brandname">PLEXUS</span>${SANDBOX ? '<span class="lsbx">SANDBOX</span>' : ''}<span class="lclock">${now.toLocaleDateString([], {weekday:'short', month:'short', day:'numeric'})} · <b>${pad(now.getHours())}:${pad(now.getMinutes())}</b></span></div>
+        <div class="lhmain">
+          <div class="lhl"><div class="lgreet">${opts.switching ? 'Switch board' : greet}</div>
+            ${okSel ? `<div class="lhname">${esc(ROTS[sel] ? (ROTS[sel].icon || '') : T.icon)} ${esc(T.label)}</div><div class="lhsub">${esc(sub(sel))}</div>
+              <div class="lhst"><span class="lhpill ${st.cls}">${st.txt}</span>${c ? `<span class="lhc">${esc(c)}</span>` : ''}</div>` : '<div class="lhname">Pick a board</div>'}</div>
+          <div class="lhr">${opts.switching ? `<button type="button" class="btn ghost" data-lback>← Back to ${esc(typeOf(activeType).label)}</button>` : ''}
+            <button type="button" class="btn lgo" data-lgo ${okSel ? '' : 'disabled'}>${cont ? 'Continue' : 'Open'} →</button></div>
+        </div>
       </div>
-      <div class="lver muted">Plexus v${APP_VERSION}${SANDBOX ? ' · Sandbox (test data only)' : ''}</div>
+      ${body}
+      <div class="lver">Plexus v${APP_VERSION}${SANDBOX ? ' · Sandbox — test data only' : ''}</div>
     </div>`;
     if(!isTouch()) setTimeout(() => { const g = el.querySelector('[data-lgo]'); if(g && !g.disabled) g.focus({preventScroll:true}); }, 0);
   };
@@ -6656,8 +6722,8 @@ function showLaunch(opts = {}){
   };
   launchKeys = e => {
     const list = [...el.querySelectorAll('[data-lk]')].map(x => x.dataset.lk), i = list.indexOf(sel);
-    if(e.key === 'ArrowDown' || e.key === 'ArrowRight' && e.target.closest('.lcard')){ e.preventDefault(); if(list.length){ sel = list[Math.min(list.length - 1, i + 1)]; draw(); } }
-    else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft' && e.target.closest('.lcard')){ e.preventDefault(); if(list.length){ sel = list[Math.max(0, i - 1)]; draw(); } }
+    if(e.key === 'ArrowDown' || e.key === 'ArrowRight' && e.target.closest('.lrow')){ e.preventDefault(); if(list.length){ sel = list[Math.min(list.length - 1, i + 1)]; draw(); } }
+    else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft' && e.target.closest('.lrow')){ e.preventDefault(); if(list.length){ sel = list[Math.max(0, i - 1)]; draw(); } }
     else if(e.key === 'Escape' && opts.switching){ e.preventDefault(); sel = activeType; go(); }
   };
   const go = () => {
@@ -6779,14 +6845,14 @@ function rolloverPrompt(){
     [['Not now'], ['Start today', 'primary', () => setTimeout(() => newDay(ns.date), 0)]]);
 }
 
-/* ---------- 🔁 PRN: a one-off shift (covering for a co-resident, a swap) — its own little board for that date ---------- */
+/* ---------- Singular shifts: covering a single shift for a co-resident, or a swap — its own board for that date ---------- */
 const TYPE_HOURS = {'bv-wards-day':['07:00', '19:00'], 'bv-icu-day':['07:00', '19:00'], 'bv-icu-24':['07:00', '10:00'], 'bv-ccu-day':['07:00', '19:30'], 'bv-ccu-night':['19:30', '10:00'],
   'night-adm-bellevue':['18:00', '08:00'], 'day-wards':['07:00', '19:30'], 'night-med-tisch':['19:30', '09:30'], 'va-wards-day':['07:00', '19:30']};
 const typeBase = t => t.kind === 'admit' ? 'admit' : t.kind === '24h' ? '24h' : t.kind === 'day' ? 'day' : 'night';
 const typeHours = k => TYPE_HOURS[k] || LEGACY_HOURS[typeBase(typeOf(k))];
 function showPrnSetup(launchOpts){
   const def = typeOf(isRot(activeType) ? ROTS[activeType].tpl : activeType).k, tm = addDays(todayISO(), 1);
-  modal(`<h3>🔁 One-off shift (PRN)</h3><p class="muted">Covering a shift for someone, or a swap — it gets its own board for that date, separate from your rotations.</p>
+  modal(`<h3>Singular shift</h3><p class="muted">Covering a single shift for a co-resident, or a swap — it gets its own board for that date, separate from your rotations.</p>
     <label class="f">Shift</label><select id="prT" style="width:100%">${SITES.map(x => `<optgroup label="${esc(x.label)}">${SHIFT_TYPES.filter(t => t.site === x.k).map(t => `<option value="${t.k}" ${t.k === def ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</optgroup>`).join('')}</select>
     <div class="row" style="gap:10px;margin-top:8px;flex-wrap:wrap"><label>Date <input type="date" id="prD" value="${tm}"></label><label>From <input id="prS" class="hhmm" size="5"></label><label>to <input id="prE" class="hhmm" size="5"></label></div>
     <label class="f">Covering for <span class="muted" style="font-weight:400">(optional — e.g. “Sam, swap for Jan 9”)</span></label><input id="prN" maxlength="60" style="width:100%">`,
@@ -6794,13 +6860,13 @@ function showPrnSetup(launchOpts){
       const k = $('#prT').value, t = typeOf(k), d = $('#prD').value || tm, st = ($('#prS').value || '').trim(), en = ($('#prE').value || '').trim(), note = $('#prN').value.trim();
       if(!/^\d\d:\d\d$/.test(st) || !/^\d\d:\d\d$/.test(en)){ toast('Hours as HH:MM, e.g. 18:00'); return false; }
       const id = 'p-' + uid();
-      ROTS[id] = {id, prn:true, tplKey:'prn', name:`${t.label} · ${fmtNoYear(d)}`, note, site:t.site, tpl:k, icon:'🔁', roles:[], start:d, end:d,
+      ROTS[id] = {id, prn:true, tplKey:'prn', name:`${t.label} · ${fmtNoYear(d)}`, note, site:t.site, tpl:k, icon:'◆', roles:[], start:d, end:d,
         kinds:{shift:{label:'PRN', base:typeBase(t), start:st, end:en}}, days:{[d]:{k:'shift'}}, createdAt:new Date().toISOString()};
       rotSave(); dfQueue();
       const el = $('#launch'); if(el && !el.hidden){ el.hidden = true; launching = false; document.body.classList.remove('launching'); launchKeys = null; }
-      switchBoard(id); logAdd([{cat:'shift', msg:`Created a one-off shift: ${t.label}, ${fmtNoYear(d)} ${st}–${en}${note ? ' — ' + note : ''}`}]);
+      switchBoard(id); logAdd([{cat:'shift', msg:`Created a singular shift: ${t.label}, ${fmtNoYear(d)} ${st}–${en}${note ? ' — ' + note : ''}`}]);
       while(launchQ.length){ try{ launchQ.shift()(); }catch(err){ console.error(err); } }
-      toast(`One-off board: ${t.label} · ${fmtNoYear(d)}`);
+      toast(`Singular shift: ${t.label} · ${fmtNoYear(d)}`);
     }]], m => { const sync = () => { const h = typeHours(m.querySelector('#prT').value); m.querySelector('#prS').value = h[0]; m.querySelector('#prE').value = h[1]; };
       sync(); m.querySelector('#prT').addEventListener('change', sync); });
 }
@@ -6900,7 +6966,8 @@ function rotExport(){
 }
 
 const CHANGELOG = [
-  {v:191, d:'2026-11-17', items:['<b>One-off shifts (PRN)</b> — covering for a co-resident or a swap: on the launch screen, <b>🔁 One-off shift</b> picks the shift type, date and hours (filled in for you) and makes a separate board just for that shift.', '<b>Census caps that match the service</b>: no cap on Bellevue CCU and MICU, Tisch ICU, and VA wards and ICU — the Overview says so instead of asking you to set one. KP Cardiology’s cap moves with the flex rooms, so you set <b>today’s cap</b> from the Overview and it clears at the next day.']},
+  {v:192, d:'2026-11-17', items:['A cleaner <b>launch screen</b> in the style of the Overview: the board you’re about to open up top with today’s shift, then your rotations as a simple list — Now, Singular shifts, Coming up, Earlier.', 'The Sandbox now carries your real PGY-3 rotations and dates (with demo patients), so you can try each block as it will look.']},
+  {v:191, d:'2026-11-17', items:['<b>Singular shifts</b> — covering a single shift for a co-resident, or a swap: on the launch screen, <b>+ Singular shift</b> picks the shift type, date and hours (filled in for you) and makes a separate board just for that shift.', '<b>Census caps that match the service</b>: no cap on Bellevue CCU and MICU, Tisch ICU, and VA wards and ICU — the Overview says so instead of asking you to set one. KP Cardiology’s cap moves with the flex rooms, so you set <b>today’s cap</b> from the Overview and it clears at the next day.']},
   {v:190, d:'2026-11-17', items:['<b>Rotations</b> — a board is now a whole block (e.g. Bellevue CCU · Nov 18 – Dec 1). Every date is Off or a shift kind with its own hours (Long, Short, NF, 27-hour…), optionally with a role (Night Captain, Float, Tisch ID, Tisch Pulm). A <b>day strip</b> under the header shows the block; tap a date to change it.', '<b>No more starting or ending shifts.</b> Chart any time — at work, at home, before or after. The day rolls over instead: <b>Start today</b> (offered the first time you open on a new workday) or <b>Start pre-charting for tomorrow</b> the evening before. Each rollover clears the daily columns and saves the day to History. <b>Wrap up</b> replaces End Shift: sign-out, print, backup — nothing locks.', 'Night and jeopardy blocks start each workday with fresh lists, with <b>“Start from your last Tisch ID list”</b> when you cover the same team again. Night Captain and Float nights are admissions only.', '<b>New rotation</b> from a template (CCU, MICU, Tisch days/nights, VA, Bellevue wards, night admitting, jeopardy), or <b>load a setup file</b> — Claude can make one from an Amion screenshot. The launch screen lists your rotations: now, coming up, earlier.']},
   {v:189, d:'2026-11-17', items:['<b>Launch screen</b> — every time Plexus opens, you choose the board first: site (Bellevue, Tisch / KP, VA), then the shift, with each board’s status (shift in progress, ended, empty). The last board is pre-selected, so it’s one tap on <b>Continue</b>.', 'The board’s context is now <b>fixed once it’s open</b>: the header shows it as a label instead of a menu, and New Shift no longer changes the shift type. To change boards on purpose: <b>Switch board…</b> (tap the label, More on iPad, or ⚙ Settings) — it warns you if a shift is in progress.']},
   {v:188, d:'2026-11-16', items:['<b>iPad &amp; touchscreens</b> — Plexus now switches to a touch layout on its own when opened on an iPad: a tab bar along the bottom, a ⌘ button for the command bar (with tap-to-start commands), bigger rows and buttons, and a More sheet for Transfers, History, End Shift, backups and Settings. Computers keep the desktop layout; Settings → Layout lets you choose.', 'On touch: <b>swipe a task right</b> to mark it done, <b>left</b> for +15 min; <b>long-press a bed</b> to change it; the Tasks entry form folds behind <b>+ New task</b>.', '<b>Back up to Files / Restore from Files</b> (More) — one file with every board, for iPad where Safari can’t save to a chosen file. A dot on More reminds you when there’s been no backup for 20 hours.', 'Plexus asks the iPad to keep its data, and suggests <b>Add to Home Screen</b> once — the Home Screen app keeps its data and opens full-screen.']},
