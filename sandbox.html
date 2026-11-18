@@ -1415,7 +1415,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '196';
+const APP_VERSION = '197';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3799,7 +3799,7 @@ function settings(){
       <button class="btn sm" id="mvGo">Move board</button><span class="muted small">For when a board was filed under the wrong shift type — patients, tasks, history and log all move.</span></div>
     <hr>
     <b>Data file <span class="muted" style="font-weight:500">— USB drive or network folder</span></b>
-    <p class="muted" style="margin:4px 0 8px">Keep your whole board (all four shift types, settings and shortcuts) in one file you carry with you. Every change saves to it automatically. On another computer, open this board and choose <b>Open my data file</b>. Works in Chrome and Edge. Use an encrypted, hospital-approved drive or folder.</p>
+    <p class="muted" style="margin:4px 0 8px">Keep everything (your rotations and boards, settings and shortcuts) in one file you carry with you. Every change saves to it automatically. On another computer, open this board and choose <b>Open my data file</b>. Works in Chrome and Edge. Use an encrypted, hospital-approved drive or folder.</p>
     <div class="dfstat ${DF.handle ? DF.status : 'off'}">${esc(dfStatusText())}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${dfSupported() ? `
       ${DF.handle && DF.status === 'needs' ? '<button class="btn primary" data-df="reconnect">Reconnect</button>' : ''}
@@ -5623,28 +5623,35 @@ document.addEventListener('click', e => {
    Patients, admissions, tasks, archive and history start empty; settings, interns, columns and shortcuts carry over. */
 function newFileModal(){
   if(!dfSupported()){ toast('Saving to a file needs Chrome or Edge'); return; }
-  const def = activeType, today = todayISO(), hasData = localHasData();
-  const nameFor = (k, d) => { const t = typeOf(k); return `Plexus${SANDBOX ? ' SANDBOX' : ''} - ${t.short}${t.night ? '' : ' block'} - ${d}.json`; };
-  modal(`<h3>Start a new file</h3>
-    <p class="muted" style="margin-top:-4px">A clean board saved in its own file — one per night shift, or one for a whole day block. Your settings, interns, columns and shortcuts come along; patients, tasks and history start empty.</p>
-    <label class="f">Shift type</label>
-    ${typePickerHTML('nfType', def)}
-    <label class="f" id="nfDateLab">Shift date</label><input type="date" id="nfDate" value="${today}">
-    <label class="f">File name</label><input type="text" id="nfName">
-    <label class="ndbk"><input type="checkbox" id="nfStart" checked> Start the shift now (shows as Active)</label>
-    ${hasData ? `<label class="ndbk"><input type="checkbox" id="nfBackup" checked> First download a backup of what's on this computer now <span class="muted">(${localPatients()} patient${localPatients() === 1 ? '' : 's'})</span></label>` : ''}
-    <p class="muted small">Next you'll pick where to save it — choose your flash drive.</p>`,
-    [['Cancel'], ['Choose where to save…', 'primary', () => {
-      const k = (document.querySelector('input[name="nfType"]:checked') || {}).value || def, d = isISO($('#nfDate').value) ? $('#nfDate').value : today;
-      const name = ($('#nfName').value.trim() || nameFor(k, d)).replace(/[\\/:*?"<>|]+/g, '-').replace(/(\.json)?$/i, '.json');
-      const start = $('#nfStart').checked, bk = $('#nfBackup') && $('#nfBackup').checked;
-      setTimeout(() => dfStartNew(k, d, name, start, bk), 0);
+  const today = todayISO(), hasData = localHasData();
+  const R = Object.values(ROTS).sort((a, b) => (a.start || '').localeCompare(b.start || ''));
+  const cur = R.find(r => !r.prn && r.start <= today && r.end >= today) || R.find(r => !r.prn && r.start > today);
+  const def = isRot(activeType) ? activeType : cur ? cur.id : activeType;
+  const nameFor = k => { const r = ROTS[k], t = typeOf(k);
+    if(r) return `Plexus${SANDBOX ? ' SANDBOX' : ''} - ${rotBlock(r) ? 'Block ' + rotBlock(r) + ' ' : ''}${r.name}${r.prn ? '' : ''}.json`.replace(/[\\/:*?"<>|]/g, '-');
+    return `Plexus${SANDBOX ? ' SANDBOX' : ''} - ${t.short}${t.night ? '' : ' block'} - ${today}.json`; };
+  modal(`<h3>Start a new data file</h3>
+    <p class="muted" style="margin-top:-4px">A clean file for one rotation (or a singular shift). Patients, tasks and history start empty; your rotation schedules, settings, interns, columns and shortcuts come along. Chrome or Edge saves every change to it.</p>
+    <label class="f">For</label>
+    <select id="nfBoard" style="width:100%">
+      ${R.length ? `<optgroup label="Rotations">${R.map(r => `<option value="${r.id}" ${r.id === def ? 'selected' : ''}>${rotBlock(r) ? 'Block ' + rotBlock(r) + ' · ' : ''}${esc(r.name)} · ${esc(fmtNoYear(r.start))} – ${esc(fmtNoYear(r.end))}</option>`).join('')}</optgroup>` : ''}
+      <optgroup label="Board without a schedule">${SHIFT_TYPES.map(t => `<option value="${t.k}" ${t.k === def ? 'selected' : ''}>${esc(t.label)}</option>`).join('')}</optgroup>
+    </select>
+    ${R.length ? '' : '<p class="muted small">No rotations yet — load your setup file from the launch screen first (Switch board… → Load a setup file…) and they’ll be listed here.</p>'}
+    <div id="nfDateW"><label class="f">Board date</label><input type="date" id="nfDate" value="${today}"></div>
+    <p class="muted small" id="nfRotNote"></p>
+    <label class="f">File name</label><input type="text" id="nfName" style="width:100%">
+    ${hasData ? `<label class="ndbk"><input type="checkbox" id="nfBackup" checked> Download a backup of what’s on this computer first</label>` : ''}`,
+    [['Cancel'], ['Create file…', 'primary', () => {
+      const k = $('#nfBoard').value, r = ROTS[k], d = r ? rotStartDate(r) : ($('#nfDate').value || today);
+      const name = ($('#nfName').value.trim() || nameFor(k)).replace(/(\.json)?$/i, '.json'), bk = $('#nfBackup') && $('#nfBackup').checked;
+      setTimeout(() => dfStartNew(k, d, name, false, bk), 0);
     }]], m => {
       m.classList.add('wide');
-      wireTypePicker(m, 'nfType', () => upd());
-      const upd = () => { const k = (m.querySelector('input[name="nfType"]:checked') || {}).value || def; $('#nfDateLab').textContent = typeOf(k).span24 ? 'Shift date (the morning it starts)' : typeOf(k).night ? 'Shift date (the evening it starts)' : 'Block start date'; $('#nfName').value = nameFor(k, $('#nfDate').value || today); };
-      m.addEventListener('change', e => { if(e.target.name === 'nfType' || e.target.id === 'nfDate') upd(); });
-      upd();
+      const upd = () => { const k = m.querySelector('#nfBoard').value, r = ROTS[k];
+        m.querySelector('#nfName').value = nameFor(k); m.querySelector('#nfDateW').hidden = !!r;
+        m.querySelector('#nfRotNote').innerHTML = r ? `Opens on <b>${esc(fmtNoYear(rotStartDate(r)))}</b>${rotDay(r, rotStartDate(r)) ? ' · ' + kindChip(rotDay(r, rotStartDate(r))) : ''} — pre-chart from there.` : ''; };
+      m.querySelector('#nfBoard').addEventListener('change', upd); upd();
     });
 }
 async function dfStartNew(k, d, name, start, bk){
@@ -5655,15 +5662,14 @@ async function dfStartNew(k, d, name, start, bk){
   if(localHasData()) await autoBackup('before new file', true);
   const keepSettings = t => { try{ const b = t === activeType ? state : JSON.parse(localStorage.getItem(storeKeyFor(t)) || 'null'); return b && b.settings ? JSON.parse(JSON.stringify(b.settings)) : null; }catch(e){ return null; } };
   const base = keepSettings(activeType) || {};
-  SHIFT_TYPES.forEach(t => {
-    const st = keepSettings(t.k) || {...JSON.parse(JSON.stringify(base)), team: t.k === activeType ? base.team : (base.team || '')};
-    const board = {version:1, boardDate: t.k === k ? d : todayISO(), patients:[], admits:[], archive:[], history:[], todos:[], settings:st};
-    if(t.k === k && start){ board.shiftActive = true; board.shiftStartedAt = new Date().toISOString(); }
-    try{ localStorage.setItem(storeKeyFor(t.k), JSON.stringify(board)); localStorage.setItem(logKeyFor(t.k), '[]'); }catch(e){}
+  allBoardIds().forEach(bid => {
+    const st = keepSettings(bid) || {...JSON.parse(JSON.stringify(base)), team: bid === activeType ? base.team : (base.team || '')};
+    const board = {version:1, boardDate: bid === k ? d : isRot(bid) ? rotStartDate(ROTS[bid]) : todayISO(), patients:[], admits:[], archive:[], history:[], todos:[], settings:st};
+    try{ localStorage.setItem(storeKeyFor(bid), JSON.stringify(board)); localStorage.setItem(logKeyFor(bid), '[]'); }catch(e){}
   });
   activeType = k; try{ localStorage.setItem(TYPE_KEY, k); }catch(e){}
   state = load(); loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(k).tab; if(typeOf(k).admitOnly) ui.admitView = 'today'; saveUI();
-  logAdd([{cat:'shift', msg:`Started a new file ${h.name} — ${typeOf(k).label}, ${shiftLabel(d, typeOf(k).night ? 'night' : 'day')}${start ? ' (shift started)' : ''}`}]);
+  logAdd([{cat:'shift', msg:`Started a new data file ${h.name} — ${typeOf(k).label}, from ${fmtNoYear(d)}`}]);
   DF.handle = h; DF.name = h.name; DF.status = 'ok'; DF.lastMod = 0; await idbSet(h);
   renderAll(); await dfWrite();
   if(DF.status === 'ok') toast(`New file ${h.name} — saving to it now`);
@@ -6984,6 +6990,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:197, d:'2026-11-17', items:['<b>Start a new data file</b> (⚙ → Data file) now starts a file for a rotation — e.g. “Plexus - Block 11 Bellevue CCU.json”, opening on its first shift — with your schedules, settings and interns carried over.']},
   {v:196, d:'2026-11-17', items:['The launch screen labels the board up top by date: Current rotation, Next rotation, Upcoming or Past rotation, or Singular shift.']},
   {v:195, d:'2026-11-17', items:['Launch screen rows: the block number (with BLOCK above it), then the rotation’s emoji, then its name.']},
   {v:194, d:'2026-11-17', items:['Rotation names capitalised: Tisch Pulm (Days), VA Wards (Days), Jeopardy (Block 17) and Jeopardy (Block 23).']},
