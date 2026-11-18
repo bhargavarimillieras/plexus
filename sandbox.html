@@ -1428,7 +1428,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '199';
+const APP_VERSION = '200';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4688,7 +4688,11 @@ function runDiagnostics(){
   try{ const txt = JSON.stringify(state), back = normalize(JSON.parse(txt)); const same = back.patients.length === state.patients.length && back.admits.length === state.admits.length;
     same ? add('ok', 'This board saves and reloads cleanly', `${state.patients.length} patients, ${state.admits.length} admissions, ${state.archive.length} archived, ${(state.todos||[]).length} to-dos.`) : add('fail', 'This board changes when reloaded', 'Download a backup and report this.');
     const saved = localStorage.getItem(storeKeyFor(activeType));
-    if(saved && saved !== txt) add('warn', 'Saved copy differs from what is on screen', 'Usually means the board is open in another tab. Close the other tab, then make any edit here to re-save.');
+    // The copy in browser storage can lag the screen after a file is opened or a day starts (the board gets tidied up on load) — that's harmless,
+    // so re-save it here. Only if re-saving doesn't take is something really wrong. (A second tab can't cause this: it locks itself.)
+    if(saved && saved !== txt){ save(); const now = localStorage.getItem(storeKeyFor(activeType));
+      now === JSON.stringify(state) ? add('ok', 'Saved copy brought up to date', 'The copy in this browser was a step behind the screen, so it was re-saved.')
+        : add('warn', 'Saved copy differs from what is on screen', 'Re-saving in this browser didn’t take. Download a backup now (⚙ → Backups), then reload Plexus.'); }
   }catch(e){ add('fail', 'This board could not be serialized', String(e)); }
   // backup file round-trip
   try{ const pkg = JSON.parse(JSON.stringify({...state, log:actLog})); normalize(pkg); add('ok', 'Backup files can be created and restored', 'A test backup was built and read back in memory.'); }
@@ -5400,7 +5404,7 @@ function applyAll(pkg){
   if(pkg.shortcuts && typeof pkg.shortcuts === 'object'){ scOverrides = pkg.shortcuts; try{ localStorage.setItem(SC_KEY, JSON.stringify(scOverrides)); }catch(e){} }
   if(pkg.colWidths && typeof pkg.colWidths === 'object'){ ui.colW = pkg.colWidths; saveUI(); widthCSS(); }
   if(pkg.activeType && knownBoard(pkg.activeType)){ activeType = pkg.activeType; try{ localStorage.setItem(TYPE_KEY, activeType); }catch(e){} }
-  state = load(); loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(activeType).tab; saveUI();
+  state = load(); loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(activeType).tab; saveUI(); try{ localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){}   // the tidied-up board, so the browser copy matches the screen
   try{ localStorage.setItem(LOCAL_SAVED_KEY, pkg.savedAt || new Date().toISOString()); }catch(e){}
   renderAll();
 }
@@ -6976,6 +6980,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:200, d:'2026-11-18', items:['Fixed a false alarm: “Self-check found a problem: Saved copy differs from what is on screen” could appear after opening your data file or starting a new day. Nothing was wrong — the browser’s copy was just a step behind — and Plexus now quietly re-saves it instead of warning.']},
   {v:199, d:'2026-11-18', items:['<b>Tab icon</b> — Plexus now has its own icon in the browser tab and bookmarks: a white P on dark grey, matching the home-screen icon. The Sandbox’s has a small orange dot so you can tell the tabs apart.']},
   {v:198, d:'2026-11-18', items:['<b>Pre-charted ✓</b> — a tick next to each patient’s bed on the Census. The Overview shows “Pre-charted 9/12” (today’s new admissions aren’t counted), the Census has a <b>Not pre-charted</b> filter, and the command bar takes <code>pc 7W05</code>. The ticks clear by themselves when the next day starts.', '<b>Boards without a schedule are gone</b> — every board is now a rotation or a Singular shift. Older boards that still hold patients stay on the launch screen under <b>Older boards</b> until they’re empty.', 'Pre-charting a shift that hasn’t started yet: a task time like 05:00 now lands in that shift (tomorrow morning) instead of this morning.', 'Removed some unused code.']},
   {v:197, d:'2026-11-17', items:['<b>Start a new data file</b> (⚙ → Data file) now starts a file for a rotation — e.g. “Plexus - Block 11 Bellevue CCU.json”, opening on its first shift — with your schedules, settings and interns carried over.']},
