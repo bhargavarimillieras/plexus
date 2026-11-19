@@ -1428,7 +1428,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '203';
+const APP_VERSION = '204';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6590,15 +6590,15 @@ function filesBackup(){
 }
 function downloadedNote(name){
   modal(`<h3>⬇ Backup downloaded</h3><p><b>${esc(name)}</b> — every board, task and the activity log.</p>
-    <p class="muted">On iPad it lands in <b>Files → Downloads</b>, which is usually in <b>iCloud Drive</b>. Move it to <b>OneDrive (NYU)</b> in the Files app, so patient details stay in NYU’s storage. To bring it back: More → <b>Restore from Files…</b>. Delete old backups you no longer need.</p>`, [['OK', 'primary']]);
+    <p class="muted">On iPad it lands in <b>Files → Downloads</b>, which is usually in <b>iCloud Drive</b>. Move it to <b>On My iPad → Plexus Backups</b> in the Files app, so patient details stay off non-NYU clouds. To bring it back: More → <b>Restore from Files…</b>. Delete old backups you no longer need.</p>`, [['OK', 'primary']]);
 }
 // iPad: once per session when a backup is due — on opening a board, and when wrapping up
 let bkNudged = false;
 function backupNudge(when){
   if(!isTouch() || !filesBackupDue() || (bkNudged && when !== 'wrap')) return false; bkNudged = true;
   const at = filesBackupAt();
-  modal(`<h3>⬆ Time for a backup</h3><p>${at ? `Last backup <b>${esc(agoText(at))}</b>.` : 'No backup from this iPad yet.'} Everything lives on this iPad — a copy in OneDrive means nothing is lost if it breaks or goes missing.</p>
-    <p class="muted">Tap <b>Back up now</b> → <b>Save to Files</b> → <b>OneDrive</b> → your Plexus folder → <b>Save</b>. Not iCloud Drive: keep patient details in NYU’s storage.</p>`,
+  modal(`<h3>⬆ Time for a backup</h3><p>${at ? `Last backup <b>${esc(agoText(at))}</b>.` : 'No backup from this iPad yet.'} Everything lives inside the Plexus app — a backup file means nothing is lost if the app’s data is ever cleared.</p>
+    <p class="muted">Tap <b>Back up now</b> → <b>Save to Files</b> → <b>On My iPad</b> → <b>Plexus Backups</b> → <b>Save</b>. Not iCloud Drive: keep patient details off non-NYU clouds.</p>`,
     [['Later'], ['⬆ Back up now', 'primary', () => { filesBackup(); }]]);
   return true;
 }
@@ -6637,7 +6637,7 @@ function moreSheet(){
     <button class="row" data-do="endShiftBtn"><span class="ic">✓</span>Wrap up</button>
     ${isRot(activeType) ? '<button class="row" data-do="sched"><span class="ic">🗓</span>Edit schedule</button>' : ''}
     <h5>This ${/iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'device'}</h5>
-    <button class="row" data-do="files"><span class="ic">⬆</span>Back up to OneDrive / Files<span class="sub ${due ? 'due' : ''}">${at ? 'last ' + agoText(at) : 'not yet'}</span></button>
+    <button class="row" data-do="files"><span class="ic">⬆</span>Back up to Files<span class="sub ${due ? 'due' : ''}">${at ? 'last ' + agoText(at) : 'not yet'}</span></button>
     <button class="row" data-do="restore"><span class="ic">↺</span>Restore from Files…</button>
     <button class="row" data-do="privBtn"><span class="ic">👁</span>Hide screen</button>
     <button class="row" data-do="settingsBtn"><span class="ic">⚙</span>Settings</button>`,
@@ -6850,7 +6850,7 @@ function wrapUp(){
       ${T.tasks ? '<button class="btn" data-wu="sb">📋 Copy the night-task sign-back</button>' : ''}
       ${state.admits.some(a => a.date === state.boardDate) ? '<button class="btn" data-wu="so">📋 Copy the admissions sign-out</button>' : ''}
       <button class="btn" data-wu="pr">🖨 Print the board</button>
-      ${isTouch() ? `<button class="btn ${filesBackupDue() ? 'primary' : ''}" data-wu="fb">⬆ Back up to OneDrive${filesBackupAt() ? ` <span class="muted small">· last ${esc(agoText(filesBackupAt()))}</span>` : ''}</button>` : `<button class="btn" data-wu="bk">⬇ Download a backup</button>
+      ${isTouch() ? `<button class="btn ${filesBackupDue() ? 'primary' : ''}" data-wu="fb">⬆ Back up to Files${filesBackupAt() ? ` <span class="muted small">· last ${esc(agoText(filesBackupAt()))}</span>` : ''}</button>` : `<button class="btn" data-wu="bk">⬇ Download a backup</button>
       <button class="btn" data-wu="take">🧳 Take with me…</button>`}
     </div>`, [['Done', 'primary', () => logAdd([{cat:'shift', msg:`Wrapped up ${fmtNoYear(state.boardDate)}`}])]], m => {
     m.addEventListener('click', e => { const b = e.target.closest('[data-wu]'); if(!b) return; const w = b.dataset.wu;
@@ -7040,6 +7040,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:204, d:'2026-11-19', items:['iPad backups now point to <b>On My iPad → Plexus Backups</b> (More → <b>⬆ Back up to Files</b>), since OneDrive is read-only on the iPad.']},
   {v:203, d:'2026-11-19', items:['<b>iPad backups to OneDrive</b> — More → <b>Back up to OneDrive / Files</b> now opens the share sheet, so you can tap Save to Files → OneDrive in one go. The file is named after the rotation (e.g. “Plexus backup - Block 11 Bellevue CCU - 2026-11-21 1930.json”).', 'When a backup is due (12 hours by default; ⚙ Settings → Backup reminder), the iPad asks once when you open a board, and <b>Wrap up</b> shows a <b>Back up to OneDrive</b> button.', 'Fixed: the iPad’s “backup due” dot ignored rotation boards.']},
   {v:202, d:'2026-11-18', items:['Sandbox only: the Sandbox is now a single <b>Practice CCU</b> rotation (Nov 18 – Dec 1, Long days with days off, then nights from Nov 27) with 6 fictional patients — for rehearsing the data-file routine before the real block. It replaces the Sandbox’s earlier test data.']},
   {v:201, d:'2026-11-18', items:['<b>📂 Open my data file…</b> right on the launch screen. On a computer that starts fresh every time (like a remote desktop), open your data file straight away. It brings your rotations, boards and settings with it, so there’s no setup file to load again, and changes save back to it as you work.']},
