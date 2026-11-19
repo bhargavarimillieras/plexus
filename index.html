@@ -1469,7 +1469,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '216';
+const APP_VERSION = '217';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3940,7 +3940,7 @@ function settings(){
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button class="btn" id="bDiag">🩺 Run self-check</button><span class="muted">Checks storage, saved boards, data integrity, backups and shortcuts.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Command bar <select id="sCmdDock"><option value="bottom" ${CMDDOCK.side === 'bottom' ? 'selected' : ''}>Strip along the bottom</option><option value="right" ${CMDDOCK.side === 'right' ? 'selected' : ''}>Panel on the right</option></select></label><span class="muted" id="cmdDockNote">Switch any time with ⇆ in the bar. The side panel can be resized by dragging its left edge, and it moves to the bottom when the window is too narrow. Saved on this computer.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>Board: ${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${esc(siteOf(activeType).label)}</span></span><button class="btn sm" id="bSwitchBoard">⇆ Switch board…</button>${isRot(activeType) ? '<button class="btn sm" id="bSched">🗓 Edit schedule…</button>' : ''}<button class="btn sm" id="bRotExp" ${Object.keys(ROTS).length ? '' : 'hidden'}>Save rotation schedules…</button><span class="muted">Opens the launch screen. Plexus also shows it every time it opens.</span></div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Layout <select id="sLayout"><option value="auto" ${LAYOUT === 'auto' ? 'selected' : ''}>Automatic (${touchMQ.matches ? 'touch on this device' : 'desktop on this device'})</option><option value="touch" ${LAYOUT === 'touch' ? 'selected' : ''}>Touch — iPad style</option><option value="desktop" ${LAYOUT === 'desktop' ? 'selected' : ''}>Desktop</option></select></label><span class="muted">Touch: tab bar at the bottom, ⌘ button for the command bar, swipe tasks, long-press a bed to change it.</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Layout <select id="sLayout"><option value="auto" ${LAYOUT === 'auto' ? 'selected' : ''}>Automatic (${touchMQ.matches ? 'touch on this device' : 'desktop on this device'})</option><option value="touch" ${LAYOUT === 'touch' ? 'selected' : ''}>Touch — iPad style</option><option value="desktop" ${LAYOUT === 'desktop' ? 'selected' : ''}>Desktop</option></select></label><span class="muted">Touch: tab bar at the bottom, swipe tasks, long-press a bed to change it.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Older shifts: move out anything older than <select id="sTidyDays">${TIDY_DAYS.map(d => `<option value="${d}" ${TIDY.days === d ? 'selected' : ''}>${d} days</option>`).join('')}</select></label><button class="btn sm" id="bTidy">🗄 Move older shifts out…</button><span class="muted">Keeps the data file small. Plexus also offers this when you start a new shift.</span></div>
     <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
     <hr>
@@ -6684,8 +6684,7 @@ function touchBuild(){
   bar.innerHTML = TB_TABS.map(([k, l]) => `<button type="button" data-tt="${k}">${TB_ICON[k]}<span>${l}</span><i class="bdg" hidden></i></button>`).join('');
   document.body.appendChild(bar);
   bar.addEventListener('click', e => { const b = e.target.closest('[data-tt]'); if(!b) return; if(b.dataset.tt === 'more') moreSheet(); else touchTab(b.dataset.tt); });
-  const fab = document.createElement('button'); fab.type = 'button'; fab.className = 'fab'; fab.id = 'cmdFab'; fab.textContent = '⌘'; fab.setAttribute('aria-label', 'Command bar');
-  fab.addEventListener('click', () => cmdOpen()); document.body.appendChild(fab);
+  // (no ⌘ button on touch screens — the command bar is still there from a hardware keyboard: Ctrl + K)
   const more = document.createElement('button'); more.type = 'button'; more.className = 'hbtn tmore'; more.id = 'tMore'; more.textContent = '⋯'; more.setAttribute('aria-label', 'More');
   more.addEventListener('click', moreSheet); document.querySelector('header.top').appendChild(more);
 }
@@ -7176,6 +7175,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:217, d:'2026-11-19', items:['iPad: the round <b>⌘</b> command-bar button in the bottom-right corner is gone, so it no longer covers the board. (With a hardware keyboard, Ctrl + K still opens the command bar.)']},
   {v:216, d:'2026-11-19', items:['iPad home-screen app: a buffer strip at the very top keeps the To-Dos, undo/redo and other top buttons clear of the blurred status-bar area.']},
   {v:215, d:'2026-11-19', items:['The hospital’s <b>logo</b> sits in the top bar, left of the To-Dos button: Bellevue on Bellevue boards, NYU Langone on Tisch / KP boards, the VA on VA boards. (Hidden on narrow screens, e.g. an iPad in portrait, to keep the bar on one line.)']},
   {v:214, d:'2026-11-19', items:['iPad: on <b>ICU and CCU</b> boards, the tab bar shows <b>Transfers</b> in place of Discharges (transfers to the floor are the usual way out); Discharges moves under <b>More</b>. Other boards are unchanged.']},
