@@ -149,6 +149,9 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
 body.touch .pcchk{width:24px;height:24px;font-size:13px}
+.asof{font-size:12px;font-weight:700;color:#8a5a00;background:#fff4d6;border:1px solid #f0d58a;border-radius:999px;padding:3px 10px;white-space:nowrap;cursor:help}
+@media (prefers-color-scheme: dark){.asof{color:#f5c86a;background:rgba(245,184,61,.12);border-color:rgba(245,184,61,.35)}}
+.hubasof{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(120,160,255,.16);color:#b9cbff;font-weight:800;cursor:help}
 .hubpc{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;background:rgba(245,184,61,.14);color:#f5c86a;cursor:pointer;font-weight:800}
 .hubpc i{font-style:normal;display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;border:1.5px solid currentColor;font-size:9px}
 .hubpc b{color:inherit!important}
@@ -1316,6 +1319,7 @@ body.touch .lrow{padding:14px 16px}
         </div>
         <label>Intern <select id="internFilter"></select></label>
         <input type="search" id="search" placeholder="Search bed / problem…" style="width:170px">
+        <span id="asOfNote" class="asof" hidden></span>
         <div class="spacer"></div>
         <button class="btn sm" id="roundsBtn" title="Go through patients one at a time (← → to move, Esc to close)">▶ Rounds</button>
         <button class="btn sm validate" id="validateBtn">✓ Validation</button>
@@ -1428,7 +1432,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '204';
+const APP_VERSION = '205';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2678,7 +2682,12 @@ function renderSummary(){
   document.querySelector('.ovwrap').classList.toggle('noside', !!ui.sideHidden);
 }
 
+// pre-charting a future date: date flags (EDD, T&S, hospital day, PT/OT…) are worked out for that date, not today — say so
+const asOfTxt = () => { const d = state && state.boardDate; if(!d || d <= todayISO()) return '';
+  return `Flags as of ${new Date(d + 'T12:00').toLocaleDateString([], {weekday:'short'})} ${fmtShort(d)}`; };
+const asOfTip = () => `You’re pre-charting ${fmtNoYear(state.boardDate)}. EDD, T&S, hospital day and the other date flags show how things will stand that day — e.g. a T&S that’s fine today can already read “expired”.`;
 function renderCensus(){
+  { const n = $('#asOfNote'); if(n){ const t = asOfTxt(); n.hidden = !t; n.textContent = t ? '🗓 ' + t : ''; n.title = t ? asOfTip() : ''; } }
   $('#censusGrid').innerHTML = gridHTML(filteredPatients());
   addCensusCommentIcons();
   document.querySelectorAll('#filterSeg button').forEach(b => b.classList.toggle('on', b.dataset.f === ui.filter));
@@ -6383,7 +6392,7 @@ function renderOverview(){
   const tRow = t => { const s = todoState(t); return `<div class="trow" data-ovgo="tasks"><span class="tm ${s}">${t.due ? hhmmOf(t.due) : '—'}</span><span class="bd">${esc(todoWhere(t) || '—')}</span><span class="tx">${t.pri === 'emergent' ? '‼ ' : t.pri === 'urgent' ? '! ' : ''}${esc(t.text || '')}</span></div>`; };
 
   const band = kp => `<div class="hubband">
-      <div class="hubtop"><span class="hublive"><i></i>LIVE</span><span><b>${esc(T.label)}</b>${state.settings.team ? ' · ' + esc(state.settings.team) : ''}</span><span>${esc(shiftLabel(d, state.settings.shift))}</span>${!T.admitOnly && (() => { const c = pcCount(); return c.of ? `<span class="hubpc ${c.n === c.of ? 'ok' : ''}" data-ovgo="census" data-ovf="${c.n === c.of ? 'all' : 'notpc'}" title="Existing patients ticked ✓ pre-charted for ${esc(fmtNoYear(d))}${c.n === c.of ? '' : ' — click to see who’s left'}"><i>✓</i>PRE-CHARTED <b>${c.n}/${c.of}</b></span>` : ''; })() || ''}<span class="hubclock" id="ovClock">${t2(now)}</span></div>
+      <div class="hubtop"><span class="hublive"><i></i>LIVE</span><span><b>${esc(T.label)}</b>${state.settings.team ? ' · ' + esc(state.settings.team) : ''}</span><span>${esc(shiftLabel(d, state.settings.shift))}</span>${asOfTxt() ? `<span class="hubasof" title="${esc(asOfTip())}">🗓 ${esc(asOfTxt().toUpperCase())}</span>` : ''}${!T.admitOnly && (() => { const c = pcCount(); return c.of ? `<span class="hubpc ${c.n === c.of ? 'ok' : ''}" data-ovgo="census" data-ovf="${c.n === c.of ? 'all' : 'notpc'}" title="Existing patients ticked ✓ pre-charted for ${esc(fmtNoYear(d))}${c.n === c.of ? '' : ' — click to see who’s left'}"><i>✓</i>PRE-CHARTED <b>${c.n}/${c.of}</b></span>` : ''; })() || ''}<span class="hubclock" id="ovClock">${t2(now)}</span></div>
       ${(() => { const nx = nextStart(); return nx ? `<div class="hubnext"><span>${nx.now ? 'The board is still on ' + esc(fmtNoYear(state.boardDate)) : 'Next: ' + (dayKindTxt(activeType, nx.date) || esc(fmtNoYear(nx.date)))}</span><button class="btn sm ${nx.now ? 'primary' : ''}" id="ovNext">▶ ${esc(startLabel(nx, true))}</button></div>` : ''; })()}
       <div class="hubprog"><span>${t2(start)}</span><span class="bar"><i style="width:${pct.toFixed(1)}%"></i></span><span>${t2(end)}</span><span style="color:#cfd8e6">${boardHours().off ? 'off this date' : now < start ? (() => { const m = Math.round((start - now) / 60000); return m >= 1440 ? `starts ${fmtNoYear(state.boardDate)}` : `starts in ${Math.floor(m / 60)}h ${pad(m % 60)}m`; })() : left > 0 ? `${Math.floor(left/3600e3)}h ${pad(Math.floor(left/60000) % 60)}m left` : 'shift over'}</span></div>
       <div class="kpis">${kp}</div></div>`;
@@ -7040,6 +7049,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:205, d:'2026-11-19', items:['While you’re pre-charting a future date, the Census and Overview say <b>“Flags as of Sat 11/21”</b> — EDD, T&amp;S, hospital day and the other date flags are worked out for that day, not today.']},
   {v:204, d:'2026-11-19', items:['iPad backups now point to <b>On My iPad → Plexus Backups</b> (More → <b>⬆ Back up to Files</b>), since OneDrive is read-only on the iPad.']},
   {v:203, d:'2026-11-19', items:['<b>iPad backups to OneDrive</b> — More → <b>Back up to OneDrive / Files</b> now opens the share sheet, so you can tap Save to Files → OneDrive in one go. The file is named after the rotation (e.g. “Plexus backup - Block 11 Bellevue CCU - 2026-11-21 1930.json”).', 'When a backup is due (12 hours by default; ⚙ Settings → Backup reminder), the iPad asks once when you open a board, and <b>Wrap up</b> shows a <b>Back up to OneDrive</b> button.', 'Fixed: the iPad’s “backup due” dot ignored rotation boards.']},
   {v:202, d:'2026-11-18', items:['Sandbox only: the Sandbox is now a single <b>Practice CCU</b> rotation (Nov 18 – Dec 1, Long days with days off, then nights from Nov 27) with 6 fictional patients — for rehearsing the data-file routine before the real block. It replaces the Sandbox’s earlier test data.']},
