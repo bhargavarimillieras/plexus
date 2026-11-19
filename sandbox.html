@@ -1097,6 +1097,11 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 /* ---------- 📱 Touch / iPad layout (body.touch) ---------- */
 body.touch{-webkit-tap-highlight-color:transparent;--tbarh:62px}
 body.touch .app{height:100dvh;padding-bottom:calc(var(--tbarh) + env(safe-area-inset-bottom))}
+/* Home-screen app on iPad: the status bar (and iPadOS's blur under it) covers the top of the page — keep a solid buffer strip there
+   so the header's buttons sit fully below it */
+body.standalone header.top{padding-top:calc(max(env(safe-area-inset-top), 24px) + 14px)!important}
+body.standalone #launch{padding-top:calc(max(env(safe-area-inset-top), 24px) + 28px)}
+body.standalone .tsheet .sh{max-height:calc(85vh - max(env(safe-area-inset-top), 24px))}
 body.touch header.top{flex-wrap:nowrap;row-gap:0;padding-top:max(8px,env(safe-area-inset-top));padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
 body.touch header.top #tabs,body.touch #takeBtn,body.touch #privBtn,body.touch #backupInd,body.touch #settingsBtn,body.touch #endShiftBtn,body.touch #newDayBtn,body.touch #hclocks{display:none!important}
 body.touch .hbtn{min-width:44px;min-height:44px}
@@ -1464,7 +1469,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '215';
+const APP_VERSION = '216';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6656,6 +6661,7 @@ const isStandalone = () => navigator.standalone === true || matchMedia('(display
 function layoutApply(){
   const t = LAYOUT === 'touch' || (LAYOUT === 'auto' && touchMQ.matches), was = isTouch();
   document.body.classList.toggle('touch', t);
+  document.body.classList.toggle('standalone', isStandalone());   // opened from the home-screen icon: the status bar sits over the page
   if(t !== was){ try{ cmdDockApply(); }catch(e){} try{ fitHeader(); }catch(e){} touchSync(); }
 }
 function layoutSet(v){ LAYOUT = v; try{ localStorage.setItem(LAYOUT_KEY, v); }catch(e){} layoutApply(); }
@@ -7170,6 +7176,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:216, d:'2026-11-19', items:['iPad home-screen app: a buffer strip at the very top keeps the To-Dos, undo/redo and other top buttons clear of the blurred status-bar area.']},
   {v:215, d:'2026-11-19', items:['The hospital’s <b>logo</b> sits in the top bar, left of the To-Dos button: Bellevue on Bellevue boards, NYU Langone on Tisch / KP boards, the VA on VA boards. (Hidden on narrow screens, e.g. an iPad in portrait, to keep the bar on one line.)']},
   {v:214, d:'2026-11-19', items:['iPad: on <b>ICU and CCU</b> boards, the tab bar shows <b>Transfers</b> in place of Discharges (transfers to the floor are the usual way out); Discharges moves under <b>More</b>. Other boards are unchanged.']},
   {v:213, d:'2026-11-19', items:['Clearer counts: the Interns card said “22 tasks left” when it meant the <b>daily checklist boxes</b> on the Census (Vitals, I/O, Note…) not yet done. It now says “22 boxes open”, and shows the intern’s <b>Tasks</b>-tab items separately when there are any. The Census filter and links say “open daily boxes” too.']},
