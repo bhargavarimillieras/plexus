@@ -1432,7 +1432,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '205';
+const APP_VERSION = '206';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1651,7 +1651,7 @@ const OPT_COLORS = [['','None'],['green','Green'],['yellow','Yellow'],['orange',
 const DC_OPTS = () => [O('Signed','green'),O('Pended','orange'),O('Incomplete','red')];
 const GROUPS = [
   {k:'daily', label:'Daily', cols:[
-    {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'status'},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','HD catheter','Port','Foley catheter','Rectal tube','NG tube','OG tube','G-tube / PEG','Chest tube','JP drain','Trach'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
+    {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'status'},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','IABP','HD catheter','Port','Foley catheter','Rectal tube','NG tube','OG tube','G-tube / PEG','Chest tube','JP drain','ETT','Trach'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
     {k:'labrev',h:'Lab Rev',type:'status'},{k:'vst',h:'Visit',type:'check'},
     {k:'note',h:'Note',type:'statusChoice',size:'mid',opts:[O('Progress'),O('H&P'),O('Discharge'),O('Pending'),O('ALOC'),O('Transfer')]},
     {k:'hc',h:'Hosp Course',type:'check'},
@@ -1952,6 +1952,12 @@ function normalize(s){
   if(s.settings.shift !== 'night') s.settings.shift = 'day';
   if(typeof s.settings.autoBackup !== 'boolean') s.settings.autoBackup = true;
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
+  // v206: ETT and IABP join the Avatar list — also on boards whose Avatar list was already customised (once; delete them again if you don't want them)
+  if(!s.settings.avEttIabp){ const av = s.settings.columns.avatar;
+    if(av && Array.isArray(av.opts)){ const has = l => av.opts.some(o => (o.label || '').toLowerCase() === l.toLowerCase()), at = l => av.opts.findIndex(o => o.label === l);
+      if(!has('IABP')){ const i = at('Arterial line'); av.opts.splice(i >= 0 ? i + 1 : av.opts.length, 0, {label:'IABP'}); }
+      if(!has('ETT')){ const i = at('Trach'); av.opts.splice(i >= 0 ? i : av.opts.length, 0, {label:'ETT'}); } }
+    s.settings.avEttIabp = 1; }
   s.settings.colOrder = s.settings.colOrder || {};
   if(!(s.settings.cap >= 0)) s.settings.cap = 0;   // 0 = no cap set
   if(!(s.settings.admitCap >= 0)) s.settings.admitCap = 0;   // admissions per shift; 0 = no cap set
@@ -7049,6 +7055,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:206, d:'2026-11-19', items:['<b>ETT</b> (endotracheal tube) and <b>IABP</b> are now built-in choices in the Avatar column, on every board — including ones where you’d already edited the list.']},
   {v:205, d:'2026-11-19', items:['While you’re pre-charting a future date, the Census and Overview say <b>“Flags as of Sat 11/21”</b> — EDD, T&amp;S, hospital day and the other date flags are worked out for that day, not today.']},
   {v:204, d:'2026-11-19', items:['iPad backups now point to <b>On My iPad → Plexus Backups</b> (More → <b>⬆ Back up to Files</b>), since OneDrive is read-only on the iPad.']},
   {v:203, d:'2026-11-19', items:['<b>iPad backups to OneDrive</b> — More → <b>Back up to OneDrive / Files</b> now opens the share sheet, so you can tap Save to Files → OneDrive in one go. The file is named after the rotation (e.g. “Plexus backup - Block 11 Bellevue CCU - 2026-11-21 1930.json”).', 'When a backup is due (12 hours by default; ⚙ Settings → Backup reminder), the iPad asks once when you open a board, and <b>Wrap up</b> shows a <b>Back up to OneDrive</b> button.', 'Fixed: the iPad’s “backup due” dot ignored rotation boards.']},
