@@ -612,6 +612,9 @@ body.tkfull #hclocks{margin-right:4px}
 .ldtlist{display:flex;flex-direction:column;max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-bottom:6px}
 .ldtrow{display:grid;grid-template-columns:20px 1fr 128px 46px;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
 .ldtrow:first-child{border-top:0}
+.ldtgrp{position:sticky;top:0;z-index:1;padding:5px 8px 3px;font:800 10px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--panel2,var(--bg));border-top:1px solid var(--line)}
+.ldtgrp:first-child{border-top:0}
+.ldtgrp+.ldtrow{border-top:0}
 .ldtloc{grid-column:2/-1;display:flex;gap:5px;align-items:center;margin:-1px 0 2px}
 .ldtloc select{font:inherit;font-size:12px;padding:2px 4px;border:1px solid var(--line2);border-radius:6px;background:var(--panel);color:var(--ink)}
 .ldtloc select:disabled,.ldtloc button:disabled{opacity:.45}
@@ -1442,7 +1445,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '208';
+const APP_VERSION = '209';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1661,7 +1664,7 @@ const OPT_COLORS = [['','None'],['green','Green'],['yellow','Yellow'],['orange',
 const DC_OPTS = () => [O('Signed','green'),O('Pended','orange'),O('Incomplete','red')];
 const GROUPS = [
   {k:'daily', label:'Daily', cols:[
-    {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'status'},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','IABP','HD catheter','Port','Foley catheter','Rectal tube','NG tube','OG tube','G-tube / PEG','Chest tube','JP drain','ETT','Trach'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
+    {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'status'},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','HD catheter','Port','IABP','Foley catheter','NG tube','OG tube','G-tube / PEG','Rectal tube','ETT','Trach','Chest tube','JP drain'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
     {k:'labrev',h:'Lab Rev',type:'status'},{k:'vst',h:'Visit',type:'check'},
     {k:'note',h:'Note',type:'statusChoice',size:'mid',opts:[O('Progress'),O('H&P'),O('Discharge'),O('Pending'),O('ALOC'),O('Transfer')]},
     {k:'hc',h:'Hosp Course',type:'check'},
@@ -2369,6 +2372,13 @@ const ldtAge = it => isISO(it.d) ? daysBetween(it.d, state.boardDate) : null;   
 const ldtOld = it => { const a = ldtAge(it); return a !== null && a > state.settings.ldtDays; };
 const ldtItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
 // where it is (PIVs: side + site) and how many — a PIV can be listed more than once
+// the Avatar list is shown in groups, in this order; anything else (your own additions) goes under Other
+const LDT_GROUPS = [['Vascular access', ['PIV', 'Midline', 'PICC', 'CVC', 'Arterial line', 'HD catheter', 'Port', 'IABP', 'Impella', 'ECMO cannula', 'Swan-Ganz', 'PA catheter', 'Temporary pacing wire']],
+  ['Urinary', ['Foley catheter', 'Suprapubic catheter', 'Nephrostomy tube', 'Condom catheter']],
+  ['GI / feeding', ['NG tube', 'OG tube', 'Dobhoff', 'G-tube / PEG', 'J-tube', 'Rectal tube', 'Flexi-Seal']],
+  ['Airway', ['ETT', 'Trach']],
+  ['Drains', ['Chest tube', 'JP drain', 'Pigtail drain', 'Biliary drain', 'EVD']]];
+const ldtGroupOf = n => { const l = String(n).toLowerCase(), i = LDT_GROUPS.findIndex(g => g[1].some(x => x.toLowerCase() === l)); return i < 0 ? LDT_GROUPS.length : i; };
 const LDT_SITES = {'PIV':['hand', 'wrist', 'forearm', 'AC', 'upper arm', 'EJ', 'foot']};
 const LDT_MULTI = new Set(['PIV']);
 const LDT_SITE_SHORT = {forearm:'FA', 'upper arm':'UA'};
@@ -2384,7 +2394,9 @@ function ldtCellTxt(items){ const out = [];
 function ldtPopHTML(col, cell){
   const items = ldtItems(cell), names = [...new Set([...col.opts.map(o => o.label), ...items.map(i => i.k).filter(k => !col.opts.some(o => o.label === k))])];
   const rows = n => { const its = items.filter(i => i.k === n); return (LDT_MULTI.has(n) && its.length > 1 ? its : [its[0]]).map(it => ldtRowHTML(n, it)).join(''); };
-  return `<div class="ldtlist">${names.map(rows).join('')}</div>
+  const order = names.map((n, i) => ({n, i, g:ldtGroupOf(n)})).sort((a, b) => a.g - b.g || a.i - b.i);
+  let html = '', g = -1; order.forEach(o => { if(o.g !== g){ g = o.g; html += `<div class="ldtgrp">${esc(g < LDT_GROUPS.length ? LDT_GROUPS[g][0] : 'Other')}</div>`; } html += rows(o.n); });
+  return `<div class="ldtlist">${html}</div>
     <div class="ed ldtaddrow"><input type="text" data-ldtnew placeholder="Add another (e.g. Nephrostomy tube)"><button class="btn sm" data-ldtadd>Add</button></div>
     <div class="muted" style="font-size:11px;margin-top:2px">Tick what's in, with the date it was placed. Red after more than ${state.settings.ldtDays} days.</div>`;
 }
@@ -7092,6 +7104,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:209, d:'2026-11-19', items:['The <b>Avatar</b> list is now grouped: <b>Vascular access</b> (PIV, Midline, PICC, CVC, A-line, HD catheter, Port, IABP), <b>Urinary</b> (Foley), <b>GI / feeding</b> (NG, OG, G-tube, rectal tube), <b>Airway</b> (ETT, trach) and <b>Drains</b> (chest tube, JP). Anything you add yourself goes in the right group if it’s a known device (e.g. Impella, nephrostomy tube, Dobhoff), otherwise under Other.']},
   {v:208, d:'2026-11-19', items:['<b>PIVs in the Avatar</b>: pick the side (R / L) and site (hand, wrist, forearm, AC, upper arm, EJ, foot) for each one, and tap <b>＋ another</b> for a second (or third) PIV. The board shows them as e.g. “PIV R AC · PIV L FA”.']},
   {v:207, d:'2026-11-19', items:['The <b>block number</b> now sits at the top of the board, right after the rotation name (e.g. Bellevue CCU ⇆ <b>BLOCK 11</b>).']},
   {v:206, d:'2026-11-19', items:['<b>ETT</b> (endotracheal tube) and <b>IABP</b> are now built-in choices in the Avatar column, on every board — including ones where you’d already edited the list.']},
