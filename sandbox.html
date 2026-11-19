@@ -1210,6 +1210,11 @@ body.launching .app,body.launching .tbar,body.launching .fab,body.launching .toa
 .ndboard{background:var(--head);border-radius:8px;padding:8px 12px;margin:4px 0 10px}
 .shiftlbl{display:inline-flex;align-items:center;gap:6px;border:0;background:none;font:600 14px inherit;font-family:inherit;color:var(--ink);padding:2px 0;cursor:pointer;white-space:nowrap}
 .shiftlbl .sw{font-size:11px;font-weight:700;color:var(--muted);border:1px solid var(--line2);border-radius:6px;padding:1px 6px}
+.hdrblk{display:inline-flex;align-items:center;gap:5px;margin-left:8px;flex:none}
+.hdrblk[hidden]{display:none}
+.hdrblk i{font-style:normal;font:800 8.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.1em;color:#4a5262}
+.hdrblk b{min-width:24px;height:24px;padding:0 5px;box-sizing:border-box;border-radius:6px;background:#2b3240;color:#fff;display:inline-flex;align-items:center;justify-content:center;font:700 12.5px ui-monospace,"SF Mono",Menlo,monospace}
+@media (prefers-color-scheme: dark){.hdrblk i{color:#9aa3b2}.hdrblk b{background:#3a4252}}
 .shiftlbl:hover .sw{color:var(--accent);border-color:var(--accent)}
 body.touch .shiftlbl{font-size:17px}
 /* ---------- Launch screen (v192: matches the Overview) ---------- */
@@ -1272,7 +1277,7 @@ body.touch .lrow{padding:14px 16px}
 <div class="app">
   <header class="top">
     <div class="brand"><span class="brandname">PLEXUS</span> <span id="teamWrap"></span></div>
-    <div class="boarddate"><button class="shiftpill" id="shiftPill"></button><b id="boardDate"></b><span class="bdsep"></span><button type="button" id="shiftLabel" class="shiftlbl" title="This board’s site and shift. To work on a different one: Switch board…"></button></div>
+    <div class="boarddate"><button class="shiftpill" id="shiftPill"></button><b id="boardDate"></b><span class="bdsep"></span><button type="button" id="shiftLabel" class="shiftlbl" title="This board’s site and shift. To work on a different one: Switch board…"></button><span id="hdrBlock" class="hdrblk" hidden></span></div>
     <nav class="tabs" id="tabs">
       <button data-tab="overview">Overview</button>
       <button data-tab="tasks" hidden>Tasks</button>
@@ -1432,7 +1437,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '206';
+const APP_VERSION = '207';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3175,7 +3180,9 @@ function renderChromeInner(){
     $('#boardDate').title = shiftLabel(d, state.settings.shift); }
   renderShiftPill(); renderTodoInd(); tickClocks();
   { const k = scLabel('bulkAdd'), plain = k.replace(/<[^>]+>/g, ''); const e2 = $('#bulkKey2'); if(e2) e2.innerHTML = k; const b = $('#bulkPt'); if(b) b.dataset.tip = `Bulk Add patients${plain ? '\nShortcut: ' + plain : ''}`; }
-  { const T = typeOf(activeType); $('#shiftLabel').innerHTML = `${T.icon} ${esc(T.label)} <span class="sw" aria-label="Switch board">⇆</span>`; }
+  { const T = typeOf(activeType); $('#shiftLabel').innerHTML = `${T.icon} ${esc(T.label)} <span class="sw" aria-label="Switch board">⇆</span>`;
+    const hb = $('#hdrBlock'), bn = isRot(activeType) ? rotBlock(ROTS[activeType]) : '';
+    if(hb){ hb.hidden = !bn; hb.innerHTML = bn ? `<i>BLOCK</i><b>${esc(String(bn))}</b>` : ''; hb.title = bn ? `Block ${bn}` : ''; } }
   if(!document.querySelector('#teamWrap .teamedit')){
     const t = state.settings.team;
     $('#teamWrap').innerHTML = `<button class="teamname ${t?'':'unset'}" id="teamBtn" title="${t ? 'Click to rename the team' : 'Click to set the team name'}">${t ? esc(t) : '+ Team'}</button>`;
@@ -7055,6 +7062,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:207, d:'2026-11-19', items:['The <b>block number</b> now sits at the top of the board, right after the rotation name (e.g. Bellevue CCU ⇆ <b>BLOCK 11</b>).']},
   {v:206, d:'2026-11-19', items:['<b>ETT</b> (endotracheal tube) and <b>IABP</b> are now built-in choices in the Avatar column, on every board — including ones where you’d already edited the list.']},
   {v:205, d:'2026-11-19', items:['While you’re pre-charting a future date, the Census and Overview say <b>“Flags as of Sat 11/21”</b> — EDD, T&amp;S, hospital day and the other date flags are worked out for that day, not today.']},
   {v:204, d:'2026-11-19', items:['iPad backups now point to <b>On My iPad → Plexus Backups</b> (More → <b>⬆ Back up to Files</b>), since OneDrive is read-only on the iPad.']},
