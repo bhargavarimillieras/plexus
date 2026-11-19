@@ -1457,7 +1457,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '213';
+const APP_VERSION = '214';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6655,8 +6655,12 @@ const TB_ICON = {
   census:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14.5h18M9 4v16"/></svg>',
   admits:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>',
   discharges:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M3 12h12M11 8l4 4-4 4"/></svg>',
+  transfers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 8h13M13 4l4 4-4 4M20 16H7M11 12l-4 4 4 4"/></svg>',
   more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg>'};
-const TB_TABS = [['overview', 'Overview'], ['tasks', 'Tasks'], ['census', 'Census'], ['admits', 'Admissions'], ['discharges', 'Discharges'], ['more', 'More']];
+const TB_TABS = [['overview', 'Overview'], ['tasks', 'Tasks'], ['census', 'Census'], ['admits', 'Admissions'], ['discharges', 'Discharges'], ['transfers', 'Transfers'], ['more', 'More']];
+// ICU / CCU boards: transfers out to the floor are the usual way patients leave, so Transfers takes Discharges' place in the tab bar (Discharges moves to More)
+const isCritCare = () => { const T = typeOf(activeType), key = (T.rot ? T.rot.tpl + ' ' + (T.rot.tplKey || '') : T.k) || ''; return /icu|ccu/i.test(key); };
+const tbSwap = () => isCritCare() ? ['transfers', 'discharges'] : ['discharges', 'transfers'];   // [in the bar, under More]
 function touchBuild(){
   if($('#tbar')) return;
   const bar = document.createElement('nav'); bar.className = 'tbar'; bar.id = 'tbar'; bar.setAttribute('aria-label', 'Pages');
@@ -6672,8 +6676,10 @@ function touchTab(k){ const b = document.querySelector(`#tabs button[data-tab="$
 function touchSync(){
   const bar = $('#tbar'); if(!bar || !state) return;
   const t = ui.tab, tasksOn = !$('#tabs button[data-tab=tasks]').hidden, censusOn = !$('#tabs button[data-tab=census]').hidden;
-  bar.querySelectorAll('[data-tt]').forEach(b => b.classList.toggle('on', b.dataset.tt === t || (b.dataset.tt === 'more' && ['transfers', 'history'].includes(t))));
+  const [inBar, inMore] = tbSwap();
+  bar.querySelectorAll('[data-tt]').forEach(b => b.classList.toggle('on', b.dataset.tt === t || (b.dataset.tt === 'more' && [inMore, 'history'].includes(t))));
   bar.querySelector('[data-tt=tasks]').hidden = !tasksOn; bar.querySelector('[data-tt=census]').hidden = !censusOn;
+  bar.querySelector(`[data-tt=${inBar}]`).hidden = $(`#tabs button[data-tab=${inBar}]`).hidden; bar.querySelector(`[data-tt=${inMore}]`).hidden = true;
   bar.style.gridTemplateColumns = `repeat(${bar.querySelectorAll('[data-tt]:not([hidden])').length},1fr)`;
   const badge = (k, n, cls) => { const i = bar.querySelector(`[data-tt=${k}] .bdg`); i.hidden = !n; i.textContent = n > 99 ? '99+' : n; i.className = 'bdg ' + (cls || ''); };
   let over = 0, wait = 0;
@@ -6741,7 +6747,7 @@ function sheet(html, onPick){
 function moreSheet(){
   const at = filesBackupAt(), due = filesBackupDue();
   sheet(`<h5>Pages</h5>
-    <button class="row" data-do="tab:transfers"><span class="ic">⇄</span>Transfers</button>
+    ${tbSwap()[1] === 'transfers' ? '<button class="row" data-do="tab:transfers"><span class="ic">⇄</span>Transfers</button>' : '<button class="row" data-do="tab:discharges"><span class="ic">⇥</span>Discharges</button>'}
     <button class="row" data-do="tab:history"><span class="ic">🗂</span>History &amp; Archive</button>
     ${$('#tabs button[data-tab=census]').hidden ? '' : ''}
     <h5>Shift</h5>
@@ -7153,6 +7159,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:214, d:'2026-11-19', items:['iPad: on <b>ICU and CCU</b> boards, the tab bar shows <b>Transfers</b> in place of Discharges (transfers to the floor are the usual way out); Discharges moves under <b>More</b>. Other boards are unchanged.']},
   {v:213, d:'2026-11-19', items:['Clearer counts: the Interns card said “22 tasks left” when it meant the <b>daily checklist boxes</b> on the Census (Vitals, I/O, Note…) not yet done. It now says “22 boxes open”, and shows the intern’s <b>Tasks</b>-tab items separately when there are any. The Census filter and links say “open daily boxes” too.']},
   {v:212, d:'2026-11-19', items:['<b>Diet</b>: new core diets <b>Renal</b>, <b>Full Liquid</b> and <b>Clear Liquid</b>, and a <b>Modifiers</b> row under them — <b>Kosher</b>, <b>Halal</b>, <b>Mod Con</b>, <b>Fluid Restriction</b> — that you can tick on top of any diet (shown as e.g. “Heart Healthy + Kosher + Fluid Restriction”). Kosher moved from the diet list to the modifiers.']},
   {v:211, d:'2026-11-19', items:['DVT PPx: <b>Heparin</b> is replaced by <b>SQH</b> (subcutaneous heparin) and <b>HEP GTT</b> (heparin drip). Patients already marked “Heparin” keep it until you pick one of the two.']},
