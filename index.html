@@ -1451,7 +1451,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '210';
+const APP_VERSION = '211';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1678,7 +1678,7 @@ const GROUPS = [
   {k:'standing', label:'Standing', cols:[
     {k:'bm',h:'Last BM',type:'date'},{k:'ts',h:'T&S',type:'date'},
     {k:'diet',h:'Diet',type:'choice',size:'mid',opts:[O('General'),O('Diabetic'),O('Heart Healthy'),O('Kosher'),O('NPO','red')]},
-    {k:'dvt',h:'DVT PPx',type:'choice',size:'mid',opts:[O('Heparin'),O('LMWH'),O('DOAC'),O('HELD','red')]},
+    {k:'dvt',h:'DVT PPx',type:'choice',size:'mid',opts:[O('SQH'),O('HEP GTT'),O('LMWH'),O('DOAC'),O('HELD','red')]},
     {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'text'},
     {k:'pt',h:'PT',type:'date'},{k:'ot',h:'OT',type:'date'}]},
   {k:'edd', label:'EDD', tab:'fixed', cols:[{k:'edd',h:'EDD',type:'date',fixedType:true}]},
@@ -1837,29 +1837,29 @@ function demoState(){
     settings:{team:'', interns:['Intern A','Intern B','Intern C','Intern D'], internCaps:{'Intern A':5,'Intern B':5,'Intern C':5,'Intern D':4}, tsHours:72, bmDays:3, ptotDays:2, cap:18, admitCap:5},
     patients:[
       // ---- Intern A ----
-      mk('7W-01A','Intern A','CHF exacerbation','Existing',4,{vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:['C','BMP stable'],vst:Y,note:['P','Progress'],labord:{c:true,t:'05:00'},bm:['',y],ts:['',addDays(d,-4)],diet:['','Heart Healthy'],dvt:['','Heparin'],pt:['',addDays(d,-2)],ot:['',addDays(d,-2)],sw:['','SNF referrals sent'],edd:['',t1],dest:['','SAR/SNF'],dcint:['','Pended'],dcmdr:['','Incomplete'],dcsum:['','Incomplete'],transport:['','Medical transport'],dispo:['','2 bed offers, awaiting insurance auth']}),
+      mk('7W-01A','Intern A','CHF exacerbation','Existing',4,{vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:['C','BMP stable'],vst:Y,note:['P','Progress'],labord:{c:true,t:'05:00'},bm:['',y],ts:['',addDays(d,-4)],diet:['','Heart Healthy'],dvt:['','SQH'],pt:['',addDays(d,-2)],ot:['',addDays(d,-2)],sw:['','SNF referrals sent'],edd:['',t1],dest:['','SAR/SNF'],dcint:['','Pended'],dcmdr:['','Incomplete'],dcsum:['','Incomplete'],transport:['','Medical transport'],dispo:['','2 bed offers, awaiting insurance auth']}),
       mk('7W-02B','Intern A','CAP, AKI','Existing',2,{vitals:'C',io:['R','UOP 0.3 mL/kg/h'],avatar:'C',fsg:'C',labrev:['X','K 6.1 – repeat sent'],note:['','Progress'],labord:{c:true,t:'05:00, 14:00'},bm:['',addDays(d,-4)],ts:['',addDays(d,-2)],diet:['','General'],dvt:['','LMWH'],pt:['',addDays(d,-1)],edd:['',addDays(d,3)],dest:['','Home']}),
       mk('7W-03A','Intern A','COPD exacerbation','Discharge',5,{hc:Y,vitals:'C',io:'N',avatar:'C',fsg:'N',labrev:'C',vst:Y,note:['C','Discharge'],attest:Y,handoff:Y,ordrev:Y,bm:['',y],diet:['','General'],dvt:['','LMWH'],pt:['',addDays(d,-1)],ot:['','N/A'],edd:['',d],dcint:['','Signed'],dcmdr:['','Signed'],dcsum:['','Signed'],dcord:['','Signed'],transport:['','Family / friend'],dest:['','Home'],services:['','Home O2 2L delivered']}),
       mk('7W-04B','Intern A','Alcohol withdrawal','Existing',1,{vitals:['S','CIWA q2h'],io:'C',avatar:['R','Tremulous overnight'],fsg:'N',labrev:['R','Mg 1.4 – repleting'],vst:Y,note:['','Progress'],bm:['',y],ts:['',y],diet:['','General'],dvt:['','LMWH'],sw:['','Rehab resources'],edd:['',addDays(d,3)],dest:['','Home']}),
       // ---- Intern B ----
-      mk('7W-05A','Intern B','DKA, resolving','Existing',3,{vitals:'C',io:'C',avatar:'C',fsg:['R','BG 280s'],labrev:['C','AG closed'],vst:Y,note:['P','Progress'],labord:{c:true,t:'05:00'},bm:['',y],diet:['','Diabetic'],dvt:['','Heparin'],pt:['','N/A'],ot:['','N/A'],edd:['',d],dest:['','Home'],dcint:['','Pended'],dcmdr:['','Incomplete'],dcsum:['','Pended'],transport:['','Family / friend'],services:['','Endocrine f/u, insulin teaching']}),
+      mk('7W-05A','Intern B','DKA, resolving','Existing',3,{vitals:'C',io:'C',avatar:'C',fsg:['R','BG 280s'],labrev:['C','AG closed'],vst:Y,note:['P','Progress'],labord:{c:true,t:'05:00'},bm:['',y],diet:['','Diabetic'],dvt:['','SQH'],pt:['','N/A'],ot:['','N/A'],edd:['',d],dest:['','Home'],dcint:['','Pended'],dcmdr:['','Incomplete'],dcsum:['','Pended'],transport:['','Family / friend'],services:['','Endocrine f/u, insulin teaching']}),
       mk('7W-06B','Intern B','Cellulitis LLE','Existing',5,{hc:Y,vitals:'C',io:'N',avatar:'C',fsg:'N',labrev:'C',vst:Y,note:['','Progress'],attest:Y,bm:['',y],diet:['','General'],dvt:['','LMWH'],pt:['',addDays(d,-3)],ot:['','N/A'],edd:['',t1],dest:['','Home'],dcint:['','Pended'],transport:['','Taxi / rideshare']}),
       mk('7W-07A','Intern B','AFib with RVR','New',0,{vitals:'C',io:'C',avatar:'P',labrev:['O','Trop pending'],note:['P','H&P'],ts:['',d],diet:['','Heart Healthy'],dvt:['','DOAC'],edd:['',addDays(d,2)],dest:['','Home']}),
       mk('7W-08B','Intern B','Hip fracture, s/p ORIF','Existing',6,{vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:['C','Hgb stable'],vst:Y,note:['','Progress'],bm:['',addDays(d,-5)],ts:['',addDays(d,-6)],diet:['','General'],dvt:['','LMWH'],pt:['',addDays(d,-4)],ot:['',addDays(d,-4)],sw:['','SAR referrals out'],edd:['',addDays(d,2)],dest:['','SAR/SNF'],transport:['','Ambulance (BLS)']}),
       // ---- Intern C ----
       mk('7W-09A','Intern C','Upper GI bleed','Existing',1,{vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:['S','q6h H/H'],vst:Y,note:['','Progress'],labord:{c:true,t:'05:00, 11:00, 17:00'},ts:['',y],diet:['','NPO'],dvt:['','HELD'],proc:['','EGD today'],edd:['',addDays(d,2)],dest:['','Home']}),
-      mk('7W-10B','Intern C','Pyelonephritis','Discharge',3,{hc:Y,vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:['C','Cx: pan-S E. coli'],vst:Y,note:['C','Discharge'],attest:Y,bm:['',y],diet:['','General'],dvt:['','Heparin'],pt:['','N/A'],ot:['','N/A'],edd:['',d],dcint:['','Signed'],dcmdr:['','Signed'],dcsum:['','Pended'],dcord:['','Pended'],transport:['','Taxi / rideshare'],dest:['','Home']}),
-      mk('7W-11A','Intern C','Syncope','New',0,{vitals:'C',io:'P',avatar:'C',labrev:['O','Orthostatics, TTE ordered'],note:['P','H&P'],diet:['','General'],dvt:['','Heparin'],proc:['','TTE pending'],edd:['',t1],dest:['','Home']}),
+      mk('7W-10B','Intern C','Pyelonephritis','Discharge',3,{hc:Y,vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:['C','Cx: pan-S E. coli'],vst:Y,note:['C','Discharge'],attest:Y,bm:['',y],diet:['','General'],dvt:['','SQH'],pt:['','N/A'],ot:['','N/A'],edd:['',d],dcint:['','Signed'],dcmdr:['','Signed'],dcsum:['','Pended'],dcord:['','Pended'],transport:['','Taxi / rideshare'],dest:['','Home']}),
+      mk('7W-11A','Intern C','Syncope','New',0,{vitals:'C',io:'P',avatar:'C',labrev:['O','Orthostatics, TTE ordered'],note:['P','H&P'],diet:['','General'],dvt:['','SQH'],proc:['','TTE pending'],edd:['',t1],dest:['','Home']}),
       mk('7W-12B','Intern C','Hyponatremia','Existing',2,{vitals:'C',io:['R','Fluid restrict 1.2L'],avatar:'C',fsg:'N',labrev:['P','Na q6h – 124'],note:['','Progress'],labord:{c:false},bm:['',addDays(d,-2)],diet:['','General'],dvt:['','LMWH'],pt:['',addDays(d,-1)],edd:['',addDays(d,3)],dest:['','Home']}),
       // ---- Intern D ----
-      mk('7W-13A','Intern D','Sepsis, UTI source','Existing',2,{vitals:['R','Soft BPs overnight'],io:'C',avatar:'C',fsg:'C',labrev:['X','Lactate 4.2'],note:['','Progress'],bm:['',y],ts:['',addDays(d,-2)],diet:['','Diabetic'],dvt:['','Heparin'],edd:['',addDays(d,4)],dest:['','Home']}),
+      mk('7W-13A','Intern D','Sepsis, UTI source','Existing',2,{vitals:['R','Soft BPs overnight'],io:'C',avatar:'C',fsg:'C',labrev:['X','Lactate 4.2'],note:['','Progress'],bm:['',y],ts:['',addDays(d,-2)],diet:['','Diabetic'],dvt:['','SQH'],edd:['',addDays(d,4)],dest:['','Home']}),
       mk('7W-14B','Intern D','Hepatic encephalopathy','Existing',4,{vitals:'C',io:'C',avatar:['A','Grade 2 HE'],fsg:'C',labrev:['C','NH3 trending down'],vst:Y,note:['A','ALOC'],bm:['',d],diet:['','General'],dvt:['','HELD'],sw:['','Family meeting 2pm'],edd:['',addDays(d,3)],dest:['','Home']}),
       mk('7W-15A','Intern D','PE, on heparin gtt','Transfer',3,{vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:['C','PTT therapeutic'],vst:Y,note:['','Transfer'],handoff:Y,bm:['',y],diet:['','General'],dvt:['','HELD'],dest:['','Uptriage'],dispo:['','Step-down bed requested']}),
       mk('7W-16B','Intern D','Stroke rule-out → TIA','Existing',2,{hc:Y,vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:'C',vst:Y,note:['','Progress'],attest:Y,bm:['',y],ts:['',addDays(d,-2)],diet:['','Heart Healthy'],dvt:['','LMWH'],pt:['',y],ot:['',y],proc:['','MRI brain done'],edd:['',t1],dest:['','Home'],dcint:['','Incomplete'],dcmdr:['','Pended'],transport:['','Family / friend']}),
     ],
     admits:[
       admit('7W-07A','Intern B','AFib with RVR','ED Admit','Direct','08:40',['edcourse','visit','problist','medadm','pain','bm','medrec','labord','hpi','pt','ot','handoff'],{diet:'Heart Healthy',dvt:'DOAC',ap:'Pended',note:'Pended'}),
-      admit('7W-11A','Intern C','Syncope','ED Admit','RML','10:15',['edcourse','visit','problist'],{diet:'General',dvt:'Heparin',medrec:'Pended',hpi:'Pended'}),
+      admit('7W-11A','Intern C','Syncope','ED Admit','RML','10:15',['edcourse','visit','problist'],{diet:'General',dvt:'SQH',medrec:'Pended',hpi:'Pended'}),
     ],
     archive:[], history:[],
   };
@@ -1901,11 +1901,11 @@ function practiceDemo(r){
   const mk = (bed, intern, problem, status, ago, set) => { const p = {id:uid(), bed, intern, problem, status, admitDate:addDays(bd, -ago), cells:blankCells(ALL_COLS)};
     Object.entries(set).forEach(([k, v]) => { p.cells[k] = Array.isArray(v) ? {s:v[0], t:v[1]} : (typeof v === 'object' ? Object.assign({s:'', t:''}, v) : {s:v, t:''}); }); return p; };
   return normalize({version:1, boardDate:bd, patients:[
-      mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:'C', avatar:'C', labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'Heparin'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
-      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {vitals:'C', io:['R', 'Net −1.2 L, goal −2'], avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'Heparin'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
+      mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:'C', avatar:'C', labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
+      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {vitals:'C', io:['R', 'Net −1.2 L, goal −2'], avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
       mk('CCU-3', 'Intern A', 'Complete heart block → PPM today', 'Existing', 1, {vitals:'C', io:'C', avatar:['A', 'Temp wire in R IJ'], labrev:'C', note:['', 'Progress'], diet:['', 'NPO after midnight'], dvt:['', 'HELD'], proc:['', 'PPM placement'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
-      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {vitals:['R', 'MAP 62–65'], io:'C', avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'Heparin'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
-      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {vitals:'C', io:'C', avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'Heparin'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
+      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {vitals:['R', 'MAP 62–65'], io:'C', avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
+      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {vitals:'C', io:'C', avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
       mk('CCU-6', 'Intern B', 'Severe AS, pre-TAVR workup', 'Existing', 5, {hc:Y, vitals:'C', io:'C', avatar:'C', labrev:'C', vst:Y, note:['', 'Progress'], attest:Y, bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'LMWH'], pt:['', addDays(bd, -2)], ot:['', addDays(bd, -2)], proc:['', 'CTA TAVR protocol'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
     ], admits:[], archive:[], history:[],
     settings:{team:'', interns:['Intern A', 'Intern B'], internCaps:{'Intern A':5, 'Intern B':5}, tsHours:72, bmDays:3, ptotDays:2, shiftType:r.id}});
@@ -1971,6 +1971,14 @@ function normalize(s){
   if(s.settings.shift !== 'night') s.settings.shift = 'day';
   if(typeof s.settings.autoBackup !== 'boolean') s.settings.autoBackup = true;
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
+  // v211: DVT PPx “Heparin” splits into SQH (subcutaneous) and HEP GTT (drip) — on boards whose DVT list was customised too (once)
+  if(!s.settings.dvtSqh){ const dv = s.settings.columns.dvt;
+    if(dv && Array.isArray(dv.opts)){ const i = dv.opts.findIndex(o => (o.label || '').toLowerCase() === 'heparin'), has = l => dv.opts.some(o => (o.label || '').toLowerCase() === l.toLowerCase());
+      if(i >= 0 && !has('SQH')) dv.opts.splice(i, 1, {...dv.opts[i], label:'SQH'}); else if(i >= 0) dv.opts.splice(i, 1);
+      const j = dv.opts.findIndex(o => o.label === 'SQH');
+      if(!has('SQH')) dv.opts.unshift({label:'SQH'});
+      if(!has('HEP GTT')) dv.opts.splice((j >= 0 ? j : 0) + 1, 0, {label:'HEP GTT'}); }
+    s.settings.dvtSqh = 1; }
   // v206: ETT and IABP join the Avatar list — also on boards whose Avatar list was already customised (once; delete them again if you don't want them)
   if(!s.settings.avEttIabp){ const av = s.settings.columns.avatar;
     if(av && Array.isArray(av.opts)){ const has = l => av.opts.some(o => (o.label || '').toLowerCase() === l.toLowerCase()), at = l => av.opts.findIndex(o => o.label === l);
@@ -5207,10 +5215,10 @@ function bellevueDemo(){
   const admit = (seq, bed, problem, origin, timeIn, signed, extra, team) => { const a = {id:uid(), seq, date:d, bed, intern:'', problem, origin, method:'Direct', team:team || '', timeIn, timeOut:'', cells:blankCells(ADMIT_COLS)};
     signed.forEach(k => a.cells[k].t = 'Signed'); Object.entries(extra || {}).forEach(([k, v]) => a.cells[k] = {s:'', t:v}); return a; };
   const admits = [
-    admit(1, 'ED-12', 'CHF exacerbation', 'ED Admit', '19:50', [...P1, ...P2, ...P3], {diet:'Heart Healthy', dvt:'Heparin', signout:'Yes'}, 'GM2'),
+    admit(1, 'ED-12', 'CHF exacerbation', 'ED Admit', '19:50', [...P1, ...P2, ...P3], {diet:'Heart Healthy', dvt:'SQH', signout:'Yes'}, 'GM2'),
     admit(2, 'ED-07', 'Pyelonephritis with sepsis', 'ED Admit', '21:05', [...P1, ...P2, 'ap'], {diet:'General', dvt:'LMWH', note:'Pended'}, 'GM4'),
     admit(3, 'ED-21', 'Upper GI bleed', 'ED Admit', '22:40', [...P1], {diet:'NPO', dvt:'HELD', medrec:'Pended', hpi:'Pended'}, 'GM1'),
-    admit(4, 'ED-03', 'Hyperkalemia, AKI', 'ED Admit', '23:55', ['edcourse'], {visit:'Pended', diet:'Heart Healthy', dvt:'Heparin'}, 'GM3'),
+    admit(4, 'ED-03', 'Hyperkalemia, AKI', 'ED Admit', '23:55', ['edcourse'], {visit:'Pended', diet:'Heart Healthy', dvt:'SQH'}, 'GM3'),
     {...admit(1, 'ED-30', 'Community-acquired pneumonia', '', '19:15', [], {}, 'GM2'), hold:true, mlBy:'Moonlighter A', method:''},
     {...admit(2, 'ED-16', 'Cellulitis, LLE', '', '19:20', [], {signout:'Yes'}, 'GM4'), hold:true, mlBy:'Moonlighter A', method:''},
   ];
@@ -5240,7 +5248,7 @@ function tischDemo(){
   const mk = (bed, intern, problem, status, hd, o = {}) => {
     const p = {id:uid(), bed, intern, problem, status, admitDate:ago(hd - 1), cells:blankCells(ALL_COLS)};
     const c = p.cells;
-    c.diet = {s:'', t:o.diet || 'General'}; c.dvt = {s:'', t:o.dvt || 'Heparin'};
+    c.diet = {s:'', t:o.diet || 'General'}; c.dvt = {s:'', t:o.dvt || 'SQH'};
     c.avatar = {s:'', t:'', items:(o.lines || [['PIV', Math.min(hd - 1, 2)]]).map(([k, n]) => ({k, d:ago(n)}))};
     c.proc = {s:'', t:o.proc ? o.proc[0] : '', d:o.proc ? addDays(d, o.proc[1]) : ''};
     if(o.edd !== undefined) c.edd = {s:'', t:addDays(d, o.edd)};
@@ -5263,7 +5271,7 @@ function tischDemo(){
     mk('14E05/01','Intern B','Alcohol withdrawal','Existing',2,{edd:3, sw:'Rehab resources'}),
     mk('14E06/01','Intern C','Hip fracture s/p ORIF','Existing',8,{dvt:'LMWH', lines:[['PIV',9],['JP drain',6]], pt:2, bm:5, dest:'SAR/SNF', edd:2, sw:'SAR referrals out'}),
     mk('14E06/02','Intern C','Sickle cell pain crisis','Existing',3,{lines:[['PIV',2]], edd:2}),
-    mk('14E07/01','Intern C','Submassive PE, heparin gtt','Existing',3,{dvt:'Heparin', lines:[['PIV',3],['Arterial line',2]], edd:4, cmt:{dvt:'Therapeutic gtt — PTT q6h'}}),
+    mk('14E07/01','Intern C','Submassive PE, heparin gtt','Existing',3,{dvt:'SQH', lines:[['PIV',3],['Arterial line',2]], edd:4, cmt:{dvt:'Therapeutic gtt — PTT q6h'}}),
     mk('14E08/02','Intern C','DKA, resolving','Existing',2,{diet:'Diabetic', edd:2}),
     mk('14E09/01','Intern D','Cellulitis LLE','Existing',5,{dvt:'LMWH', edd:1, pt:2, dest:'Home'}),
     mk('14E09/02','Intern D','Hyponatremia','Existing',3,{bm:3, edd:3, cmt:{diet:'1.2 L fluid restriction'}}),
@@ -5271,12 +5279,12 @@ function tischDemo(){
   ];
   // two admissions picked up tonight, still being worked up
   const newPt = (bed, problem, diet, dvt) => { const p = mk(bed, '', problem, 'New', 1, {diet, dvt, lines:[['PIV',0]]}); p.cells.note = {s:'', t:'H&P'}; return p; };
-  const n1 = newPt('14E11/01','Hyperkalemia (K 6.4), AKI','Heart Healthy','Heparin'), n2 = newPt('14E12/02','Syncope','General','Heparin');
+  const n1 = newPt('14E11/01','Hyperkalemia (K 6.4), AKI','Heart Healthy','SQH'), n2 = newPt('14E12/02','Syncope','General','SQH');
   const admit = (p, seq, origin, method, timeIn, signed, extra) => { const a = {id:uid(), seq, date:d, bed:p.bed, intern:'', problem:p.problem, origin, method, team:'', timeIn, timeOut:'', cells:blankCells(ADMIT_COLS), patientId:p.id};
     signed.forEach(k => a.cells[k].t = 'Signed'); Object.entries(extra).forEach(([k, v]) => a.cells[k] = {s:'', t:v}); p.admitId = a.id; return a; };
   const admits = [
-    admit(n1, 1, 'ED Admit', 'Direct', '20:15', ['edcourse','visit','problist','medadm','pain','bm'], {diet:'Heart Healthy', dvt:'Heparin', medrec:'Pended', labord:'Signed', hpi:'Pended'}),   // P1 done, working on P2
-    admit(n2, 2, 'ED Admit', 'RML', '21:40', ['edcourse'], {visit:'Pended', diet:'General', dvt:'Heparin'}),                                                                             // just started
+    admit(n1, 1, 'ED Admit', 'Direct', '20:15', ['edcourse','visit','problist','medadm','pain','bm'], {diet:'Heart Healthy', dvt:'SQH', medrec:'Pended', labord:'Signed', hpi:'Pended'}),   // P1 done, working on P2
+    admit(n2, 2, 'ED Admit', 'RML', '21:40', ['edcourse'], {visit:'Pended', diet:'General', dvt:'SQH'}),                                                                             // just started
   ];
   admits[0].arrived = '20:40'; admits[0].visitAt = new Date(+d.slice(0,4), +d.slice(5,7) - 1, +d.slice(8,10), 20, 58).toISOString();
   const BOARD_TEAM = 'Tisch 14E';
@@ -7117,6 +7125,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:211, d:'2026-11-19', items:['DVT PPx: <b>Heparin</b> is replaced by <b>SQH</b> (subcutaneous heparin) and <b>HEP GTT</b> (heparin drip). Patients already marked “Heparin” keep it until you pick one of the two.']},
   {v:210, d:'2026-11-19', items:['Fixed: you couldn’t clear an EDD. There’s now a <b>✕</b> beside a filled-in EDD (and other date boxes on the Census) that empties it, and on iPad the date picker’s <b>Reset</b> now clears the date instead of putting the old one back.']},
   {v:209, d:'2026-11-19', items:['The <b>Avatar</b> list is now grouped: <b>Vascular access</b> (PIV, Midline, PICC, CVC, A-line, HD catheter, Port, IABP), <b>Urinary</b> (Foley), <b>GI / feeding</b> (NG, OG, G-tube, rectal tube), <b>Airway</b> (ETT, trach) and <b>Drains</b> (chest tube, JP). Anything you add yourself goes in the right group if it’s a known device (e.g. Impella, nephrostomy tube, Dobhoff), otherwise under Other.']},
   {v:208, d:'2026-11-19', items:['<b>PIVs in the Avatar</b>: pick the side (R / L) and site (hand, wrist, forearm, AC, upper arm, EJ, foot) for each one, and tap <b>＋ another</b> for a second (or third) PIV. The board shows them as e.g. “PIV R AC · PIV L FA”.']},
