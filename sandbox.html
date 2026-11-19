@@ -1338,7 +1338,7 @@ body.touch .lrow{padding:14px 16px}
         <button class="btn sm" id="sideToggle" title="Show / hide the summary panel">◧</button>
         <div class="seg" id="filterSeg">
           <button data-f="all" class="on">All</button>
-          <button data-f="open">Unfinished tasks</button>
+          <button data-f="open" title="Patients with daily checklist boxes not yet done">Open boxes</button>
           <button data-f="flagged">Flagged</button>
           <button data-f="notpc">Not pre-charted</button>
         </div>
@@ -1457,7 +1457,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '212';
+const APP_VERSION = '213';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2623,7 +2623,7 @@ function gridHTML(patients, {ro=false} = {}){
     if(grouped && p.intern !== lastIntern){
       lastIntern = p.intern;
       const mine = patients.filter(x => x.intern === p.intern);
-      h += `<tr class="grprow"><td colspan="${totalCols}"><div class="grplabel">${esc(p.intern || 'Unassigned')} <span>${mine.length} patient${mine.length===1?'':'s'} · ${mine.reduce((n,x) => n + openCount(x), 0)} daily tasks left</span></div></td></tr>`;
+      h += `<tr class="grprow"><td colspan="${totalCols}"><div class="grplabel">${esc(p.intern || 'Unassigned')} <span>${mine.length} patient${mine.length===1?'':'s'} · ${mine.reduce((n,x) => n + openCount(x), 0)} daily boxes open</span></div></td></tr>`;
     }
     h += `<tr class="${p.status==='Discharge'?'dc':''}" data-id="${p.id}" data-intern="${esc(p.intern||'')}">`;
     h += `<td class="stk" style="${stkStyle(0)}"><div class="seqc">${ro ? '' : `<span class="drag" draggable="true" data-drag="${p.id}" title="Drag to move this patient">⠿</span>`}<span>${ri+1}</span>${ro?'':`<span class="rowbtns"><button data-act="up" data-id="${p.id}" title="Move up">▲</button><button data-act="down" data-id="${p.id}" title="Move down">▼</button><button data-act="del" data-id="${p.id}" title="Remove patient">✕</button></span>`}</div></td>`;
@@ -2679,14 +2679,15 @@ function dcBar(p){
   return `<div class="dcbar">${DC_KEYS.map(seg).join('')}</div><div class="dcabbr">${DC_KEYS.map(k => `<span title="${esc(colCfg(k).h)}">${DC_ABBR[k]}</span>`).join('')}</div>`;
 }
 /* Intern workload: census per intern vs the intern cap, new admits, DCs today, unfinished daily tasks, and who's next up. */
+const todoOpenFor = pts => { const ids = new Set(pts.map(p => p.id)); try{ return liveTodos().filter(t => !t.done && t.pid && ids.has(t.pid)).length; }catch(e){ return 0; } };
 function workloadRows(){
   const ps = state.patients, capOf = n => +(state.settings.internCaps || {})[n] || 0;
   const names = [...state.settings.interns, ...new Set(ps.map(p => p.intern).filter(i => i && !state.settings.interns.includes(i)))];
   const rows = names.map((name, i) => { const mine = ps.filter(p => p.intern === name);
     return {name, i, n:mine.length, nw:mine.filter(p => p.status === 'New').length, dc:mine.filter(p => dcBucket(p) === 'today').length,
-            open:mine.reduce((x,p) => x + openCount(p), 0), cap:capOf(name), full: capOf(name) > 0 && mine.length >= capOf(name), listed: state.settings.interns.includes(name)}; });
+            open:mine.reduce((x,p) => x + openCount(p), 0), todo:todoOpenFor(mine), cap:capOf(name), full: capOf(name) > 0 && mine.length >= capOf(name), listed: state.settings.interns.includes(name)}; });
   const un = ps.filter(p => !p.intern);
-  if(un.length) rows.push({name:'', i:1e6, n:un.length, nw:un.filter(p => p.status === 'New').length, dc:un.filter(p => dcBucket(p) === 'today').length, open:un.reduce((x,p) => x + openCount(p), 0), full:false, listed:false});
+  if(un.length) rows.push({name:'', i:1e6, n:un.length, nw:un.filter(p => p.status === 'New').length, dc:un.filter(p => dcBucket(p) === 'today').length, open:un.reduce((x,p) => x + openCount(p), 0), todo:todoOpenFor(un), full:false, listed:false});
   // next up for an admission: a listed intern under cap with the fewest new admits, then the smallest census
   const cand = rows.filter(r => r.listed && !r.full).sort((a,b) => a.nw - b.nw || a.n - b.n || a.i - b.i);
   if(cand.length && rows.filter(r => r.listed).length > 1) cand[0].next = true;
@@ -2701,7 +2702,7 @@ function workloadCard(){
       <div class="wlname"><span>${esc(r.name || 'Unassigned')}</span>${r.next ? '<i class="wlnext" title="Fewest new admits and under cap">NEXT UP</i>' : ''}</div>
       <div class="wlnum ${r.full ? 'full' : ''}">${r.n}${r.cap ? `<span class="muted" style="font-weight:600">/${r.cap}</span>` : ''}</div>
       <div class="wlbar"><i class="${r.full ? 'full' : ''}" style="width:${Math.min(100, r.n / (r.cap || max) * 100)}%"></i></div>
-      <div class="wlstats"><span><b>${r.nw}</b> new</span><span><b>${r.dc}</b> DC today</span><span><b>${r.open}</b> task${r.open===1?'':'s'} left</span></div>
+      <div class="wlstats"><span><b>${r.nw}</b> new</span><span><b>${r.dc}</b> DC today</span><span title="Daily checklist boxes on the Census (Vitals, I/O, Note…) not yet marked done"><b>${r.open}</b> box${r.open===1?'':'es'} open</span>${r.todo ? `<span title="Unfinished items on the Tasks tab for this intern’s patients"><b>${r.todo}</b> task${r.todo===1?'':'s'}</span>` : ''}</div>
     </div>`).join('')}
   </div>`;
 }
@@ -2740,7 +2741,7 @@ function renderSummary(){
       <div class="censusbox">${ringSVG(n, cap)}
         <div class="censusinfo"><div class="${full ? 'red' : ''}" style="font-weight:600">${capLine}</div>
           <a href="#" data-f="flagged" class="lnk">${flagged} flagged patient${flagged===1?'':'s'} →</a>
-          <a href="#" data-f="open" class="lnk">${ps.filter(p => openCount(p) > 0).length} with unfinished tasks →</a>
+          <a href="#" data-f="open" class="lnk">${ps.filter(p => openCount(p) > 0).length} with open daily boxes →</a>
           ${(() => { const c = pcCount(); return c.of ? `<a href="#" data-f="notpc" class="lnk">${c.n === c.of ? '✓ All pre-charted' : `${c.of - c.n} not pre-charted →`}</a>` : ''; })()}</div>
       </div>
     </div>
@@ -3564,7 +3565,7 @@ function renderRounds(){
   const list = roundsList(), body = $('#roundsBody');
   let i = list.findIndex(p => p.id === rounds.id);
   if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
-  const filt = [ui.intern && `Intern: ${ui.intern}`, ui.filter === 'open' && 'Unfinished tasks', ui.filter === 'flagged' && 'Flagged', ui.search && `Search: “${ui.search}”`].filter(Boolean);
+  const filt = [ui.intern && `Intern: ${ui.intern}`, ui.filter === 'open' && 'Open daily boxes', ui.filter === 'flagged' && 'Flagged', ui.search && `Search: “${ui.search}”`].filter(Boolean);
   const bar = `<div class="rbar"><h3>Rounds</h3><span class="rcount">${list.length ? `${i+1} / ${list.length}` : '0 patients'}</span>
     ${list.length ? `<select id="rJump" title="Jump to a patient">${list.map((p,j) => `<option value="${p.id}" ${j===i?'selected':''}>${j+1}. ${esc(p.bed || '(no bed)')} — ${esc(p.intern || 'unassigned')}${p.problem ? ' · ' + esc(p.problem) : ''}</option>`).join('')}</select>` : ''}
     ${filt.length ? `<span class="muted small">Following the Census filter: ${esc(filt.join(' · '))}</span>` : ''}
@@ -4491,7 +4492,7 @@ function scRun(a, ctx){
     case 'tkFull': if(ui.tab !== 'tasks') return false; tkFullOn() ? exitTkFull() : enterTkFull(); return;
     case 'tabTasks': if(scGoTab('tasks')) setTimeout(() => $('#tkText').focus(), 0); return;
     case 'search': if(ui.tab !== 'census' && !scGoTab('census')) return; { const s = $('#search'); s.focus(); s.select(); } return;
-    case 'filter': { if(ui.tab !== 'census' && !scGoTab('census')) return; const order = ['all','open','flagged'], names = {all:'All patients', open:'Unfinished tasks', flagged:'Flagged'};
+    case 'filter': { if(ui.tab !== 'census' && !scGoTab('census')) return; const order = ['all','open','flagged'], names = {all:'All patients', open:'Open daily boxes', flagged:'Flagged'};
       ui.filter = order[(order.indexOf(ui.filter) + 1) % order.length]; saveUI(); renderCensus(); toast(`Filter: ${names[ui.filter]}`); return; }
     case 'intern': { if(ui.tab !== 'census' && !scGoTab('census')) return; const list = ['', ...new Set([...state.settings.interns, ...state.patients.map(p => p.intern).filter(Boolean)])];
       ui.intern = list[(list.indexOf(ui.intern) + 1) % list.length]; saveUI(); renderCensus(); toast(`Intern: ${ui.intern || 'All'}`); return; }
@@ -7152,6 +7153,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:213, d:'2026-11-19', items:['Clearer counts: the Interns card said “22 tasks left” when it meant the <b>daily checklist boxes</b> on the Census (Vitals, I/O, Note…) not yet done. It now says “22 boxes open”, and shows the intern’s <b>Tasks</b>-tab items separately when there are any. The Census filter and links say “open daily boxes” too.']},
   {v:212, d:'2026-11-19', items:['<b>Diet</b>: new core diets <b>Renal</b>, <b>Full Liquid</b> and <b>Clear Liquid</b>, and a <b>Modifiers</b> row under them — <b>Kosher</b>, <b>Halal</b>, <b>Mod Con</b>, <b>Fluid Restriction</b> — that you can tick on top of any diet (shown as e.g. “Heart Healthy + Kosher + Fluid Restriction”). Kosher moved from the diet list to the modifiers.']},
   {v:211, d:'2026-11-19', items:['DVT PPx: <b>Heparin</b> is replaced by <b>SQH</b> (subcutaneous heparin) and <b>HEP GTT</b> (heparin drip). Patients already marked “Heparin” keep it until you pick one of the two.']},
   {v:210, d:'2026-11-19', items:['Fixed: you couldn’t clear an EDD. There’s now a <b>✕</b> beside a filled-in EDD (and other date boxes on the Census) that empties it, and on iPad the date picker’s <b>Reset</b> now clears the date instead of putting the old one back.']},
