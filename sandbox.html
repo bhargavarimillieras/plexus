@@ -612,6 +612,11 @@ body.tkfull #hclocks{margin-right:4px}
 .ldtlist{display:flex;flex-direction:column;max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-bottom:6px}
 .ldtrow{display:grid;grid-template-columns:20px 1fr 128px 46px;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
 .ldtrow:first-child{border-top:0}
+.ldtloc{grid-column:2/-1;display:flex;gap:5px;align-items:center;margin:-1px 0 2px}
+.ldtloc select{font:inherit;font-size:12px;padding:2px 4px;border:1px solid var(--line2);border-radius:6px;background:var(--panel);color:var(--ink)}
+.ldtloc select:disabled,.ldtloc button:disabled{opacity:.45}
+.ldtmore{margin-left:auto;border:0;background:none;color:var(--accent);font:700 12px inherit;font-family:inherit;cursor:pointer;padding:2px 4px}
+body.touch .ldtloc select{font-size:14px;padding:5px 6px}
 .ldtrow.on{background:var(--info-bg)}
 .ldtrow.old{background:var(--bad-bg)}
 .ldtrow.old .ldtage{color:var(--bad-ink);font-weight:800}
@@ -1437,7 +1442,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '207';
+const APP_VERSION = '208';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2221,7 +2226,7 @@ function cellDesc(cfg, c){
     case 'status': case 'statusChoice': return [SMAP[c.s] ? SMAP[c.s].label : (c.s ? c.s : ''), c.t].filter(Boolean).join(' · ') || 'cleared';
     case 'check': return c.t ? 'checked' : 'unchecked';
     case 'proc': return c.t || c.d ? `${c.t || 'procedure'}${isISO(c.d) ? ' on ' + fmtShort(c.d) : ''}` : 'cleared';
-    case 'ldt': return ldtItems(c).length ? ldtItems(c).map(i => i.k + (isISO(i.d) ? ' ' + fmtShort(i.d) : '')).join(', ') : 'none';
+    case 'ldt': return ldtItems(c).length ? ldtItems(c).map(i => ldtLabel(i) + (isISO(i.d) ? ' ' + fmtShort(i.d) : '')).join(', ') : 'none';
     case 'checkNote': return (c.c ? 'checked' : 'unchecked') + (c.t ? ' · ' + c.t : '');
     case 'date': return c.t ? (isISO(c.t) ? fmtShort(c.t) : c.t) : 'cleared';
     default: return c.t ? q(c.t) : 'cleared';
@@ -2363,19 +2368,38 @@ const LDT_SHORT = {'Foley catheter':'Foley', 'Arterial line':'A-line', 'HD cathe
 const ldtAge = it => isISO(it.d) ? daysBetween(it.d, state.boardDate) : null;          // days in place
 const ldtOld = it => { const a = ldtAge(it); return a !== null && a > state.settings.ldtDays; };
 const ldtItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
-function ldtSummary(cell){ return ldtItems(cell).map(it => `${it.k}${isISO(it.d) ? ` (since ${fmtShort(it.d)}, day ${ldtAge(it)})` : ' (no date)'}`).join('; '); }
+// where it is (PIVs: side + site) and how many — a PIV can be listed more than once
+const LDT_SITES = {'PIV':['hand', 'wrist', 'forearm', 'AC', 'upper arm', 'EJ', 'foot']};
+const LDT_MULTI = new Set(['PIV']);
+const LDT_SITE_SHORT = {forearm:'FA', 'upper arm':'UA'};
+const ldtLoc = it => [it.side, it.site].filter(Boolean).join(' ');
+const ldtLocShort = it => [it.side, LDT_SITE_SHORT[it.site] || it.site].filter(Boolean).join(' ');
+const ldtLabel = it => it.k + (ldtLoc(it) ? ' ' + ldtLoc(it) : '');
+function ldtSummary(cell){ return ldtItems(cell).map(it => `${ldtLabel(it)}${isISO(it.d) ? ` (since ${fmtShort(it.d)}, day ${ldtAge(it)})` : ' (no date)'}`).join('; '); }
+// cell text: "PIV R AC · PIV L FA · Foley", identical ones collapsed ("PIV ×2")
+function ldtCellTxt(items){ const out = [];
+  items.forEach(it => { const t = `${LDT_SHORT[it.k] || it.k}${ldtLocShort(it) ? ' ' + ldtLocShort(it) : ''}${ldtOld(it) ? ' ' + ldtAge(it) + 'd' : ''}`;
+    const last = out[out.length - 1]; if(last && last.t === t) last.n++; else out.push({t, n:1}); });
+  return out.map(x => x.t + (x.n > 1 ? ' ×' + x.n : '')).join(' · '); }
 function ldtPopHTML(col, cell){
-  const items = ldtItems(cell), names = [...col.opts.map(o => o.label), ...items.map(i => i.k).filter(k => !col.opts.some(o => o.label === k))];
-  const row = n => { const it = items.find(i => i.k === n), age = it ? ldtAge(it) : null, old = it && ldtOld(it);
-    return `<label class="ldtrow ${it ? 'on' : ''} ${old ? 'old' : ''}"><input type="checkbox" data-ldt="${esc(n)}" ${it ? 'checked' : ''}><span class="ldtn">${esc(n)}</span>
-      <input type="date" data-ldtd value="${esc(it && isISO(it.d) ? it.d : '')}" max="${state.boardDate}" ${it ? '' : 'disabled'} title="Date placed"><span class="ldtage">${age !== null ? `day ${age}` : ''}</span></label>`; };
-  return `<div class="ldtlist">${names.map(row).join('')}</div>
+  const items = ldtItems(cell), names = [...new Set([...col.opts.map(o => o.label), ...items.map(i => i.k).filter(k => !col.opts.some(o => o.label === k))])];
+  const rows = n => { const its = items.filter(i => i.k === n); return (LDT_MULTI.has(n) && its.length > 1 ? its : [its[0]]).map(it => ldtRowHTML(n, it)).join(''); };
+  return `<div class="ldtlist">${names.map(rows).join('')}</div>
     <div class="ed ldtaddrow"><input type="text" data-ldtnew placeholder="Add another (e.g. Nephrostomy tube)"><button class="btn sm" data-ldtadd>Add</button></div>
     <div class="muted" style="font-size:11px;margin-top:2px">Tick what's in, with the date it was placed. Red after more than ${state.settings.ldtDays} days.</div>`;
+}
+function ldtRowHTML(n, it, extra){
+  const age = it ? ldtAge(it) : null, old = it && ldtOld(it), sites = LDT_SITES[n], dis = it ? '' : 'disabled';
+  return `<label class="ldtrow ${it ? 'on' : ''} ${old ? 'old' : ''}"><input type="checkbox" data-ldt="${esc(n)}" ${it ? 'checked' : ''} ${extra ? 'data-extra="1"' : ''}><span class="ldtn">${esc(n)}</span>
+    <input type="date" data-ldtd value="${esc(it && isISO(it.d) ? it.d : '')}" max="${state.boardDate}" ${dis} title="Date placed"><span class="ldtage">${age !== null ? `day ${age}` : ''}</span>
+    ${sites ? `<span class="ldtloc"><select data-ldtside ${dis} aria-label="Side"><option value="">R / L</option>${['R', 'L'].map(x => `<option ${it && it.side === x ? 'selected' : ''}>${x}</option>`).join('')}</select>
+      <select data-ldtsite ${dis} aria-label="Site"><option value="">Site…</option>${sites.map(x => `<option ${it && it.site === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
+      ${LDT_MULTI.has(n) ? `<button type="button" class="ldtmore" data-ldtmore="${esc(n)}" ${dis} title="Add another ${esc(n)}">＋ another</button>` : ''}</span>` : ''}</label>`;
 }
 function wireLdtPop(el){
   const refreshRow = lab => { const cb = lab.querySelector('[data-ldt]'), d = lab.querySelector('[data-ldtd]'), ag = lab.querySelector('.ldtage');
     d.disabled = !cb.checked; if(cb.checked && !d.value) d.value = state.boardDate;
+    lab.querySelectorAll('.ldtloc select, .ldtloc button').forEach(x => x.disabled = !cb.checked);
     const age = cb.checked && isISO(d.value) ? daysBetween(d.value, state.boardDate) : null;
     lab.classList.toggle('on', cb.checked); lab.classList.toggle('old', age !== null && age > state.settings.ldtDays); ag.textContent = age !== null ? `day ${age}` : ''; };
   el.querySelector('.ldtlist').addEventListener('change', e => { const lab = e.target.closest('.ldtrow'); if(lab) refreshRow(lab); });
@@ -2386,11 +2410,17 @@ function wireLdtPop(el){
       lab = tmp.firstElementChild; el.querySelector('.ldtlist').appendChild(lab); }
     lab.querySelector('[data-ldt]').checked = true; refreshRow(lab); lab.scrollIntoView({block:'nearest'}); nw.focus(); };
   el.querySelector('[data-ldtadd]').addEventListener('click', add);
+  // ＋ another PIV: a new row right after the last one of that kind
+  el.querySelector('.ldtlist').addEventListener('click', e => { const b = e.target.closest('[data-ldtmore]'); if(!b) return; e.preventDefault(); e.stopPropagation();
+    const n = b.dataset.ldtmore, same = [...el.querySelectorAll('.ldtrow')].filter(l => l.querySelector('[data-ldt]').dataset.ldt === n), lastRow = same[same.length - 1];
+    const tmp = document.createElement('div'); tmp.innerHTML = ldtRowHTML(n, null, true); const lab = tmp.firstElementChild; lastRow.after(lab);
+    lab.querySelector('[data-ldt]').checked = true; refreshRow(lab); lab.scrollIntoView({block:'nearest'}); });
   nw.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); add(); } });
 }
 function commitLdt(p, r, el){
-  const items = [...el.querySelectorAll('.ldtrow')].map(l => ({cb:l.querySelector('[data-ldt]'), d:l.querySelector('[data-ldtd]')}))
-    .filter(x => x.cb.checked).map(x => ({k:x.cb.dataset.ldt, d:isISO(x.d.value) ? x.d.value : ''}));
+  const items = [...el.querySelectorAll('.ldtrow')].map(l => ({cb:l.querySelector('[data-ldt]'), d:l.querySelector('[data-ldtd]'), side:l.querySelector('[data-ldtside]'), site:l.querySelector('[data-ldtsite]')}))
+    .filter(x => x.cb.checked).map(x => { const it = {k:x.cb.dataset.ldt, d:isISO(x.d.value) ? x.d.value : ''};
+      if(x.side && x.side.value) it.side = x.side.value; if(x.site && x.site.value) it.site = x.site.value; return it; });
   const fresh = [...el.querySelectorAll('[data-ldt][data-new]')].filter(x => x.checked).map(x => x.dataset.ldt);
   if(JSON.stringify(items) === JSON.stringify(ldtItems(r.cells[p.k])) && !fresh.length) return;
   mutate(() => {
@@ -2412,7 +2442,7 @@ function cellHTML(cell, col, kind, id, ri, ci, ro){
   }
   if(col.type === 'ldt'){
     const items = ldtItems(cell), old = items.some(ldtOld), st = !items.length ? 'none' : old ? 'old' : 'ok';
-    const txt = items.map(it => `${LDT_SHORT[it.k] || it.k}${ldtOld(it) ? ' ' + ldtAge(it) + 'd' : ''}`).join(' · ');
+    const txt = ldtCellTxt(items);
     const title = `${col.h}: ${items.length ? ldtSummary(cell) : 'no lines / drains / tubes'}`;
     return `<div class="tc t-ldt ldt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}</span></div>`;
   }
@@ -3984,7 +4014,7 @@ function download(name, text, type){
 function validationFindings(){
   const statusCols = ALL_COLS.filter(c => isStatusType(colCfg(c.k).type));
   const out = {R:[], X:[], npo:[], proc:[], held:[], todo:[], ldt:[]};
-  state.patients.forEach(p => ldtItems(p.cells.avatar).filter(ldtOld).forEach(it => out.ldt.push({p, col:'avatar', what:it.k, note:`day ${ldtAge(it)} (placed ${fmtShort(it.d)})`})));
+  state.patients.forEach(p => ldtItems(p.cells.avatar).filter(ldtOld).forEach(it => out.ldt.push({p, col:'avatar', what:ldtLabel(it), note:`day ${ldtAge(it)} (placed ${fmtShort(it.d)})`})));
   liveTodos().filter(t => t.pid && !t.done && todoState(t) === 'over').sort(byDue).forEach(t => out.todo.push({p:todoPatient(t), col:'', what:t.text, note:`due ${hhmmOf(t.due)}`}));
   const lc = v => String(v||'').trim().toLowerCase();
   state.patients.forEach(p => {
@@ -6309,7 +6339,7 @@ function printSheetHTML(){
     Object.keys(by).sort((a, b) => (a === 'No intern') - (b === 'No intern') || a.localeCompare(b)).forEach(intern => {
       s += `<tr class="pgrp"><td colspan="11">${esc(intern)} · ${by[intern].length}</td></tr>`;
       by[intern].forEach(p => { const open = DAILY_KEYS.filter(k => colCfg(k).type !== 'ldt' && !isDone(colCfg(k), p.cells[k])).map(k => colCfg(k).h);
-        const lines = ldtItems(p.cells.avatar || {}).map(it => `${esc(it.k)}${isISO(it.d) ? ' d' + ldtAge(it) : ''}`).join(', ');
+        const lines = ldtItems(p.cells.avatar || {}).map(it => `${esc(ldtLabel(it))}${isISO(it.d) ? ' d' + ldtAge(it) : ''}`).join(', ');
         s += `<tr><td class="pc">${box(false)}</td><td><b>${esc(p.bed || '—')}</b></td><td>${hospDay(p) || ''}</td><td>${esc(p.problem || '')}</td><td>${esc(p.status || '')}${isISO(p.cells.edd && p.cells.edd.t) ? ' · ' + fmtShort(p.cells.edd.t) : ''}</td>
           <td>${esc([p.cells.diet && p.cells.diet.t, p.cells.dvt && p.cells.dvt.t].filter(Boolean).join(' · '))}</td><td>${lines}</td><td class="psm">${esc(open.join(', '))}</td><td class="psm">${tkTxt(openTasksFor(p.bed, p.id))}</td><td class="psm">${esc((p.cells.dest && p.cells.dest.t) || '')}</td><td class="pnotes"></td></tr>`; });
     });
@@ -7062,6 +7092,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:208, d:'2026-11-19', items:['<b>PIVs in the Avatar</b>: pick the side (R / L) and site (hand, wrist, forearm, AC, upper arm, EJ, foot) for each one, and tap <b>＋ another</b> for a second (or third) PIV. The board shows them as e.g. “PIV R AC · PIV L FA”.']},
   {v:207, d:'2026-11-19', items:['The <b>block number</b> now sits at the top of the board, right after the rotation name (e.g. Bellevue CCU ⇆ <b>BLOCK 11</b>).']},
   {v:206, d:'2026-11-19', items:['<b>ETT</b> (endotracheal tube) and <b>IABP</b> are now built-in choices in the Avatar column, on every board — including ones where you’d already edited the list.']},
   {v:205, d:'2026-11-19', items:['While you’re pre-charting a future date, the Census and Overview say <b>“Flags as of Sat 11/21”</b> — EDD, T&amp;S, hospital day and the other date flags are worked out for that day, not today.']},
