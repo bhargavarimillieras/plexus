@@ -1472,7 +1472,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '219';
+const APP_VERSION = '220';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6681,7 +6681,7 @@ const TB_ICON = {
   discharges:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M3 12h12M11 8l4 4-4 4"/></svg>',
   transfers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 8h13M13 4l4 4-4 4M20 16H7M11 12l-4 4 4 4"/></svg>',
   more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg>'};
-const TB_TABS = [['overview', 'Overview'], ['tasks', 'Tasks'], ['census', 'Census'], ['admits', 'Admissions'], ['discharges', 'Discharges'], ['transfers', 'Transfers'], ['more', 'More']];
+const TB_TABS = [['overview', 'Overview'], ['census', 'Census'], ['tasks', 'Tasks'], ['admits', 'Admissions'], ['discharges', 'Discharges'], ['transfers', 'Transfers'], ['more', 'More']];
 // ICU / CCU boards: transfers out to the floor are the usual way patients leave, so Transfers takes Discharges' place in the tab bar (Discharges moves to More)
 const isCritCare = () => { const T = typeOf(activeType), key = (T.rot ? T.rot.tpl + ' ' + (T.rot.tplKey || '') : T.k) || ''; return /icu|ccu/i.test(key); };
 const tbSwap = () => isCritCare() ? ['transfers', 'discharges'] : ['discharges', 'transfers'];   // [in the bar, under More]
@@ -7182,6 +7182,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:220, d:'2026-11-20', items:['iPad tab bar order: <b>Overview · Census · Tasks · Admissions · Transfers/Discharges · More</b>.']},
   {v:219, d:'2026-11-20', items:['Diet: <b>TF</b> (tube feeds) is now a built-in choice, just before NPO.']},
   {v:218, d:'2026-11-20', items:['The <b>Left hospital</b> button no longer pops up over the Problem box. With a mouse it now appears in the flags line underneath. On iPad it only shows there once the discharge checklist is signed (or for a transfer or AMA); otherwise it’s on the <b>Discharges</b> and <b>Transfers</b> tabs.']},
   {v:217, d:'2026-11-19', items:['iPad: the round <b>⌘</b> command-bar button in the bottom-right corner is gone, so it no longer covers the board. (With a hardware keyboard, Ctrl + K still opens the command bar.)']},
