@@ -1472,7 +1472,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '218';
+const APP_VERSION = '219';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1700,7 +1700,7 @@ const GROUPS = [
     {k:'attest',h:'Attest',type:'check'},{k:'labord',h:'Lab Ord',type:'checkNote'},{k:'handoff',h:'Handoff',type:'check'},{k:'ordrev',h:'Ord Rev',type:'check'}]},
   {k:'standing', label:'Standing', cols:[
     {k:'bm',h:'Last BM',type:'date'},{k:'ts',h:'T&S',type:'date'},
-    {k:'diet',h:'Diet',type:'choice',size:'mid',opts:[O('General'),O('Diabetic'),O('Heart Healthy'),O('Renal'),O('Full Liquid'),O('Clear Liquid'),O('NPO','red')]},
+    {k:'diet',h:'Diet',type:'choice',size:'mid',opts:[O('General'),O('Diabetic'),O('Heart Healthy'),O('Renal'),O('Full Liquid'),O('Clear Liquid'),O('TF'),O('NPO','red')]},
     {k:'dvt',h:'DVT PPx',type:'choice',size:'mid',opts:[O('SQH'),O('HEP GTT'),O('LMWH'),O('DOAC'),O('HELD','red')]},
     {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'text'},
     {k:'pt',h:'PT',type:'date'},{k:'ot',h:'OT',type:'date'}]},
@@ -2000,6 +2000,10 @@ function normalize(s){
   if(s.settings.shift !== 'night') s.settings.shift = 'day';
   if(typeof s.settings.autoBackup !== 'boolean') s.settings.autoBackup = true;
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
+  // v219: TF (tube feeds) joins the core diets, before NPO (once)
+  if(!s.settings.dietTF){ const dl = s.settings.columns.diet;
+    if(dl && Array.isArray(dl.opts) && !dl.opts.some(o => (o.label || '').toLowerCase() === 'tf')){ const i = dl.opts.findIndex(o => (o.label || '').toLowerCase() === 'npo'); dl.opts.splice(i < 0 ? dl.opts.length : i, 0, {label:'TF'}); }
+    s.settings.dietTF = 1; }
   // v212: Renal / Full Liquid / Clear Liquid join the core diets; Kosher becomes a modifier (once)
   if(!s.settings.dietMods){ const dl = s.settings.columns.diet;
     if(dl && Array.isArray(dl.opts)){ dl.opts = dl.opts.filter(o => !isDietMod(o.label || ''));
@@ -7178,6 +7182,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:219, d:'2026-11-20', items:['Diet: <b>TF</b> (tube feeds) is now a built-in choice, just before NPO.']},
   {v:218, d:'2026-11-20', items:['The <b>Left hospital</b> button no longer pops up over the Problem box. With a mouse it now appears in the flags line underneath. On iPad it only shows there once the discharge checklist is signed (or for a transfer or AMA); otherwise it’s on the <b>Discharges</b> and <b>Transfers</b> tabs.']},
   {v:217, d:'2026-11-19', items:['iPad: the round <b>⌘</b> command-bar button in the bottom-right corner is gone, so it no longer covers the board. (With a hardware keyboard, Ctrl + K still opens the command bar.)']},
   {v:216, d:'2026-11-19', items:['iPad home-screen app: a buffer strip at the very top keeps the To-Dos, undo/redo and other top buttons clear of the blurred status-bar area.']},
