@@ -299,7 +299,10 @@ tr.rowpulse td{animation:pulse 1.6s ease-out}
 .leftbtn{border:1px solid var(--line2);background:var(--panel);color:var(--muted);border-radius:9px;font-size:10.5px;font-weight:700;padding:0 7px;cursor:pointer;line-height:16px;display:none}
 tr:hover .leftbtn,.leftbtn.always,.leftbtn.confirm{display:inline-block}
 .probwrap{position:relative}
-.probwrap .leftbtn:not(.always):not(.confirm){position:absolute;right:6px;top:6px;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+/* in the Problem box the button sits in the flags line under the text, never over it; on touch screens it only shows once the
+   discharge checklist is signed (or for transfers / AMA) — otherwise use the Discharges or Transfers tab */
+.probwrap .leftbtn:not(.always):not(.confirm){margin-left:auto}
+body.touch .probwrap .leftbtn:not(.always):not(.confirm){display:none!important}
 .leftbtn:hover{color:var(--ink);border-color:var(--ink)}
 .leftbtn.confirm{background:var(--bad-ink);border-color:var(--bad-ink);color:#fff}
 .flag.info{background:var(--info-bg);color:var(--info-ink)}
@@ -1469,7 +1472,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '217';
+const APP_VERSION = '218';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7175,6 +7178,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:218, d:'2026-11-20', items:['The <b>Left hospital</b> button no longer pops up over the Problem box. With a mouse it now appears in the flags line underneath. On iPad it only shows there once the discharge checklist is signed (or for a transfer or AMA); otherwise it’s on the <b>Discharges</b> and <b>Transfers</b> tabs.']},
   {v:217, d:'2026-11-19', items:['iPad: the round <b>⌘</b> command-bar button in the bottom-right corner is gone, so it no longer covers the board. (With a hardware keyboard, Ctrl + K still opens the command bar.)']},
   {v:216, d:'2026-11-19', items:['iPad home-screen app: a buffer strip at the very top keeps the To-Dos, undo/redo and other top buttons clear of the blurred status-bar area.']},
   {v:215, d:'2026-11-19', items:['The hospital’s <b>logo</b> sits in the top bar, left of the To-Dos button: Bellevue on Bellevue boards, NYU Langone on Tisch / KP boards, the VA on VA boards. (Hidden on narrow screens, e.g. an iPad in portrait, to keep the bar on one line.)']},
