@@ -1519,7 +1519,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '228';
+const APP_VERSION = '229';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2522,8 +2522,12 @@ function ldtCellTxt(items){ const out = [];
   items.forEach(it => { const t = `${LDT_SHORT[it.k] || it.k}${ldtLocShort(it) ? ' ' + ldtLocShort(it) : ''}${ldtOld(it) ? ' ' + ldtAge(it) + 'd' : ''}`;
     const last = out[out.length - 1]; if(last && last.t === t) last.n++; else out.push({t, n:1}); });
   return out.map(x => x.t + (x.n > 1 ? ' ×' + x.n : '')).join(' · '); }
+// ICU/CCU-only devices: hidden from the Avatar list on other boards, unless the patient already has one (e.g. arrived from the ICU)
+const LDT_ICU_ONLY = ['CVC', 'Arterial line', 'IABP', 'S-G catheter', 'ETT'];
+const ldtIcuOnly = n => LDT_ICU_ONLY.some(x => x.toLowerCase() === String(n).toLowerCase());
 function ldtPopHTML(col, cell){
-  const items = ldtActive(cell), names = [...new Set([...col.opts.map(o => o.label), ...items.map(i => i.k).filter(k => !col.opts.some(o => o.label === k))])];
+  const items = ldtActive(cell), icu = isCritCare();
+  const names = [...new Set([...col.opts.map(o => o.label), ...items.map(i => i.k).filter(k => !col.opts.some(o => o.label === k))])].filter(n => icu || !ldtIcuOnly(n) || items.some(i => i.k === n));
   const rows = n => { const its = items.filter(i => i.k === n); return (LDT_MULTI.has(n) && its.length > 1 ? its : [its[0]]).map(it => ldtRowHTML(n, it)).join(''); };
   const order = names.map((n, i) => ({n, i, g:ldtGroupOf(n)})).sort((a, b) => a.g - b.g || a.i - b.i);
   let html = '', g = -1; order.forEach(o => { if(o.g !== g){ g = o.g; html += `<div class="ldtgrp">${esc(g < LDT_GROUPS.length ? LDT_GROUPS[g][0] : 'Other')}</div>`; } html += rows(o.n); });
@@ -7340,6 +7344,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:229, d:'2026-11-21', items:['Avatar: <b>CVC, arterial line, IABP, S-G catheter and ETT</b> only appear on ICU and CCU boards. On other boards they’re hidden unless the patient already has one (e.g. after transfer from the ICU); you can still add one by typing it in “Add another”.']},
   {v:228, d:'2026-11-21', items:['Avatar: a <b>✕ Mark removed</b> button on each line, drain or tube. It moves to a <b>Removed</b> list with the date (editable) and how many days it was in, and shows struck through on the board for a day (e.g. <s>Foley</s>). <b>↺ Put back</b> undoes it. Unticking still deletes outright, for mistakes.']},
   {v:227, d:'2026-11-21', items:['Rounds: <b>Next</b> no longer ticks <b>Discussed</b> for you — you tick it yourself. Next still skips patients you’ve already marked discussed.']},
   {v:226, d:'2026-11-21', items:['Rounds: if you untick <b>✓ Discussed</b> yourself, pressing <b>Next</b> no longer ticks it straight back.']},
