@@ -649,6 +649,22 @@ body.touch .ldtloc select{font-size:14px;padding:5px 6px}
 .rbar h3{margin:0;font-size:16px}
 .rbar .rcount{font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .rbar select{max-width:280px}
+/* iPad: Rounds covers the whole screen, above the bottom tab bar (which used to hide its Next button), clear of the status bar */
+body.touch .rounds{z-index:65;padding-bottom:env(safe-area-inset-bottom)}
+body.touch .pop{z-index:70}
+body.standalone .rounds .rbar{padding-top:calc(max(env(safe-area-inset-top), 24px) + 10px)}
+.rseen{font-size:12px;font-weight:700;color:#1e7e34;background:#e6f4ea;border-radius:999px;padding:3px 9px}
+.rord button{font-size:12px}
+.rstrip{flex-basis:100%;display:flex;gap:5px;overflow-x:auto;padding:2px 0 2px;scrollbar-width:thin;align-items:center}
+.rsi{flex:none;font:800 10px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 2px 0 8px}
+.rsi:first-child{margin-left:0}
+.rchip{flex:none;border:1px solid var(--line2);background:var(--panel);color:var(--ink);border-radius:8px;padding:4px 9px;font:700 12.5px ui-monospace,"SF Mono",Menlo,monospace;cursor:pointer;white-space:nowrap}
+.rchip.seen{background:#e6f4ea;border-color:#b7dfc3;color:#1e7e34}
+.rchip.on{background:#2b3240;border-color:#2b3240;color:#fff}
+body.touch .rchip{padding:8px 12px;font-size:14px}
+.rseenbtn{display:inline-block;margin-left:10px;vertical-align:middle;border:1px solid var(--line2);background:var(--panel);color:var(--muted);border-radius:999px;padding:3px 10px;font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer}
+.rseenbtn.on{background:#34A853;border-color:#34A853;color:#fff}
+@media (prefers-color-scheme: dark){.rseen,.rchip.seen{background:rgba(52,168,83,.18);border-color:rgba(52,168,83,.4);color:#7ee2a0}}
 .rbody{width:100%;max-width:1180px;margin:0 auto;padding:18px 20px 40px;box-sizing:border-box}
 .rhead{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .rbed{font-size:30px;font-weight:800;letter-spacing:.3px;line-height:1.1;min-width:120px}
@@ -1472,7 +1488,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '220';
+const APP_VERSION = '221';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3569,9 +3585,16 @@ function onCellKey(e){
 
 /* ---------- rounds mode: one patient at a time ---------- */
 const rounds = {open:false, id:null};
+/* Rounds order: by intern (each intern's patients together), by bed, or as listed on the Census.
+   Each patient you leave with Next is marked ✓ seen for the day; Next then goes to the next one not yet seen, so after jumping out of
+   order (tap a bed in the strip) you pick up where you left off. ← → keys still step one by one. */
+const roundsOrder = () => ui.roundsOrder || (ui.groupBy === 'intern' ? 'intern' : 'bed');
+const rdSeen = p => !!p && p.rd === state.boardDate;
+function rdMark(p, on){ if(!p || rdSeen(p) === on) return; if(on) p.rd = state.boardDate; else delete p.rd; save(); }
 function roundsList(){
   let list = filteredPatients();
-  if(ui.groupBy === 'intern'){
+  if(roundsOrder() === 'bed') return list.slice().sort(bedCmp);
+  if(roundsOrder() === 'intern'){
     const order = [...state.settings.interns, ...new Set(list.map(p => p.intern).filter(i => i && !state.settings.interns.includes(i)))];
     const rank = i => { const n = order.indexOf(i); return n < 0 ? 1e6 : n; };
     list = list.map((p,i) => [p,i]).sort((a,b) => rank(a[0].intern) - rank(b[0].intern) || a[1] - b[1]).map(x => x[0]);
@@ -3581,7 +3604,13 @@ function roundsList(){
 function openRounds(id){ closePop(); rounds.open = true; const list = roundsList(); rounds.id = id || (list.find(p => p.id === rounds.id) || list[0] || {}).id || null; $('#rounds').hidden = false; document.body.style.overflow = 'hidden'; renderRounds(); focusRounds(); }
 function closeRounds(){ closePop(); rounds.open = false; $('#rounds').hidden = true; document.body.style.overflow = ''; lastFocus = null;
   const tr = rounds.id && document.querySelector(`#censusGrid tr[data-id="${rounds.id}"]`); if(tr){ tr.scrollIntoView({block:'center'}); tr.classList.add('rowpulse'); setTimeout(() => tr.classList.remove('rowpulse'), 1600); } }
-function roundsGo(step){ const list = roundsList(); if(!list.length) return; let i = list.findIndex(p => p.id === rounds.id); i = Math.min(list.length - 1, Math.max(0, (i < 0 ? 0 : i) + step)); closePop(); rounds.id = list[i].id; lastFocus = null; renderRounds(); focusRounds(); $('#rounds').scrollTop = 0; }
+function roundsGo(step, plain){ const list = roundsList(); if(!list.length) return; let i = list.findIndex(p => p.id === rounds.id); const cur = list[i];
+  if(step > 0 && !plain && cur){ rdMark(cur, true);   // done with this one → the next not yet seen (wrapping round), else just the next
+    const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(p => !rdSeen(p));
+    if(nx){ roundsTo(nx.id); return; } }
+  i = Math.min(list.length - 1, Math.max(0, (i < 0 ? 0 : i) + step)); roundsTo(list[i].id); }
+function roundsTo(id){ closePop(); rounds.id = id; lastFocus = null; renderRounds(); focusRounds(); $('#rounds').scrollTop = 0;
+  const c = document.querySelector(`#roundsBody .rchip[data-rgo="${id}"]`); if(c) c.scrollIntoView({block:'nearest', inline:'center'}); }
 function focusRounds(){ const r = $('#rounds'); if(r) r.focus({preventScroll:true}); }
 function renderRounds(){
   if(!rounds.open) return;
@@ -3589,12 +3618,16 @@ function renderRounds(){
   let i = list.findIndex(p => p.id === rounds.id);
   if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
   const filt = [ui.intern && `Intern: ${ui.intern}`, ui.filter === 'open' && 'Open daily boxes', ui.filter === 'flagged' && 'Flagged', ui.search && `Search: “${ui.search}”`].filter(Boolean);
+  const seenN = list.filter(rdSeen).length, ord = roundsOrder();
+  const strip = list.length ? `<div class="rstrip" role="tablist" aria-label="Patients">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<span class="rsi">${esc(q.intern || 'Unassigned')}</span>` : ''}<button type="button" class="rchip ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'seen' : ''}" data-rgo="${q.id}" title="${esc((q.problem || '') + (rdSeen(q) ? ' — seen' : ''))}">${rdSeen(q) ? '✓ ' : ''}${esc(q.bed || '—')}</button>`).join('')}</div>` : '';
   const bar = `<div class="rbar"><h3>Rounds</h3><span class="rcount">${list.length ? `${i+1} / ${list.length}` : '0 patients'}</span>
+    <span class="rseen" title="Patients marked seen today">✓ ${seenN}/${list.length} seen</span>
+    <span class="seg rord" role="group" aria-label="Order">${[['intern', 'By intern'], ['bed', 'By bed'], ['list', 'Census order']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
     ${list.length ? `<select id="rJump" title="Jump to a patient">${list.map((p,j) => `<option value="${p.id}" ${j===i?'selected':''}>${j+1}. ${esc(p.bed || '(no bed)')} — ${esc(p.intern || 'unassigned')}${p.problem ? ' · ' + esc(p.problem) : ''}</option>`).join('')}</select>` : ''}
     ${filt.length ? `<span class="muted small">Following the Census filter: ${esc(filt.join(' · '))}</span>` : ''}
     <div class="spacer" style="flex:1"></div>
-    <button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← Prev</button><button class="btn primary" data-r="next" ${i >= list.length - 1 ? 'disabled' : ''}>Next →</button>
-    <button class="btn" data-r="close" title="Close (Esc)">✕ Close</button></div>`;
+    <button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← Prev</button><button class="btn primary" data-r="next" ${list.length > 1 || !rdSeen(list[i] || null) ? '' : 'disabled'}>Next →</button>
+    <button class="btn" data-r="close" title="Close (Esc)">✕ Close</button>${strip}</div>`;
   if(!list.length){ body.innerHTML = bar + `<div class="rempty">No patients in this view.</div>`; return; }
   const p = list[i], fl = flagsFor(p), n = hospDay(p), cm = p.comments || {};
   const adm = admitOf(p);
@@ -3603,7 +3636,7 @@ function renderRounds(){
       return `<div class="rtile"><div class="rlab" title="${esc(cfg.h)}">${esc(cfg.h)}</div>${cellHTML(p.cells[c.k], cfg, 'p', p.id, 0, ci, false)}${cm[c.k] ? `<div class="rcmt">${esc(cm[c.k])}</div>` : ''}</div>`; }).join('')}</div></div>`).join('');
   body.innerHTML = bar + `<div class="rbody">
     <div class="rhead">
-      <div class="rbed">${esc(p.bed || '(no bed)')}<small>${n === null ? 'No admission date' : `Hospital day ${n}`}${adm ? ` · admission ${admitSigned(adm)}/${ADMIT_ITEMS.length} signed` : ''}</small></div>
+      <div class="rbed">${esc(p.bed || '(no bed)')}<button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Seen today — tap to undo' : 'Mark seen (Next does this for you)'}">${rdSeen(p) ? '✓ Seen' : 'Mark seen'}</button><small>${n === null ? 'No admission date' : `Hospital day ${n}`}${adm ? ` · admission ${admitSigned(adm)}/${ADMIT_ITEMS.length} signed` : ''}</small></div>
       <div class="rfields">
         <div class="wide2"><label>Problem / one-liner</label><input data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" placeholder="One-liner / problem"></div>
         <div><label>Intern</label>${selHTML('intern', p.intern, state.settings.interns, {kind:'p', id:p.id})}</div>
@@ -3618,11 +3651,16 @@ function renderRounds(){
     ${sections}
     <div class="rnav"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
       <span class="muted small rkeys" style="align-self:center">${scLabel('rNext')} next · ${scLabel('rPrev')} back · ${scLabel('rUnfinished')} next unfinished · ${scLabel('rVisit')} visit · ${scLabel('rowDone')} all Daily done · <kbd>←</kbd><kbd>→</kbd> always move · <kbd>Esc</kbd> closes · <a href="#" data-sc-open>all shortcuts</a></span>
-      <button class="btn primary" data-r="next" ${i >= list.length - 1 ? 'disabled' : ''}>${i < list.length - 1 ? esc(list[i+1].bed || 'Next') : 'Next'} →</button></div>
+      ${(() => { const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(q => !rdSeen(q)) || (i < list.length - 1 ? list[i + 1] : null);
+        return `<button class="btn primary" data-r="next" ${nx ? '' : 'disabled'}>${nx ? esc(nx.bed || 'Next') : 'All seen'} →</button>`; })()}</div>
   </div>`;
 }
 $('#roundsBtn').addEventListener('click', () => openRounds());
-$('#roundsBody').addEventListener('click', e => { const b = e.target.closest('[data-r]'); if(!b || b.disabled) return; const r = b.dataset.r; if(r === 'close') closeRounds(); else roundsGo(r === 'next' ? 1 : -1); });
+$('#roundsBody').addEventListener('click', e => {
+  const g = e.target.closest('[data-rgo]'); if(g){ roundsTo(g.dataset.rgo); return; }
+  const o = e.target.closest('[data-rord]'); if(o){ ui.roundsOrder = o.dataset.rord; saveUI(); renderRounds(); const c = document.querySelector('#roundsBody .rchip.on'); if(c) c.scrollIntoView({block:'nearest', inline:'center'}); return; }
+  const sb = e.target.closest('[data-rseen]'); if(sb){ const q = rowOf('p', sb.dataset.rseen); rdMark(q, !rdSeen(q)); renderRounds(); return; }
+  const b = e.target.closest('[data-r]'); if(!b || b.disabled) return; const r = b.dataset.r; if(r === 'close') closeRounds(); else roundsGo(r === 'next' ? 1 : -1); });
 wireTodoRows($('#roundsBody'), () => {});
 $('#roundsBody').addEventListener('change', e => { if(e.target.id === 'rJump'){ closePop(); rounds.id = e.target.value; lastFocus = null; renderRounds(); focusRounds(); } });
 document.addEventListener('keydown', e => {
@@ -3630,8 +3668,8 @@ document.addEventListener('keydown', e => {
   const t = e.target; if(t.closest && (t.closest('.pop') || t.closest('.scrim'))) return;
   if(['INPUT','SELECT','TEXTAREA'].includes(t.tagName)){ if(e.key === 'Escape') t.blur(); return; }
   if(e.key === 'Escape'){ e.preventDefault(); closeRounds(); }
-  else if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){ e.preventDefault(); roundsGo(1); }
-  else if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ e.preventDefault(); roundsGo(-1); }
+  else if(e.key === 'ArrowRight' || e.key === 'ArrowDown'){ e.preventDefault(); roundsGo(1, true); }
+  else if(e.key === 'ArrowLeft' || e.key === 'ArrowUp'){ e.preventDefault(); roundsGo(-1, true); }
 });
 
 /* ---------- toolbar & header wiring ---------- */
@@ -7182,6 +7220,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:221, d:'2026-11-21', items:['<b>Rounds</b>: choose the order at the top — <b>By intern</b>, <b>By bed</b> or <b>Census order</b>. A strip of beds lets you jump to any patient when rounds go out of order. Leaving a patient with <b>Next</b> marks them <b>✓ seen</b>, and Next then goes to the next patient not yet seen, so you pick up where you left off. “✓ 3/8 seen” keeps count; it starts fresh each day.']},
   {v:220, d:'2026-11-20', items:['iPad tab bar order: <b>Overview · Census · Tasks · Admissions · Transfers/Discharges · More</b>.']},
   {v:219, d:'2026-11-20', items:['Diet: <b>TF</b> (tube feeds) is now a built-in choice, just before NPO.']},
   {v:218, d:'2026-11-20', items:['The <b>Left hospital</b> button no longer pops up over the Problem box. With a mouse it now appears in the flags line underneath. On iPad it only shows there once the discharge checklist is signed (or for a transfer or AMA); otherwise it’s on the <b>Discharges</b> and <b>Transfers</b> tabs.']},
