@@ -159,6 +159,8 @@ body.touch .rdchk{width:24px;height:24px;font-size:12px}
 body.touch .dclr{font-size:15px;padding:6px 7px}
 .dwrap{display:flex;align-items:center;gap:2px}
 .dwrap>input{flex:1 1 auto;min-width:0}
+.optgrp{grid-column:1/-1;font:800 10px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 0 2px;flex-basis:100%;width:100%}
+.optgrp:first-child{margin-top:0}
 .dmods{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
 .dmh{font:800 10px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
 .dmrow{display:flex;flex-wrap:wrap;gap:5px}
@@ -1591,7 +1593,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '236';
+const APP_VERSION = '237';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1831,7 +1833,7 @@ const GROUPS = [
     {k:'dcord',h:'DC Order',type:'choice',size:'mid',opts:DC_OPTS()},
     {k:'transport',h:'Transportation',type:'choice',size:'mid',opts:['Family / friend','Taxi / rideshare','Medical transport','Ambulance (BLS)','Ambulance (ALS)','Facility transport','Public transit'].map(x=>O(x))}]},
   {k:'dispo', label:'Dispo', cols:[
-    {k:'dest',h:'Destination',type:'choice',size:'mid',opts:['Home','SAR/SNF','LTACH','Nursing Home','Uptriage','Hospice','ALF','Shelter','Acute Rehab','Safe Haven','LOH'].map(x=>O(x))},
+    {k:'dest',h:'Disposition',type:'choice',size:'mid',opts:['Home','SAR/SNF','LTACH','Nursing Home','Hospice','ALF','Shelter','Acute Rehab','Safe Haven','LOH','Floor','SDU','cSDU','MICU','CCU','ALOC','Uptriage'].map(x=>O(x))},
     {k:'services',h:'Services',type:'text',size:'mid'},
     {k:'dispo',h:'Dispo notes',type:'text',size:'wide'}]},
 ];
@@ -1924,6 +1926,8 @@ function newPatientFromAdmit(a){
 /* Diet and DVT PPx are one value shared by a new admit's Admissions row and its census row:
    whichever side was just edited wins and is copied to the other. */
 const LINKED_KEYS = ['diet','dvt'];
+const DISPO_IN = ['MICU', 'CCU', 'SDU', 'cSDU', 'Floor', 'ALOC', 'Uptriage', 'Tele', 'PACU', 'OR', 'ED'];
+const isDispoIn = l => DISPO_IN.some(x => x.toLowerCase() === String(l || '').trim().toLowerCase());
 // Diet = one core diet + any modifiers, saved as e.g. “Heart Healthy + Kosher + Fluid Restriction”
 const DIET_MODS = ['Kosher', 'Halal', 'Mod Con', 'Fluid Restriction'];
 const isDietMod = x => DIET_MODS.some(m => m.toLowerCase() === String(x).trim().toLowerCase());
@@ -2143,6 +2147,11 @@ function normalize(s){
   if(s.settings.shift !== 'night') s.settings.shift = 'day';
   if(typeof s.settings.autoBackup !== 'boolean') s.settings.autoBackup = true;
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
+  // v237: Destination → Disposition, with in-hospital choices (once)
+  if(!s.settings.dispoIn){ const dc = s.settings.columns.dest;
+    if(dc){ if(dc.h === 'Destination') delete dc.h;
+      if(Array.isArray(dc.opts)){ const has = l => dc.opts.some(o => (o.label || '').toLowerCase() === l.toLowerCase()); ['Floor', 'SDU', 'cSDU', 'MICU', 'CCU', 'ALOC'].forEach(l => { if(!has(l)) dc.opts.push({label:l}); }); } }
+    s.settings.dispoIn = 1; }
   // v219: TF (tube feeds) joins the core diets, before NPO (once)
   if(!s.settings.dietTF){ const dl = s.settings.columns.diet;
     if(dl && Array.isArray(dl.opts) && !dl.opts.some(o => (o.label || '').toLowerCase() === 'tf')){ const i = dl.opts.findIndex(o => (o.label || '').toLowerCase() === 'npo'); dl.opts.splice(i < 0 ? dl.opts.length : i, 0, {label:'TF'}); }
@@ -3582,6 +3591,13 @@ function openPop(cellEl, focusEditor=false){
     body += `<div class="opts">${col.opts.map((o,i) => `<button class="optbtn ${dp.base===o.label?'on':''}" data-o="${esc(o.label)}"><i class="oc oc-${o.color||'none'}">${i<9?i+1:''}</i>${esc(o.label)}</button>`).join('')}
       ${dp.base && !optOf(col, dp.base) ? `<div class="muted" style="font-size:11px;margin-top:4px">Current diet “${esc(dp.base)}” isn't in the list.</div>` : ''}</div>
       <div class="dmods" data-val="${esc(cell.t || '')}" data-base="${esc(dp.base)}"><div class="dmh">Modifiers</div><div class="dmrow">${DIET_MODS.map(m => `<button type="button" class="dmod ${dp.mods.includes(m) ? 'on' : ''}" data-dmod="${esc(m)}" aria-pressed="${dp.mods.includes(m)}">${dp.mods.includes(m) ? '✓ ' : ''}${esc(m)}</button>`).join('')}</div></div>`;
+  } else if(col.type === 'choice' && k === 'dest'){
+    // Disposition: leaving the hospital vs. moving within it
+    const ob = (o, i) => `<button class="optbtn ${cell.t===o.label?'on':''}" data-o="${esc(o.label)}"><i class="oc oc-${o.color||'none'}">${i<9?i+1:''}</i>${esc(o.label)}</button>`;
+    const all = col.opts.map((o, i) => ({o, i})), inH = all.filter(x => isDispoIn(x.o.label)), outH = all.filter(x => !isDispoIn(x.o.label));
+    const gOut = `<div class="optgrp">Leaving the hospital</div>${outH.map(x => ob(x.o, x.i)).join('')}`, gIn = `<div class="optgrp">Within the hospital</div>${inH.map(x => ob(x.o, x.i)).join('')}`;
+    body += `<div class="opts">${isCritCare() ? gIn + gOut : gOut + gIn}
+      ${cell.t && !optOf(col, cell.t) ? `<div class="muted" style="font-size:11px;margin-top:4px">Current value “${esc(cell.t)}” isn't in the list.</div>` : ''}</div>`;
   } else if(col.type === 'choice'){
     body += `<div class="opts">${col.opts.map((o,i) => `<button class="optbtn ${cell.t===o.label?'on':''}" data-o="${esc(o.label)}"><i class="oc oc-${o.color||'none'}">${i<9?i+1:''}</i>${esc(o.label)}</button>`).join('')}
       ${cell.t && !optOf(col, cell.t) ? `<div class="muted" style="font-size:11px;margin-top:4px">Current value “${esc(cell.t)}” isn't in the list.</div>` : ''}</div>`;
@@ -6175,7 +6191,7 @@ const CMD_A_ALIAS = {ed:'edcourse', course:'edcourse', edc:'edcourse', pl:'probl
 const CMD_A_FIELDS = {bed:'bed', newbed:'bed', move:'bed', team:'team', tm:'team', arrived:'arrived', arrival:'arrived', arr:'arrived', onfloor:'arrived', timein:'timeIn', assigned:'timeIn', in:'timeIn', timeout:'timeOut', out:'timeOut',
   problem:'problem', dx:'problem', from:'mlBy', moonlighter:'mlBy', intern:'intern', origin:'origin', method:'method'};
 const CMD_P_ALIAS = {visit:'vst', seen:'vst', see:'vst', hosp:'hc', hospcourse:'hc', course:'hc', attestation:'attest', att:'attest', labs:'labrev', lab:'labrev', review:'ordrev', orders:'ordrev',
-  laborders:'labord', labord:'labord', bowel:'bm', lastbm:'bm', typeandscreen:'ts', tands:'ts', ppx:'dvt', dvtppx:'dvt', socialwork:'sw', social:'sw', destination:'dest', dispo:'dispo',
+  laborders:'labord', labord:'labord', bowel:'bm', lastbm:'bm', typeandscreen:'ts', tands:'ts', ppx:'dvt', dvtppx:'dvt', socialwork:'sw', social:'sw', destination:'dest', disposition:'dest', dispo:'dispo',
   procedure:'proc', procedures:'proc', vs:'vitals', vital:'vitals', uop:'io', ins:'io', glucose:'fsg', sugar:'fsg', ho:'handoff', hand:'handoff'};
 const CMD_P_FIELDS = {bed:'bed', newbed:'bed', move:'bed', status:'status', intern:'intern', problem:'problem', dx:'problem', edd:'edd'};
 
@@ -7516,6 +7532,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:237, d:'2026-11-21', items:['<b>Destination</b> is now <b>Disposition</b>, in two groups: <b>Leaving the hospital</b> (Home, SAR/SNF, LTACH, Nursing Home, Hospice, ALF, Shelter, Acute Rehab, Safe Haven, LOH) and <b>Within the hospital</b> (Floor, SDU, cSDU, MICU, CCU, ALOC, Uptriage). On ICU and CCU boards the in-hospital group comes first.']},
   {v:236, d:'2026-11-21', items:['<b>SW</b> is now a simple checkbox (notes ready for social work rounds).', 'Every checkbox (Visit, Attest, Handoff, Ord Rev, SW, Lab Ord…) can be set to <b>N/A</b>: <b>press and hold</b> it on the iPad, right-click it with a mouse, or press <b>N</b>. Do the same again to clear it. N/A counts as done.']},
   {v:235, d:'2026-11-21', items:['Rounds now sits in a clear <b>framed panel</b> (rounded corners, shadow) over a dimmed board, and in Split view the left list’s header and footer line up with the right side’s.']},
   {v:234, d:'2026-11-21', items:['Rounds · Split: the I/O line now shows <b>In</b> and <b>Out</b> next to the net (and the goal, if set).']},
