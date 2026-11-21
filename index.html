@@ -571,7 +571,9 @@ body.tkfull #hclocks{margin-right:4px}
 .tkentry{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .tkline{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .tkline input,.tkline select{border:1px solid var(--line2);border-radius:6px;padding:7px 9px;background:var(--panel);font-size:14px}
-#tkBed{width:120px;font-weight:700}#tkTeam{width:130px}#tkText{flex:1;min-width:260px}#tkTime{width:92px}
+#tkBed{width:120px;font-weight:700}
+#tkBedSel{max-width:260px;font-weight:700}
+body.touch #tkBedSel{font-size:15px;padding:8px}#tkTeam{width:130px}#tkText{flex:1;min-width:260px}#tkTime{width:92px}
 .tkline input:focus{outline:2px solid var(--focus);outline-offset:-1px}
 .tkchips{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
 .tkchip{border:1px solid var(--line2);background:var(--head);border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--ink)}
@@ -700,6 +702,62 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 .rseenbtn{display:inline-block;margin-left:10px;vertical-align:middle;border:1px solid var(--line2);background:var(--panel);color:var(--muted);border-radius:999px;padding:3px 10px;font:700 12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer}
 .rseenbtn.on{background:#34A853;border-color:#34A853;color:#fff}
 @media (prefers-color-scheme: dark){.rseen,.rchip.seen{background:rgba(52,168,83,.18);border-color:rgba(52,168,83,.4);color:#7ee2a0}}
+.rview button{font-size:12px}
+/* Rounds · Split */
+.rounds.split{overflow:hidden}
+.rounds.split #roundsBody{flex:1;min-height:0}
+.rs{display:grid;grid-template-columns:260px 1fr;height:100%;min-height:0}
+.rs-rail{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100%;min-height:0}
+.rs-railhd{padding:14px 12px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+body.standalone .rs-railhd,body.standalone .rs-hd2{padding-top:calc(max(env(safe-area-inset-top), 24px) + 10px)}
+.rs-row{display:flex;align-items:center;justify-content:space-between}.rs-row b{font-size:16px}
+.rs-railhd .seg{display:flex}.rs-railhd .seg button{flex:1}
+.rs-list{flex:1;overflow:auto;padding:4px 8px}
+.rs-grp{font:800 10.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:12px 6px 4px}
+.rs-pi{display:grid;grid-template-columns:auto 1fr auto;gap:2px 8px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:10px;margin:1px 0;cursor:pointer;color:var(--ink);font-family:inherit}
+.rs-pi.on{background:#eaf1ff;box-shadow:inset 3px 0 0 var(--accent)}
+.rs-bed{font:800 14px ui-monospace,"SF Mono",Menlo,monospace}.rs-ck{font-style:normal;color:#1e7e34}
+.rs-hd{font:600 11px ui-monospace,Menlo,monospace;color:var(--muted)}
+.rs-one{grid-column:1/-1;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs-pi.dsc .rs-one{opacity:.7}
+.rs-dots{display:flex;gap:3px}.rs-d{width:9px;height:9px;border-radius:50%;display:inline-block}
+.rs-d.pc{background:#8ab4f8}.rs-d.fl{background:#ea4335}
+.rs-key{padding:10px 12px 14px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.rs-main{display:flex;flex-direction:column;min-width:0;height:100%;min-height:0}
+.rs-hd2{display:flex;gap:16px;align-items:flex-start;padding:14px 20px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.rs-bigbed{font:800 32px/1 ui-monospace,"SF Mono",Menlo,monospace}
+.rs-id .muted{margin-top:6px;font-size:13px;white-space:nowrap}
+.rs-oneliner{flex:1;min-width:0}
+.rs-oneliner input{width:100%;font:700 18px inherit;font-family:inherit;border:1px solid transparent;border-radius:8px;padding:3px 6px;margin-left:-6px;background:transparent;color:var(--ink)}
+.rs-oneliner input:hover,.rs-oneliner input:focus{border-color:var(--line2);background:var(--panel)}
+.rs-flags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.rs-act{display:flex;gap:8px;align-items:center}
+.rs-act .rseenbtn{margin:0;padding:8px 14px;font-size:13.5px}
+.rs-body{flex:1;overflow:auto;padding:14px 20px;display:grid;grid-template-columns:1.15fr .85fr;gap:14px;align-items:start}
+.rs-colL{display:flex;flex-direction:column;gap:14px;min-width:0}
+.rs-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.rs-cardh{font:800 10.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.rs-more summary{cursor:pointer;margin:0}.rs-more[open] summary{margin-bottom:10px}
+.rs-cnt{background:#eef0f4;color:#4a5262;border-radius:999px;padding:2px 8px;letter-spacing:0;text-transform:none;font-size:11.5px}
+.rs-glance{display:grid;grid-template-columns:96px 1fr;gap:8px 10px;align-items:center}
+.rs-gl{font:800 10.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.rs-gv .tc{min-height:36px;justify-content:flex-start;padding:0 10px;text-align:left}
+.rs-chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.rs-ck2{display:flex;flex-direction:column;gap:3px;min-width:0}
+.rs-ck2>span{font-size:11.5px;font-weight:700;color:var(--muted)}
+.rs-ck2 .tc{min-height:34px}
+.rs-plan{display:flex;flex-direction:column;gap:8px;min-height:420px;position:sticky;top:0}
+.rs-todos{display:flex;flex-direction:column}
+.rs-plan .tdrow{flex-wrap:wrap;row-gap:4px}.rs-plan .tdtext{flex:1 1 150px;min-width:0}.rs-plan .tdrow>*{min-width:0}
+.rs-quick{display:flex;flex-wrap:wrap;gap:6px}
+.rs-quick button{border:0;background:#eef0f4;border-radius:8px;padding:6px 10px;font:600 12.5px inherit;font-family:inherit;color:#3c4452;cursor:pointer}
+#rsAdd{width:100%;box-sizing:border-box;border:1px solid var(--line2);border-radius:10px;padding:10px;font:14px inherit;font-family:inherit;resize:vertical;background:var(--panel);color:var(--ink)}
+.rs-foot{display:flex;align-items:center;gap:12px;padding:12px 20px calc(14px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line)}
+.rs-nx{flex:1;text-align:center;color:var(--muted)}.rs-nx b{color:var(--ink)}
+.rs-next{padding:12px 22px;font-size:15px}
+body.touch .rs-pi{padding:10px 10px}
+@media (prefers-color-scheme: dark){.rs-pi.on{background:rgba(66,133,244,.18)}.rs-cnt,.rs-quick button{background:rgba(255,255,255,.08);color:#c3cad6}}
+@media (max-width:900px){.rs{grid-template-columns:200px 1fr}.rs-body{grid-template-columns:1fr}.rs-plan{position:static;min-height:0}}
 .rbody{width:100%;max-width:1180px;margin:0 auto;padding:18px 20px 40px;box-sizing:border-box}
 .rhead{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
 .rbed{font-size:30px;font-weight:800;letter-spacing:.3px;line-height:1.1;min-width:120px}
@@ -1477,7 +1535,8 @@ body.touch .lrow{padding:14px 16px}
       <div class="tkwrap">
         <div class="tkentry">
           <div class="tkline">
-            <input id="tkBed" list="tkBeds" placeholder="Bed" title="Bed or patient identifier (avoid names)" autocomplete="off"><datalist id="tkBeds"></datalist>
+            <select id="tkBedSel" title="Which patient — from the census and tonight’s admissions, or Other for a bed that isn’t on the board"></select>
+            <input id="tkBed" list="tkBeds" placeholder="Bed" title="Bed or patient identifier (avoid names)" autocomplete="off" hidden><datalist id="tkBeds"></datalist>
             <input id="tkTeam" list="tkTeams" placeholder="Team" autocomplete="off"><datalist id="tkTeams"></datalist>
             <input id="tkText" placeholder="Task — e.g. f/u 9pm labs, UOP check at 4am" autocomplete="off">
             <input id="tkTime" class="hhmm" placeholder="HH:MM" inputmode="numeric" maxlength="5" title="Time, 24-hour (HH:MM) — e.g. 21:00, 04:30. Leave blank to use a time written in the task (e.g. “f/u 9pm labs”)." autocomplete="off">
@@ -1523,7 +1582,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '231';
+const APP_VERSION = '233';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3747,6 +3806,8 @@ function roundsTo(id){ closePop(); rounds.id = id; lastFocus = null; renderRound
 function focusRounds(){ const r = $('#rounds'); if(r) r.focus({preventScroll:true}); }
 function renderRounds(){
   if(!rounds.open) return;
+  if(ui.roundsView === 'split') return renderRoundsSplit();
+  $('#rounds').classList.remove('split');
   const list = roundsList(), body = $('#roundsBody');
   let i = list.findIndex(p => p.id === rounds.id);
   if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
@@ -3756,6 +3817,7 @@ function renderRounds(){
   const bar = `<div class="rbar"><h3>Rounds</h3><span class="rcount">${list.length ? `${i+1} / ${list.length}` : '0 patients'}</span>
     <span class="rseen" title="Patients discussed on rounds today (separate from the Visit box)">✓ ${seenN}/${list.length} discussed</span>
     <span class="seg rord" role="group" aria-label="Order">${[['intern', 'By intern'], ['bed', 'By bed'], ['list', 'Census order']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
+    <span class="seg rview" role="group" aria-label="Layout"><button type="button" data-rview="classic" class="on">Classic</button><button type="button" data-rview="split">Split</button></span>
     ${list.length ? `<select id="rJump" title="Jump to a patient">${list.map((p,j) => `<option value="${p.id}" ${j===i?'selected':''}>${j+1}. ${esc(p.bed || '(no bed)')} — ${esc(p.intern || 'unassigned')}${p.problem ? ' · ' + esc(p.problem) : ''}</option>`).join('')}</select>` : ''}
     ${filt.length ? `<span class="muted small">Following the Census filter: ${esc(filt.join(' · '))}</span>` : ''}
     <div class="spacer" style="flex:1"></div>
@@ -3788,9 +3850,63 @@ function renderRounds(){
         return `<button class="btn primary" data-r="next" ${nx ? '' : 'disabled'}>${nx ? esc(nx.bed || 'Next') : 'All seen'} →</button>`; })()}</div>
   </div>`;
 }
+/* ---------- Rounds · Split view: everyone on the left, one patient on the right ---------- */
+const RS_GLANCE = ['avatar', 'io', 'diet', 'dvt', 'dest'];
+const RS_QUICK = ['Labs: ', 'Imaging: ', 'Consult: ', 'Call family: ', 'Med change: '];
+function rsFlagged(p){ return flagsFor(p).some(f => f[0] === 'warn' || f[0] === 'bad'); }
+function renderRoundsSplit(){
+  $('#rounds').classList.add('split');
+  const list = roundsList(), body = $('#roundsBody'), ord = roundsOrder(), seenN = list.filter(rdSeen).length;
+  let i = list.findIndex(p => p.id === rounds.id); if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
+  const rail = `<aside class="rs-rail"><div class="rs-railhd"><div class="rs-row"><b>Rounds</b><span class="rseen">✓ ${seenN}/${list.length} discussed</span></div>
+      <span class="seg rord" role="group" aria-label="Order">${[['intern', 'Intern'], ['bed', 'Bed'], ['list', 'List']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
+      <span class="seg rview" role="group" aria-label="Layout"><button type="button" data-rview="classic">Classic</button><button type="button" data-rview="split" class="on">Split</button></span></div>
+    <div class="rs-list">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<div class="rs-grp">${esc(q.intern || 'Unassigned')} · ${list.filter(x => x.intern === q.intern).length}</div>` : ''}
+      <button type="button" class="rs-pi ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'dsc' : ''}" data-rgo="${q.id}"><span class="rs-bed">${esc(q.bed || '—')}${rdSeen(q) ? ' <i class="rs-ck">✓</i>' : ''}</span>
+        <span class="rs-dots">${isPc(q) ? '<i class="rs-d pc" title="Pre-charted"></i>' : ''}${rsFlagged(q) ? '<i class="rs-d fl" title="Flagged"></i>' : ''}</span><span class="rs-hd">${hospDay(q) !== null ? 'HD' + hospDay(q) : ''}</span>
+        <span class="rs-one">${esc(q.problem || '')}</span></button>`).join('')}</div>
+    <div class="rs-key"><i class="rs-d pc"></i> pre-charted &nbsp;<i class="rs-d fl"></i> flag &nbsp;✓ discussed</div></aside>`;
+  if(!list.length){ body.innerHTML = `<div class="rs">${rail}<section class="rs-main"><div class="rempty">No patients in this view.</div><div class="rs-foot"><span style="flex:1"></span><button class="btn" data-r="close">✕ Close</button></div></section></div>`; return; }
+  const p = list[i], fl = flagsFor(p), n = hospDay(p), cm = p.comments || {};
+  const tile = k => { const cfg = colCfg(k); return cellHTML(p.cells[k], cfg, 'p', p.id, 0, 0, false) + (cm[k] ? `<div class="rcmt">${esc(cm[k])}</div>` : ''); };
+  const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv">${tile(k)}</div>`).join('');
+  const daily = DAILY_KEYS.filter(k => !RS_GLANCE.includes(k) && !colHidden(k)), doneN = daily.filter(k => isDone(colCfg(k), p.cells[k])).length;
+  const chk = daily.map(k => `<div class="rs-ck2 ${isDone(colCfg(k), p.cells[k]) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('');
+  const more = CENSUS_GROUPS().filter(g => g.k !== 'daily').map(g => visibleCols(g).filter(c => !RS_GLANCE.includes(c.k)).map(c => c.k)).flat();
+  const moreH = more.map(k => `<div class="rs-ck2"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('');
+  const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(q => !rdSeen(q)) || (i < list.length - 1 ? list[i + 1] : null);
+  const todos = patientTodos(p.id);
+  body.innerHTML = `<div class="rs">${rail}<section class="rs-main">
+    <div class="rs-hd2"><div class="rs-id"><div class="rs-bigbed">${esc(p.bed || '(no bed)')}</div><div class="muted">${esc(p.intern || 'Unassigned')}${n !== null ? ' · HD ' + n : ''}${isISO(p.cells.edd.t) ? ' · EDD ' + esc(fmtShort(p.cells.edd.t)) : ''}</div></div>
+      <div class="rs-oneliner"><label class="rs-gl">One-liner</label><input data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" placeholder="One-liner / problem">
+        ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
+      <div class="rs-act"><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
+    <div class="rs-body"><div class="rs-colL">
+      <div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>
+      <div class="rs-card"><div class="rs-cardh">Today’s checklist <span class="rs-cnt">${doneN} / ${daily.length} done</span></div><div class="rs-chk">${chk}</div></div>
+      ${moreH ? `<details class="rs-card rs-more"><summary class="rs-cardh">More — standing &amp; dispo</summary><div class="rs-chk">${moreH}</div></details>` : ''}
+    </div>
+    <div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
+      <div class="rs-todos" id="rTodos">${todos.map(t => todoRowHTML(t, false)).join('') || '<div class="muted small" style="padding:6px 2px">Nothing yet.</div>'}</div>
+      <div class="rs-quick">${RS_QUICK.map(q => `<button type="button" data-rsq="${esc(q)}">+ ${esc(q.replace(': ', ''))}</button>`).join('')}</div>
+      <textarea id="rsAdd" data-pid="${p.id}" rows="2" placeholder="Type a to-do (e.g. “echo today”, “cards recs 2pm”) — Enter adds it"></textarea>
+      <div class="muted small" style="margin-top:auto">Goes on the Tasks tab under ${esc(p.bed || 'this patient')}. Add a time with the clock box if it’s due at a set time.</div></div>
+    </div>
+    <div class="rs-foot"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
+      <span class="rs-nx">${nx ? `Next not yet discussed: <b>${esc(nx.bed || '—')}</b>` : '✓ Everyone discussed'}</span>
+      <button class="btn primary rs-next" data-r="next" ${nx ? '' : 'disabled'}>${nx ? esc(nx.bed || 'Next') : 'Done'} →</button></div>
+  </section></div>`;
+}
+function rsAddTodo(pid, text){ text = (text || '').trim(); const p = rowOf('p', pid); if(!text || !p) return;
+  mutate(() => state.todos.push({id:uid(), pid, aid:'', bed:'', team:'', text, due:'', done:false, doneAt:'', result:'', series:'', every:0, src:'rounds', pri:'', createdAt:localISO()}),
+    {label:`Task added on rounds — ${p.bed || 'patient'}: “${text}”`, cat:'tasks'});
+  renderRounds(); const t = $('#rsAdd'); if(t) t.focus(); }
+$('#roundsBody').addEventListener('keydown', e => { if(e.target.id === 'rsAdd' && e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); rsAddTodo(e.target.dataset.pid, e.target.value); } });
 $('#roundsBtn').addEventListener('click', () => openRounds());
 $('#roundsBody').addEventListener('click', e => {
   const g = e.target.closest('[data-rgo]'); if(g){ roundsTo(g.dataset.rgo); return; }
+  const v = e.target.closest('[data-rview]'); if(v){ ui.roundsView = v.dataset.rview; saveUI(); closePop(); renderRounds(); return; }
+  const q = e.target.closest('[data-rsq]'); if(q){ const t = $('#rsAdd'); if(t){ t.value = q.dataset.rsq; t.focus(); t.setSelectionRange(t.value.length, t.value.length); } return; }
   const o = e.target.closest('[data-rord]'); if(o){ ui.roundsOrder = o.dataset.rord; saveUI(); renderRounds(); const c = document.querySelector('#roundsBody .rchip.on'); if(c) c.scrollIntoView({block:'nearest', inline:'center'}); return; }
   const sb = e.target.closest('[data-rseen]'); if(sb){ const q = rowOf('p', sb.dataset.rseen), on = !rdSeen(q); rdMark(q, on);
     rounds.keepOpen = rounds.keepOpen || new Set(); if(on) rounds.keepOpen.delete(q.id); else rounds.keepOpen.add(q.id);   // unticked by hand: Next leaves it unticked
@@ -5296,11 +5412,21 @@ function exitTkFull(){
   renderTasks();
 }
 document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement && tkFullOn()) exitTkFull(); });
+// Tasks: patient picker — census patients (and tonight's admissions) in a dropdown; “Other bed…” opens the free-text box
+function fillBedSel(){ const bsel = $('#tkBedSel'); if(!bsel || !state) return;
+  const pts = state.patients.filter(p => p.bed).slice().sort((a, b) => a.bed.localeCompare(b.bed, undefined, {numeric:true})), ads = state.admits.filter(a => a.date === state.boardDate && a.bed && !admitClosed(a) && !censusByBed(a.bed));
+  bsel.innerHTML = `<option value="">${pts.length || ads.length ? 'Patient…' : 'No patients yet'}</option>${pts.length ? `<optgroup label="Census">${pts.map(p => `<option value="${esc(p.bed)}">${esc(p.bed)}${p.intern ? ' — ' + esc(p.intern) : ''}${p.problem ? ' · ' + esc(p.problem.slice(0, 40)) : ''}</option>`).join('')}</optgroup>` : ''}
+    ${ads.length ? `<optgroup label="Admissions">${ads.map(a => `<option value="${esc(a.bed)}">${esc(a.bed)} · ${esc(admLabel(a))}</option>`).join('')}</optgroup>` : ''}<option value="__other">Other bed / not on the board…</option><option value="__none">No patient (general task)</option>`;
+  syncBedSel(); }
+function syncBedSel(){ const bed = $('#tkBed'), bsel = $('#tkBedSel'); if(!bed || !bsel) return;
+  const v = bed.value.trim(), opt = v && [...bsel.options].find(o => o.value.toLowerCase() === v.toLowerCase() && o.value !== '__other');
+  if(opt){ bsel.value = opt.value; bed.hidden = true; } else if(v || bed.dataset.other){ bsel.value = '__other'; bed.hidden = false; } else { bsel.value = bed.dataset.none ? '__none' : ''; bed.hidden = true; } }
 function renderTasks(){
   const wrap = $('#view-tasks'); if(!wrap || !state.todos) return;
   const chips = state.settings.taskChips || DEFAULT_CHIPS;
   $('#tkChips').innerHTML = chips.map(c => `<button type="button" class="tkchip" data-chip="${esc(c)}">${esc(c)}</button>`).join('') + `<button type="button" class="tkchip edit" id="tkChipEdit" title="Edit these quick tasks">✎</button>`;
   const beds = [...new Set([...state.patients.map(p => p.bed).filter(Boolean), ...state.admits.filter(a => a.date === state.boardDate).map(a => a.bed).filter(Boolean), ...taskList().map(t => todoWhere(t)).filter(Boolean)])].sort((a, b) => a.localeCompare(b, undefined, {numeric:true}));
+  fillBedSel();
   $('#tkBeds').innerHTML = beds.map(b => { const p = censusByBed(b), a = !p && admitByBed(b); return `<option value="${esc(b)}"${p ? ` label="On census · ${esc([p.intern, p.problem].filter(Boolean).join(' · '))}"` : a ? ` label="${esc(admLabel(a))}"` : ''}>`; }).join('');
   $('#tkBulk').hidden = !!typeOf(activeType).admitOnly;
   const boardTeam = (state.settings.team || '').trim(), tmIn = $('#tkTeam');
@@ -5374,8 +5500,13 @@ function editChips(){
       const v = $('#chipTa').value.split('\n').map(x => x.trim()).filter(Boolean); mutate(() => { state.settings.taskChips = v; }, {label:'Edited the quick tasks', cat:'settings'}); }]]);
 }
 (function wireTasks(){
-  const bed = $('#tkBed'), team = $('#tkTeam'), txt = $('#tkText'), tm = $('#tkTime'), rep = $('#tkRep'), hint = $('#tkHint');
-  const preview = () => { const d = tm.value.trim() ? parseHHMM(tm.value) : timeInText(txt.value), cp = censusByBed(bed.value);
+  const bed = $('#tkBed'), team = $('#tkTeam'), txt = $('#tkText'), tm = $('#tkTime'), rep = $('#tkRep'), hint = $('#tkHint'), bsel = $('#tkBedSel');
+  if(!bsel.dataset.wired){ bsel.dataset.wired = '1';
+    bsel.addEventListener('change', () => { const v = bsel.value; delete bed.dataset.none;
+      if(v === '__other'){ bed.dataset.other = '1'; bed.value = ''; bed.hidden = false; bed.dispatchEvent(new Event('input', {bubbles:true})); bed.focus(); return; }
+      delete bed.dataset.other; if(v === '__none') bed.dataset.none = '1';
+      bed.value = v === '__none' ? '' : v; bed.hidden = true; bed.dispatchEvent(new Event('input', {bubbles:true})); $('#tkText').focus(); }); }
+  const preview = () => { syncBedSel(); const d = tm.value.trim() ? parseHHMM(tm.value) : timeInText(txt.value), cp = censusByBed(bed.value);
     const ca = !cp && admitByBed(bed.value);
     $('#tkLink').innerHTML = !bed.value.trim() ? '' : cp ? `🔗 Linked to census: <b>${esc(cp.bed)}</b>${cp.intern ? ' · ' + esc(cp.intern) : ''}${cp.problem ? ' · ' + esc(cp.problem) : ''}` : ca ? `🔗 Matches <b>${esc(admLabel(ca))}</b>` : `<span class="muted">${typeOf(activeType).admitOnly ? 'No admission logged for this bed yet — the task is kept with the bed' : 'Not on the census — the task is kept with this bed only'}</span>`;
     bed.classList.toggle('linked', !!(cp || ca));
@@ -5403,7 +5534,7 @@ function editChips(){
   $('#tkCount').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } });
   [bed, team, txt, tm, rep].forEach(x => x.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } }));
   team.addEventListener('input', () => { if(team.value.trim() !== (state.settings.team || '').trim()) team.dataset.touched = '1'; else delete team.dataset.touched; });
-  $('#tkNextPt').onclick = () => { bed.value = ''; delete team.dataset.touched; team.value = (state.settings.team || '').trim(); txt.value = ''; tm.value = ''; rep.value = '0'; preview(); bed.focus(); };
+  $('#tkNextPt').onclick = () => { bed.value = ''; delete bed.dataset.other; delete bed.dataset.none; delete team.dataset.touched; team.value = (state.settings.team || '').trim(); txt.value = ''; tm.value = ''; rep.value = '0'; preview(); bed.focus(); };
   $('#tkChips').addEventListener('click', e => { if(e.target.id === 'tkChipEdit'){ editChips(); return; }
     const c = e.target.closest('[data-chip]'); if(!c) return; txt.value = txt.value.trim() ? `${txt.value.trim()} ${c.dataset.chip}` : c.dataset.chip; preview(); txt.focus(); txt.setSelectionRange(txt.value.length, txt.value.length); });
   $('#tkSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(!b) return; closeTkPop(); tkUI.view = b.dataset.v; try{ localStorage.setItem(`${KEY_PREFIX}.tkView`, tkUI.view); }catch(err){} renderTasks(); });
@@ -6996,7 +7127,7 @@ function tkFoldInit(){
   const en = document.querySelector('#view-tasks .tkentry'); if(!en || en.querySelector('.tkfoldbar')) return;
   en.classList.add('fold');
   en.insertAdjacentHTML('afterbegin', '<div class="tkfoldbar"><button type="button" class="btn primary" data-tkfold>+ New task</button><span class="muted">or swipe a task → done · ← +15 min · long-press a bed to change it</span></div>');
-  en.addEventListener('click', e => { if(!e.target.closest('[data-tkfold]')) return; const f = en.classList.toggle('fold'); e.target.textContent = f ? '+ New task' : 'Hide'; if(!f) setTimeout(() => $('#tkBed').focus(), 50); });
+  en.addEventListener('click', e => { if(!e.target.closest('[data-tkfold]')) return; const f = en.classList.toggle('fold'); e.target.textContent = f ? '+ New task' : 'Hide'; if(!f) setTimeout(() => ($('#tkBed').hidden ? $('#tkBedSel') : $('#tkBed')).focus(), 50); });
 }
 // ---- once: keep the data (Home Screen + persistent storage) ----
 function touchStart(){
@@ -7358,6 +7489,8 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:233, d:'2026-11-21', items:['<b>Rounds · Split view</b> is now in the real Plexus (Classic / Split toggle in Rounds).', 'Tasks: <b>Bed</b> is now a dropdown of the patients on the census (and tonight’s admissions), shown as “CCU-2 — Intern A · ADHF…”. Pick <b>Other bed / not on the board…</b> to type a bed for someone you’re cross-covering, or <b>No patient</b> for a general task.']},
+  {v:232, d:'2026-11-21', items:['<b>Rounds · Split view</b> (Sandbox first): switch with <b>Classic / Split</b> at the top of Rounds. Split keeps every patient in a list on the left (✓ discussed, blue dot = pre-charted, red dot = flag) — tap to jump. The right side shows the one-liner and flags, <b>At a glance</b> (Avatar, I/O, Diet, DVT PPx, Destination), <b>Today’s checklist</b> as compact boxes, <b>More</b> for standing &amp; dispo, and <b>Plan from rounds</b>: type a to-do (or tap + Labs, + Consult…) and Enter adds it to that patient’s Tasks. Classic stays exactly as it was.']},
   {v:231, d:'2026-11-21', items:['The <b>Hosp Course</b> column is now hidden on every board (and no longer counts toward “boxes open”). Turn it back on in ⚙ Settings → <b>Show the Hosp Course column</b>.']},
   {v:230, d:'2026-11-21', items:['Census: a <b>💬</b> button beside each bed (next to the pre-charted ✓) marks the patient <b>discussed</b> on rounds — the same mark as Rounds mode, so the two stay in step. It turns green when ticked and resets each day.']},
   {v:229, d:'2026-11-21', items:['Avatar: <b>CVC, arterial line, IABP, S-G catheter and ETT</b> only appear on ICU and CCU boards. On other boards they’re hidden unless the patient already has one (e.g. after transfer from the ICU); you can still add one by typing it in “Add another”.']},

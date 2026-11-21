@@ -571,7 +571,9 @@ body.tkfull #hclocks{margin-right:4px}
 .tkentry{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .tkline{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .tkline input,.tkline select{border:1px solid var(--line2);border-radius:6px;padding:7px 9px;background:var(--panel);font-size:14px}
-#tkBed{width:120px;font-weight:700}#tkTeam{width:130px}#tkText{flex:1;min-width:260px}#tkTime{width:92px}
+#tkBed{width:120px;font-weight:700}
+#tkBedSel{max-width:260px;font-weight:700}
+body.touch #tkBedSel{font-size:15px;padding:8px}#tkTeam{width:130px}#tkText{flex:1;min-width:260px}#tkTime{width:92px}
 .tkline input:focus{outline:2px solid var(--focus);outline-offset:-1px}
 .tkchips{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
 .tkchip{border:1px solid var(--line2);background:var(--head);border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--ink)}
@@ -1533,7 +1535,8 @@ body.touch .lrow{padding:14px 16px}
       <div class="tkwrap">
         <div class="tkentry">
           <div class="tkline">
-            <input id="tkBed" list="tkBeds" placeholder="Bed" title="Bed or patient identifier (avoid names)" autocomplete="off"><datalist id="tkBeds"></datalist>
+            <select id="tkBedSel" title="Which patient — from the census and tonight’s admissions, or Other for a bed that isn’t on the board"></select>
+            <input id="tkBed" list="tkBeds" placeholder="Bed" title="Bed or patient identifier (avoid names)" autocomplete="off" hidden><datalist id="tkBeds"></datalist>
             <input id="tkTeam" list="tkTeams" placeholder="Team" autocomplete="off"><datalist id="tkTeams"></datalist>
             <input id="tkText" placeholder="Task — e.g. f/u 9pm labs, UOP check at 4am" autocomplete="off">
             <input id="tkTime" class="hhmm" placeholder="HH:MM" inputmode="numeric" maxlength="5" title="Time, 24-hour (HH:MM) — e.g. 21:00, 04:30. Leave blank to use a time written in the task (e.g. “f/u 9pm labs”)." autocomplete="off">
@@ -1579,7 +1582,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '232';
+const APP_VERSION = '233';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -5409,11 +5412,21 @@ function exitTkFull(){
   renderTasks();
 }
 document.addEventListener('fullscreenchange', () => { if(!document.fullscreenElement && tkFullOn()) exitTkFull(); });
+// Tasks: patient picker — census patients (and tonight's admissions) in a dropdown; “Other bed…” opens the free-text box
+function fillBedSel(){ const bsel = $('#tkBedSel'); if(!bsel || !state) return;
+  const pts = state.patients.filter(p => p.bed).slice().sort((a, b) => a.bed.localeCompare(b.bed, undefined, {numeric:true})), ads = state.admits.filter(a => a.date === state.boardDate && a.bed && !admitClosed(a) && !censusByBed(a.bed));
+  bsel.innerHTML = `<option value="">${pts.length || ads.length ? 'Patient…' : 'No patients yet'}</option>${pts.length ? `<optgroup label="Census">${pts.map(p => `<option value="${esc(p.bed)}">${esc(p.bed)}${p.intern ? ' — ' + esc(p.intern) : ''}${p.problem ? ' · ' + esc(p.problem.slice(0, 40)) : ''}</option>`).join('')}</optgroup>` : ''}
+    ${ads.length ? `<optgroup label="Admissions">${ads.map(a => `<option value="${esc(a.bed)}">${esc(a.bed)} · ${esc(admLabel(a))}</option>`).join('')}</optgroup>` : ''}<option value="__other">Other bed / not on the board…</option><option value="__none">No patient (general task)</option>`;
+  syncBedSel(); }
+function syncBedSel(){ const bed = $('#tkBed'), bsel = $('#tkBedSel'); if(!bed || !bsel) return;
+  const v = bed.value.trim(), opt = v && [...bsel.options].find(o => o.value.toLowerCase() === v.toLowerCase() && o.value !== '__other');
+  if(opt){ bsel.value = opt.value; bed.hidden = true; } else if(v || bed.dataset.other){ bsel.value = '__other'; bed.hidden = false; } else { bsel.value = bed.dataset.none ? '__none' : ''; bed.hidden = true; } }
 function renderTasks(){
   const wrap = $('#view-tasks'); if(!wrap || !state.todos) return;
   const chips = state.settings.taskChips || DEFAULT_CHIPS;
   $('#tkChips').innerHTML = chips.map(c => `<button type="button" class="tkchip" data-chip="${esc(c)}">${esc(c)}</button>`).join('') + `<button type="button" class="tkchip edit" id="tkChipEdit" title="Edit these quick tasks">✎</button>`;
   const beds = [...new Set([...state.patients.map(p => p.bed).filter(Boolean), ...state.admits.filter(a => a.date === state.boardDate).map(a => a.bed).filter(Boolean), ...taskList().map(t => todoWhere(t)).filter(Boolean)])].sort((a, b) => a.localeCompare(b, undefined, {numeric:true}));
+  fillBedSel();
   $('#tkBeds').innerHTML = beds.map(b => { const p = censusByBed(b), a = !p && admitByBed(b); return `<option value="${esc(b)}"${p ? ` label="On census · ${esc([p.intern, p.problem].filter(Boolean).join(' · '))}"` : a ? ` label="${esc(admLabel(a))}"` : ''}>`; }).join('');
   $('#tkBulk').hidden = !!typeOf(activeType).admitOnly;
   const boardTeam = (state.settings.team || '').trim(), tmIn = $('#tkTeam');
@@ -5487,8 +5500,13 @@ function editChips(){
       const v = $('#chipTa').value.split('\n').map(x => x.trim()).filter(Boolean); mutate(() => { state.settings.taskChips = v; }, {label:'Edited the quick tasks', cat:'settings'}); }]]);
 }
 (function wireTasks(){
-  const bed = $('#tkBed'), team = $('#tkTeam'), txt = $('#tkText'), tm = $('#tkTime'), rep = $('#tkRep'), hint = $('#tkHint');
-  const preview = () => { const d = tm.value.trim() ? parseHHMM(tm.value) : timeInText(txt.value), cp = censusByBed(bed.value);
+  const bed = $('#tkBed'), team = $('#tkTeam'), txt = $('#tkText'), tm = $('#tkTime'), rep = $('#tkRep'), hint = $('#tkHint'), bsel = $('#tkBedSel');
+  if(!bsel.dataset.wired){ bsel.dataset.wired = '1';
+    bsel.addEventListener('change', () => { const v = bsel.value; delete bed.dataset.none;
+      if(v === '__other'){ bed.dataset.other = '1'; bed.value = ''; bed.hidden = false; bed.dispatchEvent(new Event('input', {bubbles:true})); bed.focus(); return; }
+      delete bed.dataset.other; if(v === '__none') bed.dataset.none = '1';
+      bed.value = v === '__none' ? '' : v; bed.hidden = true; bed.dispatchEvent(new Event('input', {bubbles:true})); $('#tkText').focus(); }); }
+  const preview = () => { syncBedSel(); const d = tm.value.trim() ? parseHHMM(tm.value) : timeInText(txt.value), cp = censusByBed(bed.value);
     const ca = !cp && admitByBed(bed.value);
     $('#tkLink').innerHTML = !bed.value.trim() ? '' : cp ? `🔗 Linked to census: <b>${esc(cp.bed)}</b>${cp.intern ? ' · ' + esc(cp.intern) : ''}${cp.problem ? ' · ' + esc(cp.problem) : ''}` : ca ? `🔗 Matches <b>${esc(admLabel(ca))}</b>` : `<span class="muted">${typeOf(activeType).admitOnly ? 'No admission logged for this bed yet — the task is kept with the bed' : 'Not on the census — the task is kept with this bed only'}</span>`;
     bed.classList.toggle('linked', !!(cp || ca));
@@ -5516,7 +5534,7 @@ function editChips(){
   $('#tkCount').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } });
   [bed, team, txt, tm, rep].forEach(x => x.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); add(); } }));
   team.addEventListener('input', () => { if(team.value.trim() !== (state.settings.team || '').trim()) team.dataset.touched = '1'; else delete team.dataset.touched; });
-  $('#tkNextPt').onclick = () => { bed.value = ''; delete team.dataset.touched; team.value = (state.settings.team || '').trim(); txt.value = ''; tm.value = ''; rep.value = '0'; preview(); bed.focus(); };
+  $('#tkNextPt').onclick = () => { bed.value = ''; delete bed.dataset.other; delete bed.dataset.none; delete team.dataset.touched; team.value = (state.settings.team || '').trim(); txt.value = ''; tm.value = ''; rep.value = '0'; preview(); bed.focus(); };
   $('#tkChips').addEventListener('click', e => { if(e.target.id === 'tkChipEdit'){ editChips(); return; }
     const c = e.target.closest('[data-chip]'); if(!c) return; txt.value = txt.value.trim() ? `${txt.value.trim()} ${c.dataset.chip}` : c.dataset.chip; preview(); txt.focus(); txt.setSelectionRange(txt.value.length, txt.value.length); });
   $('#tkSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(!b) return; closeTkPop(); tkUI.view = b.dataset.v; try{ localStorage.setItem(`${KEY_PREFIX}.tkView`, tkUI.view); }catch(err){} renderTasks(); });
@@ -7109,7 +7127,7 @@ function tkFoldInit(){
   const en = document.querySelector('#view-tasks .tkentry'); if(!en || en.querySelector('.tkfoldbar')) return;
   en.classList.add('fold');
   en.insertAdjacentHTML('afterbegin', '<div class="tkfoldbar"><button type="button" class="btn primary" data-tkfold>+ New task</button><span class="muted">or swipe a task → done · ← +15 min · long-press a bed to change it</span></div>');
-  en.addEventListener('click', e => { if(!e.target.closest('[data-tkfold]')) return; const f = en.classList.toggle('fold'); e.target.textContent = f ? '+ New task' : 'Hide'; if(!f) setTimeout(() => $('#tkBed').focus(), 50); });
+  en.addEventListener('click', e => { if(!e.target.closest('[data-tkfold]')) return; const f = en.classList.toggle('fold'); e.target.textContent = f ? '+ New task' : 'Hide'; if(!f) setTimeout(() => ($('#tkBed').hidden ? $('#tkBedSel') : $('#tkBed')).focus(), 50); });
 }
 // ---- once: keep the data (Home Screen + persistent storage) ----
 function touchStart(){
@@ -7471,6 +7489,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:233, d:'2026-11-21', items:['<b>Rounds · Split view</b> is now in the real Plexus (Classic / Split toggle in Rounds).', 'Tasks: <b>Bed</b> is now a dropdown of the patients on the census (and tonight’s admissions), shown as “CCU-2 — Intern A · ADHF…”. Pick <b>Other bed / not on the board…</b> to type a bed for someone you’re cross-covering, or <b>No patient</b> for a general task.']},
   {v:232, d:'2026-11-21', items:['<b>Rounds · Split view</b> (Sandbox first): switch with <b>Classic / Split</b> at the top of Rounds. Split keeps every patient in a list on the left (✓ discussed, blue dot = pre-charted, red dot = flag) — tap to jump. The right side shows the one-liner and flags, <b>At a glance</b> (Avatar, I/O, Diet, DVT PPx, Destination), <b>Today’s checklist</b> as compact boxes, <b>More</b> for standing &amp; dispo, and <b>Plan from rounds</b>: type a to-do (or tap + Labs, + Consult…) and Enter adds it to that patient’s Tasks. Classic stays exactly as it was.']},
   {v:231, d:'2026-11-21', items:['The <b>Hosp Course</b> column is now hidden on every board (and no longer counts toward “boxes open”). Turn it back on in ⚙ Settings → <b>Show the Hosp Course column</b>.']},
   {v:230, d:'2026-11-21', items:['Census: a <b>💬</b> button beside each bed (next to the pre-charted ✓) marks the patient <b>discussed</b> on rounds — the same mark as Rounds mode, so the two stay in step. It turns green when ticked and resets each day.']},
