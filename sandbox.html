@@ -742,6 +742,9 @@ body.standalone .rs-railhd,body.standalone .rs-hd2{padding-top:calc(max(env(safe
 .rs-glance{display:grid;grid-template-columns:96px 1fr;gap:8px 10px;align-items:center}
 .rs-gl{font:800 10.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .rs-gv .tc{min-height:36px;justify-content:flex-start;padding:0 10px;text-align:left}
+.rs-io{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.rs-io>.tc{flex:0 0 130px}
+.rs-iodet{font-size:13.5px;color:var(--muted)}.rs-iodet b{color:var(--ink);font-family:ui-monospace,"SF Mono",Menlo,monospace}
+.rs-iodet .met{color:#1e7e34;font-weight:700}.rs-iodet .miss{color:#b3261e;font-weight:700}
 .rs-chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
 .rs-ck2{display:flex;flex-direction:column;gap:3px;min-width:0}
 .rs-ck2>span{font-size:11.5px;font-weight:700;color:var(--muted)}
@@ -1582,7 +1585,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '233';
+const APP_VERSION = '234';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3869,7 +3872,9 @@ function renderRoundsSplit(){
   if(!list.length){ body.innerHTML = `<div class="rs">${rail}<section class="rs-main"><div class="rempty">No patients in this view.</div><div class="rs-foot"><span style="flex:1"></span><button class="btn" data-r="close">✕ Close</button></div></section></div>`; return; }
   const p = list[i], fl = flagsFor(p), n = hospDay(p), cm = p.comments || {};
   const tile = k => { const cfg = colCfg(k); return cellHTML(p.cells[k], cfg, 'p', p.id, 0, 0, false) + (cm[k] ? `<div class="rcmt">${esc(cm[k])}</div>` : ''); };
-  const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv">${tile(k)}</div>`).join('');
+  const ioDet = c => { if(!c) return ''; const parts = [ioNum(c.in) && `In <b>${esc(ioVol(c.in))}</b>`, ioNum(c.out) && `Out <b>${esc(ioVol(c.out))}</b>`].filter(Boolean);
+    const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join(' · ')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
+  const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''}">${tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
   const daily = DAILY_KEYS.filter(k => !RS_GLANCE.includes(k) && !colHidden(k)), doneN = daily.filter(k => isDone(colCfg(k), p.cells[k])).length;
   const chk = daily.map(k => `<div class="rs-ck2 ${isDone(colCfg(k), p.cells[k]) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('');
   const more = CENSUS_GROUPS().filter(g => g.k !== 'daily').map(g => visibleCols(g).filter(c => !RS_GLANCE.includes(c.k)).map(c => c.k)).flat();
@@ -7489,6 +7494,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:234, d:'2026-11-21', items:['Rounds · Split: the I/O line now shows <b>In</b> and <b>Out</b> next to the net (and the goal, if set).']},
   {v:233, d:'2026-11-21', items:['<b>Rounds · Split view</b> is now in the real Plexus (Classic / Split toggle in Rounds).', 'Tasks: <b>Bed</b> is now a dropdown of the patients on the census (and tonight’s admissions), shown as “CCU-2 — Intern A · ADHF…”. Pick <b>Other bed / not on the board…</b> to type a bed for someone you’re cross-covering, or <b>No patient</b> for a general task.']},
   {v:232, d:'2026-11-21', items:['<b>Rounds · Split view</b> (Sandbox first): switch with <b>Classic / Split</b> at the top of Rounds. Split keeps every patient in a list on the left (✓ discussed, blue dot = pre-charted, red dot = flag) — tap to jump. The right side shows the one-liner and flags, <b>At a glance</b> (Avatar, I/O, Diet, DVT PPx, Destination), <b>Today’s checklist</b> as compact boxes, <b>More</b> for standing &amp; dispo, and <b>Plan from rounds</b>: type a to-do (or tap + Labs, + Consult…) and Enter adds it to that patient’s Tasks. Classic stays exactly as it was.']},
   {v:231, d:'2026-11-21', items:['The <b>Hosp Course</b> column is now hidden on every board (and no longer counts toward “boxes open”). Turn it back on in ⚙ Settings → <b>Show the Hosp Course column</b>.']},
