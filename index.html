@@ -1596,7 +1596,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '244';
+const APP_VERSION = '245';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1850,6 +1850,19 @@ function orderedKeys(g){
   return [...order, ...keys.filter(k => !order.includes(k))];
 }
 // Hospital course is hidden on every board unless turned on in ⚙ Settings (a setting for this device, not per board)
+/* Appearance: Automatic (follow the iPad / computer), Light or Dark. The dark styles live in @media (prefers-color-scheme: dark)
+   blocks; to force a theme those blocks' conditions are switched to always / never match. Saved on this device. */
+const THEME_KEY = `${KEY_PREFIX}.theme`;
+const themeGet = () => { try{ const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' ? v : 'auto'; }catch(e){ return 'auto'; } };
+function themeApply(){ const t = themeGet(), DARK = '(prefers-color-scheme: dark)', NEVER = '(min-width: 100000px)', ALWAYS = '(min-width: 0px)';
+  [...document.styleSheets].forEach(sh => { let rules; try{ rules = sh.cssRules; }catch(e){ return; }
+    const want = t === 'auto' ? DARK : t === 'dark' ? ALWAYS : NEVER;
+    const walk = list => [...list].forEach(r => { if(r.media && r.cssRules){ const m = r.media.mediaText;
+        if(m.includes(DARK) || m.includes(NEVER) || m.includes(ALWAYS)){ const txt = m.split(DARK).join(want).split(NEVER).join(want).split(ALWAYS).join(want); if(m !== txt) r.media.mediaText = txt; }
+        walk(r.cssRules); } });
+    walk(rules); });
+  document.documentElement.style.colorScheme = t === 'auto' ? '' : t; document.documentElement.dataset.theme = t; }
+themeApply();
 const SHOWHC_KEY = `${KEY_PREFIX}.showHospCourse`;
 const showHC = () => { try{ return localStorage.getItem(SHOWHC_KEY) === '1'; }catch(e){ return false; } };
 const colHidden = k => (k === 'hc' && !showHC()) || (state.settings.hiddenCols || []).includes(k);
@@ -4272,6 +4285,7 @@ function settings(){
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>Board: ${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${esc(siteOf(activeType).label)}</span></span><button class="btn sm" id="bSwitchBoard">⇆ Switch board…</button>${isRot(activeType) ? '<button class="btn sm" id="bSched">🗓 Edit schedule…</button>' : ''}<button class="btn sm" id="bRotExp" ${Object.keys(ROTS).length ? '' : 'hidden'}>Save rotation schedules…</button><span class="muted">Opens the launch screen. Plexus also shows it every time it opens.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Layout <select id="sLayout"><option value="auto" ${LAYOUT === 'auto' ? 'selected' : ''}>Automatic (${touchMQ.matches ? 'touch on this device' : 'desktop on this device'})</option><option value="touch" ${LAYOUT === 'touch' ? 'selected' : ''}>Touch — iPad style</option><option value="desktop" ${LAYOUT === 'desktop' ? 'selected' : ''}>Desktop</option></select></label><span class="muted">Touch: tab bar at the bottom, swipe tasks, long-press a bed to change it.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Older shifts: move out anything older than <select id="sTidyDays">${TIDY_DAYS.map(d => `<option value="${d}" ${TIDY.days === d ? 'selected' : ''}>${d} days</option>`).join('')}</select></label><button class="btn sm" id="bTidy">🗄 Move older shifts out…</button><span class="muted">Keeps the data file small. Plexus also offers this when you start a new shift.</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Appearance <select id="sTheme"><option value="auto" ${themeGet() === 'auto' ? 'selected' : ''}>Automatic (follow this device)</option><option value="light" ${themeGet() === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${themeGet() === 'dark' ? 'selected' : ''}>Dark</option></select></label><span class="muted small">— saved on this device</span></div>
     <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="sShowHC" ${showHC() ? 'checked' : ''}> Show the <b>Hosp Course</b> column <span class="muted small">— on every board and rotation; hidden by default</span></label>
     <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
     <hr>
@@ -4369,6 +4383,7 @@ function settings(){
       m.querySelector('#mvGo').onclick = () => { const to = m.querySelector('#mvTo').value; closeModal(); moveBoard(to); };
       m.querySelector('#sCmdDock').onchange = e => cmdDockSet(e.target.value);
       m.querySelector('#sLayout').onchange = e => layoutSet(e.target.value);
+      m.querySelector('#sTheme').onchange = e => { try{ localStorage.setItem(THEME_KEY, e.target.value); }catch(err){} themeApply(); toast(`Appearance: ${({auto:'Automatic', light:'Light', dark:'Dark'})[e.target.value]}`); };
       m.querySelector('#bSwitchBoard').onclick = () => { closeModal(); setTimeout(switchBoardFlow, 0); };
       if(m.querySelector('#bSched')) m.querySelector('#bSched').onclick = () => { closeModal(); setTimeout(() => showRotSetup({edit:activeType}), 0); };
       m.querySelector('#bRotExp').onclick = () => rotExport();
@@ -7538,6 +7553,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:245, d:'2026-11-21', items:['<b>Appearance</b> setting: ⚙ Settings → Appearance → <b>Automatic</b> (follows the iPad or computer), <b>Light</b> or <b>Dark</b>. Saved on this device.']},
   {v:244, d:'2026-11-21', items:['Rounds · Split: <b>Standing &amp; dispo</b> now opens expanded (tap its heading to fold it away).']},
   {v:243, d:'2026-11-21', items:['ICU / CCU boards no longer show an intern as <b>NEXT UP</b> for the next admission (that’s for ward boards).']},
   {v:242, d:'2026-11-21', items:['Rounds · Split: the Intern / Bed / List and Classic / Split button labels are centred vertically.']},
