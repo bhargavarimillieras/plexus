@@ -1510,7 +1510,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '226';
+const APP_VERSION = '227';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3681,7 +3681,7 @@ function openRounds(id){ closePop(); rounds.open = true; const list = roundsList
 function closeRounds(){ closePop(); rounds.open = false; $('#rounds').hidden = true; document.body.style.overflow = ''; lastFocus = null;
   const tr = rounds.id && document.querySelector(`#censusGrid tr[data-id="${rounds.id}"]`); if(tr){ tr.scrollIntoView({block:'center'}); tr.classList.add('rowpulse'); setTimeout(() => tr.classList.remove('rowpulse'), 1600); } }
 function roundsGo(step, plain){ const list = roundsList(); if(!list.length) return; let i = list.findIndex(p => p.id === rounds.id); const cur = list[i];
-  if(step > 0 && !plain && cur){ if(!(rounds.keepOpen && rounds.keepOpen.has(cur.id))) rdMark(cur, true);   // done with this one (unless you unticked it yourself) → the next not yet discussed, else just the next
+  if(step > 0 && !plain && cur){   // → the next patient not yet discussed (you tick Discussed yourself), else just the next
     const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(p => !rdSeen(p));
     if(nx){ roundsTo(nx.id); return; } }
   i = Math.min(list.length - 1, Math.max(0, (i < 0 ? 0 : i) + step)); roundsTo(list[i].id); }
@@ -3712,7 +3712,7 @@ function renderRounds(){
       return `<div class="rtile"><div class="rlab" title="${esc(cfg.h)}">${esc(cfg.h)}</div>${cellHTML(p.cells[c.k], cfg, 'p', p.id, 0, ci, false)}${cm[c.k] ? `<div class="rcmt">${esc(cm[c.k])}</div>` : ''}</div>`; }).join('')}</div></div>`).join('');
   body.innerHTML = bar + `<div class="rbody">
     <div class="rhead">
-      <div class="rbed">${esc(p.bed || '(no bed)')}<button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (Next does this for you). Separate from the Visit box.'}">${rdSeen(p) ? '✓ Discussed' : 'Mark discussed'}</button><small>${n === null ? 'No admission date' : `Hospital day ${n}`}${adm ? ` · admission ${admitSigned(adm)}/${ADMIT_ITEMS.length} signed` : ''}</small></div>
+      <div class="rbed">${esc(p.bed || '(no bed)')}<button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds. Next skips patients already discussed. Separate from the Visit box.'}">${rdSeen(p) ? '✓ Discussed' : 'Mark discussed'}</button><small>${n === null ? 'No admission date' : `Hospital day ${n}`}${adm ? ` · admission ${admitSigned(adm)}/${ADMIT_ITEMS.length} signed` : ''}</small></div>
       <div class="rfields">
         <div class="wide2"><label>Problem / one-liner</label><input data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" placeholder="One-liner / problem"></div>
         <div><label>Intern</label>${selHTML('intern', p.intern, state.settings.interns, {kind:'p', id:p.id})}</div>
@@ -7299,6 +7299,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:227, d:'2026-11-21', items:['Rounds: <b>Next</b> no longer ticks <b>Discussed</b> for you — you tick it yourself. Next still skips patients you’ve already marked discussed.']},
   {v:226, d:'2026-11-21', items:['Rounds: if you untick <b>✓ Discussed</b> yourself, pressing <b>Next</b> no longer ticks it straight back.']},
   {v:225, d:'2026-11-21', items:['Rounds: “Mark seen” is now <b>Mark discussed</b> (and “✓ 3/8 discussed”), so it isn’t confused with the <b>Visit</b> box — it only tracks who’s been talked through on rounds.']},
   {v:224, d:'2026-11-21', items:['<b>I/O goal</b> (optional): set a goal net in the I/O box — e.g. −1L, −500 or even. The popup says “✓ met” or how much is left to go; on the board the box turns <b>green</b> when the goal is met and <b>red</b> when it isn’t, with the goal shown small in the corner. The goal carries over to the next day until you change or clear it.']},
