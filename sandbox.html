@@ -187,6 +187,9 @@ body.touch .dmod{padding:7px 12px;font-size:14px}
 .ionet b{font:800 18px ui-monospace,"SF Mono",Menlo,monospace}
 .ionet b.neg{color:#1a56b8}.ionet b.pos{color:#9a5b00}.ionet b.bad{color:#c5221f;font-size:13px}
 @media (prefers-color-scheme: dark){.tc.io-neg{background:rgba(66,133,244,.2);color:#9cc3ff}.tc.io-pos{background:rgba(245,184,61,.18);color:#f5c86a}.tc.io-even,.tc.io-part{background:rgba(255,255,255,.06);color:#c3cad6}.ionet b.neg{color:#9cc3ff}.ionet b.pos{color:#f5c86a}}
+.tc .box.na{width:auto;min-width:30px;padding:0 4px;font:800 10px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.04em;color:#5f6673;background:#eceef2;border-color:#c9ced8}
+.tc.lp{transform:scale(.94);transition:transform .45s}
+body.touch .tc.t-check,body.touch .tc.t-checkNote{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .asof{font-size:12px;font-weight:700;color:#8a5a00;background:#fff4d6;border:1px solid #f0d58a;border-radius:999px;padding:3px 10px;white-space:nowrap;cursor:help}
 @media (prefers-color-scheme: dark){.asof{color:#f5c86a;background:rgba(245,184,61,.12);border-color:rgba(245,184,61,.35)}}
 .hubasof{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(120,160,255,.16);color:#b9cbff;font-weight:800;cursor:help}
@@ -1588,7 +1591,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '235';
+const APP_VERSION = '236';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1818,7 +1821,7 @@ const GROUPS = [
     {k:'bm',h:'Last BM',type:'date'},{k:'ts',h:'T&S',type:'date'},
     {k:'diet',h:'Diet',type:'choice',size:'mid',opts:[O('General'),O('Diabetic'),O('Heart Healthy'),O('Renal'),O('Full Liquid'),O('Clear Liquid'),O('TF'),O('NPO','red')]},
     {k:'dvt',h:'DVT PPx',type:'choice',size:'mid',opts:[O('SQH'),O('HEP GTT'),O('LMWH'),O('DOAC'),O('HELD','red')]},
-    {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'text'},
+    {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'check',fixedType:true},
     {k:'pt',h:'PT',type:'date'},{k:'ot',h:'OT',type:'date'}]},
   {k:'edd', label:'EDD', tab:'fixed', cols:[{k:'edd',h:'EDD',type:'date',fixedType:true}]},
   {k:'dc', label:'Discharge — on the Discharges tab', tab:'dc', cols:[
@@ -2710,7 +2713,7 @@ function cellHTML(cell, col, kind, id, ri, ci, ro){
   if(col.type === 'check' || col.type === 'checkNote') txt = '';
   const glyph = st ? `<i class="sglyph" aria-hidden="true">${st.g}</i>` : '';
   const cls = `tc s-${(statusy && cell.s)||'0'} ${ocls} t-${col.type} ${col.size||''} ${glyph && !txt ? 'gonly' : ''}`;
-  return `<div class="${cls}" style="${style}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}">${col.type === 'checkNote' ? `<span class="cnwrap"><span class="box ${cell.c?'on':''}" data-box="1">${cell.c?'✓':''}</span>${cell.t ? `<span class="cntimes">${esc(cell.t)}</span>` : ''}</span>` : col.type === 'check' ? `<span class="box ${cell.t?'on':''}">${cell.t?'✓':''}</span>` : `${glyph}<span class="txt">${esc(txt)}</span>`}</div>`;
+  return `<div class="${cls}" style="${style}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}">${col.type === 'checkNote' ? `<span class="cnwrap">${cell.c && cell.t === 'N/A' ? '<span class="box na" data-box="1">N/A</span>' : `<span class="box ${cell.c?'on':''}" data-box="1">${cell.c?'✓':''}</span>${cell.t ? `<span class="cntimes">${esc(cell.t)}</span>` : ''}`}</span>` : col.type === 'check' ? (cell.t === 'N/A' ? '<span class="box na">N/A</span>' : `<span class="box ${cell.t?'on':''}">${cell.t?'✓':''}</span>`) : `${glyph}<span class="txt">${esc(txt)}</span>`}</div>`;
 }
 function selHTML(field, val, opts, {blank=true, cls='cell', ro=false, kind, id} = {}){
   const list = [...opts]; if(val && !list.includes(val)) list.unshift(val);
@@ -7124,6 +7127,22 @@ function cmdChips(){
     if(dx > 90){ const c = r.querySelector('[data-tkdone]'); if(c && !c.checked) c.click(); }
     else if(dx < -90){ const q = r.querySelector('[data-tksnz="15"]'); if(q) q.click(); } };
   document.addEventListener('pointerup', end); document.addEventListener('pointercancel', end); }
+// ---- checkboxes: N/A by long-press (touch), right-click (mouse) or the N key; again to clear ----
+function toggleNA(cellEl){ const kind = cellEl.dataset.kind, id = cellEl.dataset.id, col = cellEl.dataset.col, cfg = colOf(kind, col), r = rowOf(kind, id); if(!r || !cfg) return;
+  const c = r.cells[col] || {}, isNA = c.t === 'N/A';
+  if(cfg.type === 'check') setCell(kind, id, col, {t:isNA ? '' : 'N/A', s:''});
+  else if(cfg.type === 'checkNote') setCell(kind, id, col, isNA ? {c:false, t:''} : {c:true, t:'N/A'});
+  else return;
+  toast(`${cfg.h}: ${isNA ? 'cleared' : 'N/A'}`); }
+const naCell = t => { const el = t && t.closest && t.closest('.tc.t-check, .tc.t-checkNote'); return el && el.hasAttribute('tabindex') ? el : null; };
+{ let lp = null, swallow = false;
+  document.addEventListener('pointerdown', e => { const el = naCell(e.target); if(!el || e.pointerType === 'mouse') return; el.classList.add('lp');
+    lp = {el, x:e.clientX, y:e.clientY, t:setTimeout(() => { el.classList.remove('lp'); lp = null; swallow = true; toggleNA(el); try{ navigator.vibrate && navigator.vibrate(15); }catch(err){} }, 550)}; });
+  const end = e => { if(!lp) return; if(e.type === 'pointermove' && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) < 8) return; clearTimeout(lp.t); lp.el.classList.remove('lp'); lp = null; };
+  ['pointerup', 'pointercancel', 'pointermove'].forEach(ev => document.addEventListener(ev, end));
+  document.addEventListener('click', e => { if(swallow){ swallow = false; if(naCell(e.target)){ e.preventDefault(); e.stopPropagation(); } } }, true);
+  document.addEventListener('contextmenu', e => { const el = naCell(e.target); if(!el) return; e.preventDefault(); toggleNA(el); });
+  window.addEventListener('keydown', e => { if((e.key === 'n' || e.key === 'N') && !e.metaKey && !e.ctrlKey && !e.altKey){ const el = naCell(document.activeElement); if(el && document.activeElement === el){ e.preventDefault(); e.stopImmediatePropagation(); toggleNA(el); } } }, true); }
 // ---- long-press a bed to change it (the ✎ only shows on hover with a mouse) ----
 { let lp = null;
   document.addEventListener('pointerdown', e => { if(!isTouch()) return; const bb = e.target.closest('.bedbox'); if(!bb || !bb.querySelector('.bedpen')) return; bb.classList.add('lp');
@@ -7497,6 +7516,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:236, d:'2026-11-21', items:['<b>SW</b> is now a simple checkbox (notes ready for social work rounds).', 'Every checkbox (Visit, Attest, Handoff, Ord Rev, SW, Lab Ord…) can be set to <b>N/A</b>: <b>press and hold</b> it on the iPad, right-click it with a mouse, or press <b>N</b>. Do the same again to clear it. N/A counts as done.']},
   {v:235, d:'2026-11-21', items:['Rounds now sits in a clear <b>framed panel</b> (rounded corners, shadow) over a dimmed board, and in Split view the left list’s header and footer line up with the right side’s.']},
   {v:234, d:'2026-11-21', items:['Rounds · Split: the I/O line now shows <b>In</b> and <b>Out</b> next to the net (and the goal, if set).']},
   {v:233, d:'2026-11-21', items:['<b>Rounds · Split view</b> is now in the real Plexus (Classic / Split toggle in Rounds).', 'Tasks: <b>Bed</b> is now a dropdown of the patients on the census (and tonight’s admissions), shown as “CCU-2 — Intern A · ADHF…”. Pick <b>Other bed / not on the board…</b> to type a bed for someone you’re cross-covering, or <b>No patient</b> for a general task.']},
