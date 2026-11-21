@@ -714,7 +714,7 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 @media (prefers-color-scheme: dark){.rseen,.rchip.seen{background:rgba(52,168,83,.18);border-color:rgba(52,168,83,.4);color:#7ee2a0}}
 .rview button{font-size:12px}
 /* Rounds · Split */
-.rounds.split #roundsBody{overflow:hidden}
+.rounds.rsplit #roundsBody{overflow:hidden}
 .rs{--rs-hh:128px;--rs-fh:68px;display:grid;grid-template-columns:260px 1fr;height:100%;min-height:0}
 .rs-rail{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100%;min-height:0}
 .rs-railhd{height:var(--rs-hh);box-sizing:border-box;padding:12px 12px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:8px;flex:none}
@@ -1595,7 +1595,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '240';
+const APP_VERSION = '241';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3836,7 +3836,7 @@ function focusRounds(){ const r = $('#rounds'); if(r) r.focus({preventScroll:tru
 function renderRounds(){
   if(!rounds.open) return;
   if(ui.roundsView === 'split') return renderRoundsSplit();
-  $('#rounds').classList.remove('split');
+  $('#rounds').classList.remove('rsplit');
   const list = roundsList(), body = $('#roundsBody');
   let i = list.findIndex(p => p.id === rounds.id);
   if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
@@ -3884,7 +3884,7 @@ const RS_GLANCE = ['avatar', 'io', 'diet', 'dvt', 'dest'];
 const RS_QUICK = ['Labs: ', 'Imaging: ', 'Consult: ', 'Call family: ', 'Med change: '];
 function rsFlagged(p){ return flagsFor(p).some(f => f[0] === 'warn' || f[0] === 'bad'); }
 function renderRoundsSplit(){
-  $('#rounds').classList.add('split');
+  $('#rounds').classList.add('rsplit');
   const list = roundsList(), body = $('#roundsBody'), ord = roundsOrder(), seenN = list.filter(rdSeen).length;
   let i = list.findIndex(p => p.id === rounds.id); if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
   const rail = `<aside class="rs-rail"><div class="rs-railhd"><div class="rs-row"><b>Rounds</b><span class="rseen">✓ ${seenN}/${list.length} discussed</span></div>
@@ -7536,6 +7536,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:241, d:'2026-11-21', items:['Fixed: in Rounds · Split, the blur didn’t reach the edges of the screen (a board style was shrinking the backdrop). Split and Classic now sit in the same full-screen frame.']},
   {v:240, d:'2026-11-21', items:['Rounds: the dark shadow is gone — the board behind is just softly blurred. In Split view, intake and output show as ⊕ and ⊖ instead of “In” and “Out”.']},
   {v:239, d:'2026-11-21', items:['Disposition: <b>Uptriage</b> removed — pick SDU, cSDU, MICU or CCU instead.']},
   {v:238, d:'2026-11-21', items:['Disposition groups renamed <b>Leaving hospital</b> and <b>Within hospital</b>.']},
