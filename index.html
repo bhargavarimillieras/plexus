@@ -1488,7 +1488,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '221';
+const APP_VERSION = '222';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1709,7 +1709,7 @@ const OPT_COLORS = [['','None'],['green','Green'],['yellow','Yellow'],['orange',
 const DC_OPTS = () => [O('Signed','green'),O('Pended','orange'),O('Incomplete','red')];
 const GROUPS = [
   {k:'daily', label:'Daily', cols:[
-    {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'status'},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','HD catheter','Port','IABP','Foley catheter','NG tube','OG tube','G-tube / PEG','Rectal tube','ETT','Trach','Chest tube','JP drain'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
+    {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'status'},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','HD catheter','Port','IABP','S-G catheter','Foley catheter','NG tube','OG tube','G-tube / PEG','Rectal tube','ETT','Trach','Chest tube','JP drain'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
     {k:'labrev',h:'Lab Rev',type:'status'},{k:'vst',h:'Visit',type:'check'},
     {k:'note',h:'Note',type:'statusChoice',size:'mid',opts:[O('Progress'),O('H&P'),O('Discharge'),O('Pending'),O('ALOC'),O('Transfer')]},
     {k:'hc',h:'Hosp Course',type:'check'},
@@ -2035,6 +2035,10 @@ function normalize(s){
       if(!has('HEP GTT')) dv.opts.splice((j >= 0 ? j : 0) + 1, 0, {label:'HEP GTT'}); }
     s.settings.dvtSqh = 1; }
   // v206: ETT and IABP join the Avatar list — also on boards whose Avatar list was already customised (once; delete them again if you don't want them)
+  // v222: S-G (Swan-Ganz) catheter joins the Avatar list, after IABP (once)
+  if(!s.settings.avSG){ const av = s.settings.columns.avatar;
+    if(av && Array.isArray(av.opts) && !av.opts.some(o => /^(s-?g|swan)/i.test(o.label || ''))){ let i = av.opts.findIndex(o => o.label === 'IABP'); if(i < 0) i = av.opts.findIndex(o => o.label === 'Arterial line'); av.opts.splice(i < 0 ? av.opts.length : i + 1, 0, {label:'S-G catheter'}); }
+    s.settings.avSG = 1; }
   if(!s.settings.avEttIabp){ const av = s.settings.columns.avatar;
     if(av && Array.isArray(av.opts)){ const has = l => av.opts.some(o => (o.label || '').toLowerCase() === l.toLowerCase()), at = l => av.opts.findIndex(o => o.label === l);
       if(!has('IABP')){ const i = at('Arterial line'); av.opts.splice(i >= 0 ? i + 1 : av.opts.length, 0, {label:'IABP'}); }
@@ -2442,7 +2446,7 @@ const ldtOld = it => { const a = ldtAge(it); return a !== null && a > state.sett
 const ldtItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
 // where it is (PIVs: side + site) and how many — a PIV can be listed more than once
 // the Avatar list is shown in groups, in this order; anything else (your own additions) goes under Other
-const LDT_GROUPS = [['Vascular access', ['PIV', 'Midline', 'PICC', 'CVC', 'Arterial line', 'HD catheter', 'Port', 'IABP', 'Impella', 'ECMO cannula', 'Swan-Ganz', 'PA catheter', 'Temporary pacing wire']],
+const LDT_GROUPS = [['Vascular access', ['PIV', 'Midline', 'PICC', 'CVC', 'Arterial line', 'HD catheter', 'Port', 'IABP', 'S-G catheter', 'Impella', 'ECMO cannula', 'Swan-Ganz', 'PA catheter', 'Temporary pacing wire']],
   ['Urinary', ['Foley catheter', 'Suprapubic catheter', 'Nephrostomy tube', 'Condom catheter']],
   ['GI / feeding', ['NG tube', 'OG tube', 'Dobhoff', 'G-tube / PEG', 'J-tube', 'Rectal tube', 'Flexi-Seal']],
   ['Airway', ['ETT', 'Trach']],
@@ -7220,6 +7224,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:222, d:'2026-11-21', items:['Avatar: <b>S-G catheter</b> (Swan-Ganz) is now a built-in choice under Vascular access, after IABP.']},
   {v:221, d:'2026-11-21', items:['<b>Rounds</b>: choose the order at the top — <b>By intern</b>, <b>By bed</b> or <b>Census order</b>. A strip of beds lets you jump to any patient when rounds go out of order. Leaving a patient with <b>Next</b> marks them <b>✓ seen</b>, and Next then goes to the next patient not yet seen, so you pick up where you left off. “✓ 3/8 seen” keeps count; it starts fresh each day.']},
   {v:220, d:'2026-11-20', items:['iPad tab bar order: <b>Overview · Census · Tasks · Admissions · Transfers/Discharges · More</b>.']},
   {v:219, d:'2026-11-20', items:['Diet: <b>TF</b> (tube feeds) is now a built-in choice, just before NPO.']},
