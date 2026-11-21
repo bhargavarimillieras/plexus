@@ -161,6 +161,19 @@ body.touch .dclr{font-size:15px;padding:6px 7px}
 .dmod{border:1px solid var(--line2);background:var(--panel);color:var(--ink);border-radius:999px;padding:4px 10px;font:600 12.5px inherit;font-family:inherit;cursor:pointer}
 .dmod.on{background:var(--accent);border-color:var(--accent);color:#fff}
 body.touch .dmod{padding:7px 12px;font-size:14px}
+.t-io .txt{font-weight:700;font-variant-numeric:tabular-nums;font-size:12px}
+.tc.io-neg{background:#e3f0ff;color:#1a56b8}
+.tc.io-pos{background:#fff1dc;color:#9a5b00}
+.tc.io-even{background:#eef1f5;color:#3c4452}
+.tc.io-part{background:#f7f7f9;color:var(--muted)}
+.iogrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.iogrid label{display:flex;flex-direction:column;gap:3px;font:700 11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.iogrid input{font:600 15px ui-monospace,"SF Mono",Menlo,monospace;padding:6px 8px;border:1px solid var(--line2);border-radius:7px;background:var(--panel);color:var(--ink);width:100%;box-sizing:border-box}
+.ionet{grid-column:1/-1;display:flex;align-items:baseline;justify-content:space-between;padding:6px 10px;border-radius:8px;background:var(--bg)}
+.ionet span{font:700 11px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.ionet b{font:800 18px ui-monospace,"SF Mono",Menlo,monospace}
+.ionet b.neg{color:#1a56b8}.ionet b.pos{color:#9a5b00}.ionet b.bad{color:#c5221f;font-size:13px}
+@media (prefers-color-scheme: dark){.tc.io-neg{background:rgba(66,133,244,.2);color:#9cc3ff}.tc.io-pos{background:rgba(245,184,61,.18);color:#f5c86a}.tc.io-even,.tc.io-part{background:rgba(255,255,255,.06);color:#c3cad6}.ionet b.neg{color:#9cc3ff}.ionet b.pos{color:#f5c86a}}
 .asof{font-size:12px;font-weight:700;color:#8a5a00;background:#fff4d6;border:1px solid #f0d58a;border-radius:999px;padding:3px 10px;white-space:nowrap;cursor:help}
 @media (prefers-color-scheme: dark){.asof{color:#f5c86a;background:rgba(245,184,61,.12);border-color:rgba(245,184,61,.35)}}
 .hubasof{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;background:rgba(120,160,255,.16);color:#b9cbff;font-weight:800;cursor:help}
@@ -1488,7 +1501,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '222';
+const APP_VERSION = '223';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1709,7 +1722,7 @@ const OPT_COLORS = [['','None'],['green','Green'],['yellow','Yellow'],['orange',
 const DC_OPTS = () => [O('Signed','green'),O('Pended','orange'),O('Incomplete','red')];
 const GROUPS = [
   {k:'daily', label:'Daily', cols:[
-    {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'status'},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','HD catheter','Port','IABP','S-G catheter','Foley catheter','NG tube','OG tube','G-tube / PEG','Rectal tube','ETT','Trach','Chest tube','JP drain'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
+    {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'io',fixedType:true},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','HD catheter','Port','IABP','S-G catheter','Foley catheter','NG tube','OG tube','G-tube / PEG','Rectal tube','ETT','Trach','Chest tube','JP drain'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
     {k:'labrev',h:'Lab Rev',type:'status'},{k:'vst',h:'Visit',type:'check'},
     {k:'note',h:'Note',type:'statusChoice',size:'mid',opts:[O('Progress'),O('H&P'),O('Discharge'),O('Pending'),O('ALOC'),O('Transfer')]},
     {k:'hc',h:'Hosp Course',type:'check'},
@@ -1837,7 +1850,19 @@ function syncLinked(prev){
     });
   });
 }
-function isDone(cfg, cell){ if(cfg.type === 'ldt' || cfg.type === 'proc') return true; return isStatusType(cfg.type) ? DONE.has(cell.s) : cfg.type === 'checkNote' ? !!cell.c : !!cell.t; }
+/* I/O: intake and output in mL (cell.in / cell.out), net worked out. Typing accepts litres (1.2L) and sums (800+450). */
+const ioNum = v => typeof v === 'number' && isFinite(v);
+function ioParse(str){ const t = String(str || '').toLowerCase().replace(/[,\s]/g, '').replace(/ml/g, ''); if(!t) return null;
+  let sum = 0; for(const part of t.split('+')){ if(!part) continue; const m = part.match(/^(-?\d*\.?\d+)(l?)$/); if(!m) return NaN; sum += parseFloat(m[1]) * (m[2] ? 1000 : 1); }
+  return Math.round(sum); }
+const ioVol = n => Math.abs(n) >= 1000 ? `${(Math.round(Math.abs(n) / 10) / 100).toFixed(2).replace(/0$/, '')} L` : `${Math.abs(n)} mL`;
+const ioSigned = n => (n > 0 ? '+' : n < 0 ? '−' : '±') + ioVol(n);
+const ioNet = c => c && ioNum(c.in) && ioNum(c.out) ? c.in - c.out : null;
+function ioText(c){ if(!c) return ''; const n = ioNet(c);
+  if(n !== null) return `In ${ioVol(c.in)} · Out ${ioVol(c.out)} · Net ${ioSigned(n)}`;
+  return [ioNum(c.in) && `In ${ioVol(c.in)}`, ioNum(c.out) && `Out ${ioVol(c.out)}`].filter(Boolean).join(' · '); }
+function isDone(cfg, cell){ if(cfg.type === 'ldt' || cfg.type === 'proc') return true;
+  if(cfg.type === 'io') return ioNet(cell) !== null || cell.t === 'N/A' || DONE.has(cell.s); return isStatusType(cfg.type) ? DONE.has(cell.s) : cfg.type === 'checkNote' ? !!cell.c : !!cell.t; }
 function optOf(cfg, label){ return cfg.opts.find(o => o.label === label); }
 
 /* ---------- date helpers ---------- */
@@ -1946,12 +1971,12 @@ function practiceDemo(r){
   const mk = (bed, intern, problem, status, ago, set) => { const p = {id:uid(), bed, intern, problem, status, admitDate:addDays(bd, -ago), cells:blankCells(ALL_COLS)};
     Object.entries(set).forEach(([k, v]) => { p.cells[k] = Array.isArray(v) ? {s:v[0], t:v[1]} : (typeof v === 'object' ? Object.assign({s:'', t:''}, v) : {s:v, t:''}); }); return p; };
   return normalize({version:1, boardDate:bd, patients:[
-      mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:'C', avatar:'C', labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
-      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {vitals:'C', io:['R', 'Net −1.2 L, goal −2'], avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
-      mk('CCU-3', 'Intern A', 'Complete heart block → PPM today', 'Existing', 1, {vitals:'C', io:'C', avatar:['A', 'Temp wire in R IJ'], labrev:'C', note:['', 'Progress'], diet:['', 'NPO after midnight'], dvt:['', 'HELD'], proc:['', 'PPM placement'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
-      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {vitals:['R', 'MAP 62–65'], io:'C', avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
-      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {vitals:'C', io:'C', avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
-      mk('CCU-6', 'Intern B', 'Severe AS, pre-TAVR workup', 'Existing', 5, {hc:Y, vitals:'C', io:'C', avatar:'C', labrev:'C', vst:Y, note:['', 'Progress'], attest:Y, bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'LMWH'], pt:['', addDays(bd, -2)], ot:['', addDays(bd, -2)], proc:['', 'CTA TAVR protocol'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
+      mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:{in:1800, out:2100}, avatar:'C', labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
+      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {vitals:'C', io:{in:1500, out:2700, t:'goal net −2 L'}, avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
+      mk('CCU-3', 'Intern A', 'Complete heart block → PPM today', 'Existing', 1, {vitals:'C', io:{in:1200, out:1000}, avatar:['A', 'Temp wire in R IJ'], labrev:'C', note:['', 'Progress'], diet:['', 'NPO after midnight'], dvt:['', 'HELD'], proc:['', 'PPM placement'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
+      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {vitals:['R', 'MAP 62–65'], io:{in:2400, out:1650}, avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
+      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {vitals:'C', io:{in:1600, out:1900}, avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
+      mk('CCU-6', 'Intern B', 'Severe AS, pre-TAVR workup', 'Existing', 5, {hc:Y, vitals:'C', io:{in:1400, out:1300}, avatar:'C', labrev:'C', vst:Y, note:['', 'Progress'], attest:Y, bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'LMWH'], pt:['', addDays(bd, -2)], ot:['', addDays(bd, -2)], proc:['', 'CTA TAVR protocol'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
     ], admits:[], archive:[], history:[],
     settings:{team:'', interns:['Intern A', 'Intern B'], internCaps:{'Intern A':5, 'Intern B':5}, tsHours:72, bmDays:3, ptotDays:2, shiftType:r.id}});
 }
@@ -2303,6 +2328,7 @@ function cellDesc(cfg, c){
     case 'check': return c.t ? 'checked' : 'unchecked';
     case 'proc': return c.t || c.d ? `${c.t || 'procedure'}${isISO(c.d) ? ' on ' + fmtShort(c.d) : ''}` : 'cleared';
     case 'ldt': return ldtItems(c).length ? ldtItems(c).map(i => ldtLabel(i) + (isISO(i.d) ? ' ' + fmtShort(i.d) : '')).join(', ') : 'none';
+    case 'io': return ioText(c) || (c.t ? q(c.t) : 'cleared');
     case 'checkNote': return (c.c ? 'checked' : 'unchecked') + (c.t ? ' · ' + c.t : '');
     case 'date': return c.t ? (isISO(c.t) ? fmtShort(c.t) : c.t) : 'cleared';
     default: return c.t ? q(c.t) : 'cleared';
@@ -2524,6 +2550,13 @@ function cellHTML(cell, col, kind, id, ri, ci, ro){
     const when = w === 'today' ? 'today' : w === 'tomorrow' ? 'tmrw' : d ? fmtShort(d) : '';
     const title = `${col.h}: ${name || '(no name)'}${d ? ' — ' + fmtLong(d) + (w === 'today' ? ' (today)' : w === 'tomorrow' ? ' (tomorrow)' : w === 'past' ? ' (date has passed)' : '') : name ? ' — no date set' : ''}`;
     return `<div class="tc t-proc proc-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}">${name || d ? `<span class="txt">${esc(name || 'Procedure')}</span>${when ? `<span class="pdate">${esc(when)}</span>` : ''}` : ''}</div>`;
+  }
+  if(col.type === 'io'){
+    const n = ioNet(cell), legacy = n === null && !ioNum(cell.in) && !ioNum(cell.out) && SMAP[cell.s];
+    const txt = n !== null ? ioSigned(n) : ioNum(cell.in) ? `in ${ioVol(cell.in)}` : ioNum(cell.out) ? `out ${ioVol(cell.out)}` : cell.t === 'N/A' ? 'N/A' : legacy ? legacy.label : '';
+    const st = n === null ? (txt ? 'part' : 'none') : n < 0 ? 'neg' : n > 0 ? 'pos' : 'even';
+    const title = `${col.h}: ${ioText(cell) || (legacy ? legacy.label + ' (old status)' : 'not entered')}${cell.t && cell.t !== 'N/A' ? ' — ' + cell.t : ''}`;
+    return `<div class="tc t-io io-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}</span></div>`;
   }
   if(col.type === 'ldt'){
     const items = ldtItems(cell), old = items.some(ldtOld), st = !items.length ? 'none' : old ? 'old' : 'ok';
@@ -3368,7 +3401,12 @@ function closePop(commit=true){
     const cb = p.el.querySelector('[data-cn]'), lw = p.el.querySelector('.ldtlist'), dm = p.el.querySelector('.dmods');
     if(dm && r && dm.dataset.val !== (r.cells[p.k].t || '')) setCell(p.kind, p.id, p.k, {t:dm.dataset.val});
     const pd = p.el.querySelector('[data-procd]');
-    if(lw && r) commitLdt(p, r, p.el);
+    const ioIn = p.el.querySelector('[data-ioin]');
+    if(ioIn && r){ const a = ioParse(ioIn.value), b = ioParse(p.el.querySelector('[data-ioout]').value), t = p.el.querySelector('[data-ionote]').value.trim(), c = r.cells[p.k];
+      if(Number.isNaN(a) || Number.isNaN(b)) toast('I/O not saved — use numbers like 1200, 1.2L or 800+450');
+      else if(a !== (ioNum(c.in) ? c.in : null) || b !== (ioNum(c.out) ? c.out : null) || t !== (c.t === 'N/A' ? '' : c.t || '')){
+        const patch = {t, s:''}; patch.in = a === null ? undefined : a; patch.out = b === null ? undefined : b; setCell(p.kind, p.id, p.k, patch); } }
+    else if(lw && r) commitLdt(p, r, p.el);
     else if(pd && r){ const t = p.el.querySelector('[data-proct]').value.trim(), d = isISO(pd.value) ? pd.value : '', c = r.cells[p.k];
       if(t !== (c.t || '') || d !== (c.d || '')) setCell(p.kind, p.id, p.k, {t, d}); }
     else if(cb && r){
@@ -3404,6 +3442,12 @@ function openPop(cellEl, focusEditor=false){
   } else if(col.type === 'choice'){
     body += `<div class="opts">${col.opts.map((o,i) => `<button class="optbtn ${cell.t===o.label?'on':''}" data-o="${esc(o.label)}"><i class="oc oc-${o.color||'none'}">${i<9?i+1:''}</i>${esc(o.label)}</button>`).join('')}
       ${cell.t && !optOf(col, cell.t) ? `<div class="muted" style="font-size:11px;margin-top:4px">Current value “${esc(cell.t)}” isn't in the list.</div>` : ''}</div>`;
+  } else if(col.type === 'io'){
+    body += `<div class="iogrid"><label>Intake<input type="text" inputmode="decimal" data-ioin value="${ioNum(cell.in) ? cell.in : ''}" placeholder="mL" autocomplete="off"></label>
+      <label>Output<input type="text" inputmode="decimal" data-ioout value="${ioNum(cell.out) ? cell.out : ''}" placeholder="mL" autocomplete="off"></label>
+      <div class="ionet"><span>Net</span><b data-ionet>—</b></div></div>
+      <div class="ed"><input type="text" data-ionote value="${esc(cell.t === 'N/A' ? '' : cell.t || '')}" placeholder="Note (e.g. goal net −1 L)"></div>
+      <div class="muted" style="font-size:11px;margin-top:5px">mL, or litres with “L” (1.2L). Add amounts with + (800+450).</div>`;
   } else if(col.type === 'ldt'){
     body += ldtPopHTML(col, cell);
   } else if(col.type === 'proc'){
@@ -3427,6 +3471,10 @@ function openPop(cellEl, focusEditor=false){
     <div class="row2">${left}<span style="display:flex;gap:8px;align-items:center">${editLink}<button class="btn sm primary" data-done>Done</button></span></div>`;
   document.body.appendChild(el);
   if(col.type === 'ldt') wireLdtPop(el);
+  if(col.type === 'io'){ const upd = () => { const a = ioParse(el.querySelector('[data-ioin]').value), b = ioParse(el.querySelector('[data-ioout]').value), o = el.querySelector('[data-ionet]');
+      const bad = Number.isNaN(a) || Number.isNaN(b); o.textContent = bad ? 'check numbers' : a !== null && b !== null ? ioSigned(a - b) : '—';
+      o.className = bad ? 'bad' : a !== null && b !== null ? (a - b < 0 ? 'neg' : a - b > 0 ? 'pos' : '') : ''; };
+    el.addEventListener('input', upd); upd(); }
   if(col.type === 'proc') el.querySelectorAll('[data-pday]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); el.querySelector('[data-procd]').value = addDays(state.boardDate, +b.dataset.pday); el.querySelector('[data-proct]').focus(); }));
   const rc = cellEl.getBoundingClientRect(), pw = el.offsetWidth, ph = el.offsetHeight;
   let x = Math.min(rc.left, window.innerWidth - pw - 8), y = rc.bottom + 4;
@@ -3445,7 +3493,7 @@ function openPop(cellEl, focusEditor=false){
     if(b.dataset.o !== undefined){ const dm = el.querySelector('.dmods'); finish({t:dm ? dietJoin(b.dataset.o, dietParse(dm.dataset.val).mods) : b.dataset.o}); return; }
     if(b.hasAttribute('data-clear')){ finish(edEl ? {s:'', t:edEl.value} : {s:''}); return; }
     if(b.dataset.pday !== undefined) return;
-    if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:''} : {t:'', s:''}); return; }
+    if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:''} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
     if(b.hasAttribute('data-today')){ finish({t:state.boardDate}); return; }
     if(b.hasAttribute('data-now')){
       const d = new Date(), h = d.getHours(), now = `${h % 12 || 12}:${pad(d.getMinutes())} ${h < 12 ? 'am' : 'pm'}`;
@@ -3466,7 +3514,8 @@ function openPop(cellEl, focusEditor=false){
       const b = btns[+e.key-1]; if(b){ e.preventDefault(); b.click(); }
     }
   });
-  if(focusEditor && edEl) edEl.focus();
+  if(col.type === 'io') setTimeout(() => { const f = el.querySelector('[data-ioin]'); if(f){ f.focus(); f.select(); } }, 0);
+  else if(focusEditor && edEl) edEl.focus();
   else (el.querySelector('.chip.on, .optbtn.on') || el.querySelector('.chip, .optbtn') || edEl)?.focus();
 }
 document.addEventListener('mousedown', e => { if(pop && !pop.el.contains(e.target)) closePop(true); });
@@ -3505,10 +3554,11 @@ function onCellKey(e){
   else if(/^[1-9]$/.test(e.key)){
     const cfg = colOf(kind,col), n = +e.key-1;
     if(isStatusType(cfg.type)){ if(STATES[n]){ e.preventDefault(); setCell(kind,id,col,{s:STATES[n].k}); } }
+    else if(cfg.type === 'io'){ e.preventDefault(); openPop(c); setTimeout(() => { const f = document.querySelector('.pop [data-ioin]'); if(f){ f.value = e.key; f.dispatchEvent(new Event('input', {bubbles:true})); } }, 10); }   // typing a number starts the intake
     else if(cfg.type === 'choice'){ if(cfg.opts[n]){ e.preventDefault(); setCell(kind,id,col,{t:col === 'diet' ? dietJoin(cfg.opts[n].label, dietParse(rowOf(kind,id).cells.diet.t).mods) : cfg.opts[n].label}); } }
   }
   else if(e.key === '0' || e.key === 'Delete' || e.key === 'Backspace'){
-    e.preventDefault(); const ty = colOf(kind,col).type; setCell(kind,id,col, isStatusType(ty) ? {s:''} : ty === 'checkNote' ? {t:'', c:false} : ty === 'ldt' ? {t:'', items:[]} : ty === 'proc' ? {t:'', d:''} : {t:''});
+    e.preventDefault(); const ty = colOf(kind,col).type; setCell(kind,id,col, isStatusType(ty) ? {s:''} : ty === 'checkNote' ? {t:'', c:false} : ty === 'ldt' ? {t:'', items:[]} : ty === 'proc' ? {t:'', d:''} : ty === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:''});
   }
   else if(e.key === 'Enter' || e.key === ' '){
     e.preventDefault();
@@ -7224,6 +7274,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:223, d:'2026-11-21', items:['<b>I/O</b> is now numbers, not a status: tap it and enter <b>Intake</b> and <b>Output</b> (mL, or litres like 1.2L, or sums like 800+450). Plexus works out the <b>Net</b> and shows it on the board — blue when negative, amber when positive — with In / Out / Net on hover. Add an optional note (e.g. goal net −1 L). It counts as done once both are in, and clears each new day like the other daily boxes. Old I/O statuses still show until you enter numbers.']},
   {v:222, d:'2026-11-21', items:['Avatar: <b>S-G catheter</b> (Swan-Ganz) is now a built-in choice under Vascular access, after IABP.']},
   {v:221, d:'2026-11-21', items:['<b>Rounds</b>: choose the order at the top — <b>By intern</b>, <b>By bed</b> or <b>Census order</b>. A strip of beds lets you jump to any patient when rounds go out of order. Leaving a patient with <b>Next</b> marks them <b>✓ seen</b>, and Next then goes to the next patient not yet seen, so you pick up where you left off. “✓ 3/8 seen” keeps count; it starts fresh each day.']},
   {v:220, d:'2026-11-20', items:['iPad tab bar order: <b>Overview · Census · Tasks · Admissions · Transfers/Discharges · More</b>.']},
