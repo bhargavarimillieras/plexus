@@ -1596,7 +1596,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '243';
+const APP_VERSION = '244';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3917,7 +3917,7 @@ function renderRoundsSplit(){
     <div class="rs-body"><div class="rs-colL">
       <div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>
       <div class="rs-card"><div class="rs-cardh">Today’s checklist <span class="rs-cnt">${doneN} / ${daily.length} done</span></div><div class="rs-chk">${chk}</div></div>
-      ${moreH ? `<details class="rs-card rs-more"><summary class="rs-cardh">More — standing &amp; dispo</summary><div class="rs-chk">${moreH}</div></details>` : ''}
+      ${moreH ? `<details class="rs-card rs-more" open><summary class="rs-cardh">Standing &amp; dispo</summary><div class="rs-chk">${moreH}</div></details>` : ''}
     </div>
     <div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
       <div class="rs-todos" id="rTodos">${todos.map(t => todoRowHTML(t, false)).join('') || '<div class="muted small" style="padding:6px 2px">Nothing yet.</div>'}</div>
@@ -7538,6 +7538,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:244, d:'2026-11-21', items:['Rounds · Split: <b>Standing &amp; dispo</b> now opens expanded (tap its heading to fold it away).']},
   {v:243, d:'2026-11-21', items:['ICU / CCU boards no longer show an intern as <b>NEXT UP</b> for the next admission (that’s for ward boards).']},
   {v:242, d:'2026-11-21', items:['Rounds · Split: the Intern / Bed / List and Classic / Split button labels are centred vertically.']},
   {v:241, d:'2026-11-21', items:['Fixed: in Rounds · Split, the blur didn’t reach the edges of the screen (a board style was shrinking the backdrop). Split and Classic now sit in the same full-screen frame.']},
