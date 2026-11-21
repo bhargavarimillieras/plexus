@@ -149,6 +149,10 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
 body.touch .pcchk{width:24px;height:24px;font-size:13px}
+.rdchk{flex:none;width:19px;height:19px;margin-left:3px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);font-size:10px;line-height:1;cursor:pointer;display:grid;place-items:center;padding:0;filter:grayscale(1);opacity:.45;transition:all .12s}
+.rdchk:hover{opacity:.8}
+.rdchk.on{filter:none;opacity:1;background:#e6f4ea;border-color:#34A853}
+body.touch .rdchk{width:24px;height:24px;font-size:12px}
 .dclr{border:0;background:none;color:var(--muted);font:700 12px/1 inherit;font-family:inherit;cursor:pointer;padding:3px 4px;margin-left:1px;border-radius:5px;vertical-align:middle}
 .dclr:hover{color:var(--bad-ink,#c5221f);background:var(--bad-bg,#fde7e7)}
 .dclr[hidden]{display:none}
@@ -1519,7 +1523,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '229';
+const APP_VERSION = '230';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2731,7 +2735,7 @@ function markLeft(id){
 }
 
 /* ---------- census grid ---------- */
-const STK = [ {k:'seq',w:46},{k:'bed',w:108},{k:'intern',w:96},{k:'hd',w:44},{k:'problem',w:230} ];   // frozen columns
+const STK = [ {k:'seq',w:46},{k:'bed',w:130},{k:'intern',w:96},{k:'hd',w:44},{k:'problem',w:230} ];   // frozen columns
 function stkStyle(i){ let left = 0; for(let j=0;j<i;j++) left += STK[j].w; return `left:${left}px;min-width:${STK[i].w}px;max-width:${STK[i].w}px`; }
 
 function gridHTML(patients, {ro=false} = {}){
@@ -2764,7 +2768,7 @@ function gridHTML(patients, {ro=false} = {}){
     }
     h += `<tr class="${p.status==='Discharge'?'dc':''}" data-id="${p.id}" data-intern="${esc(p.intern||'')}">`;
     h += `<td class="stk" style="${stkStyle(0)}"><div class="seqc">${ro ? '' : `<span class="drag" draggable="true" data-drag="${p.id}" title="Drag to move this patient">⠿</span>`}<span>${ri+1}</span>${ro?'':`<span class="rowbtns"><button data-act="up" data-id="${p.id}" title="Move up">▲</button><button data-act="down" data-id="${p.id}" title="Move down">▼</button><button data-act="del" data-id="${p.id}" title="Remove patient">✕</button></span>`}</div></td>`;
-    h += `<td class="stk" style="${stkStyle(1)}"><div class="bedpc">${bedBoxHTML('p', p, ro, ro ? 60 : 56)}${pcBtn(p, ro)}</div></td>`;
+    h += `<td class="stk" style="${stkStyle(1)}"><div class="bedpc">${bedBoxHTML('p', p, ro, ro ? 60 : 56)}${pcBtn(p, ro)}${rdBtn(p, ro)}</div></td>`;
     h += `<td class="stk" style="${stkStyle(2)}">${selHTML('intern', p.intern, state.settings.interns, {ro, kind:'p', id:p.id})}</td>`;
     h += `<td class="stk hdtd" style="${stkStyle(3)}">${hdCell(p, ro)}</td>`;
     h += `<td class="stk last" style="${stkStyle(4)}"><div class="probwrap"><input class="cell" data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" ${ro?'disabled':''} placeholder="One-liner / problem">${(fl.length || !ro) ? `<div class="flags">${flagsHTML(p, fl, ro)}${ro ? '' : leftBtn(p, dcSigned(p) === DC_KEYS.length)}</div>` : ''}</div></td>`;
@@ -2788,6 +2792,10 @@ const pcCount = () => { const L = pcPool(); return {n:L.filter(isPc).length, of:
 const pcBtn = (p, ro) => ro ? '' : `<button type="button" class="pcchk ${isPc(p) ? 'on' : ''}" data-pc="${p.id}" title="${isPc(p) ? 'Pre-charted' : 'Mark pre-charted'} for ${esc(fmtNoYear(state.boardDate))} — clears when the next day starts" aria-label="${isPc(p) ? 'Pre-charted' : 'Not pre-charted'}: ${esc(p.bed || 'patient')}" aria-pressed="${isPc(p)}">✓</button>`;
 function togglePc(id){ const p = rowOf('p', id); if(!p) return; const on = !isPc(p);
   mutate(() => { const q = rowOf('p', id); if(on) q.pc = state.boardDate; else delete q.pc; }, {label:`${p.bed || 'Patient'}: ${on ? 'pre-charted ✓' : 'pre-charted tick removed'} (${fmtNoYear(state.boardDate)})`, cat:'census'}); }
+// 💬 discussed on rounds — the same mark as Rounds mode's “Mark discussed”, resets each day
+const rdBtn = (p, ro) => ro ? '' : `<button type="button" class="rdchk ${rdSeen(p) ? 'on' : ''}" data-rdc="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds'}" aria-label="${rdSeen(p) ? 'Discussed' : 'Not discussed'}: ${esc(p.bed || 'patient')}" aria-pressed="${rdSeen(p)}">💬</button>`;
+document.addEventListener('click', e => { const b = e.target.closest('[data-rdc]'); if(!b) return; e.preventDefault(); e.stopPropagation();
+  const p = rowOf('p', b.dataset.rdc); if(!p) return; rdMark(p, !rdSeen(p)); renderCensus(); try{ if(rounds && rounds.open) renderRounds(); }catch(err){} });
 document.addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if(!b) return; e.preventDefault(); e.stopPropagation(); togglePc(b.dataset.pc); });
 function filteredPatients(){
   const q = ui.search.trim().toLowerCase();
@@ -7344,6 +7352,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:230, d:'2026-11-21', items:['Census: a <b>💬</b> button beside each bed (next to the pre-charted ✓) marks the patient <b>discussed</b> on rounds — the same mark as Rounds mode, so the two stay in step. It turns green when ticked and resets each day.']},
   {v:229, d:'2026-11-21', items:['Avatar: <b>CVC, arterial line, IABP, S-G catheter and ETT</b> only appear on ICU and CCU boards. On other boards they’re hidden unless the patient already has one (e.g. after transfer from the ICU); you can still add one by typing it in “Add another”.']},
   {v:228, d:'2026-11-21', items:['Avatar: a <b>✕ Mark removed</b> button on each line, drain or tube. It moves to a <b>Removed</b> list with the date (editable) and how many days it was in, and shows struck through on the board for a day (e.g. <s>Foley</s>). <b>↺ Put back</b> undoes it. Unticking still deletes outright, for mistakes.']},
   {v:227, d:'2026-11-21', items:['Rounds: <b>Next</b> no longer ticks <b>Discussed</b> for you — you tick it yourself. Next still skips patients you’ve already marked discussed.']},
