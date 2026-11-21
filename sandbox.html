@@ -1596,7 +1596,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '242';
+const APP_VERSION = '243';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2921,7 +2921,8 @@ function workloadRows(){
   if(un.length) rows.push({name:'', i:1e6, n:un.length, nw:un.filter(p => p.status === 'New').length, dc:un.filter(p => dcBucket(p) === 'today').length, open:un.reduce((x,p) => x + openCount(p), 0), todo:todoOpenFor(un), full:false, listed:false});
   // next up for an admission: a listed intern under cap with the fewest new admits, then the smallest census
   const cand = rows.filter(r => r.listed && !r.full).sort((a,b) => a.nw - b.nw || a.n - b.n || a.i - b.i);
-  if(cand.length && rows.filter(r => r.listed).length > 1) cand[0].next = true;
+  // (not on ICU / CCU boards — admissions there aren't handed out in turn)
+  if(cand.length && rows.filter(r => r.listed).length > 1 && !isCritCare()) cand[0].next = true;
   return rows;
 }
 function workloadCard(){
@@ -7537,6 +7538,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:243, d:'2026-11-21', items:['ICU / CCU boards no longer show an intern as <b>NEXT UP</b> for the next admission (that’s for ward boards).']},
   {v:242, d:'2026-11-21', items:['Rounds · Split: the Intern / Bed / List and Classic / Split button labels are centred vertically.']},
   {v:241, d:'2026-11-21', items:['Fixed: in Rounds · Split, the blur didn’t reach the edges of the screen (a board style was shrinking the backdrop). Split and Classic now sit in the same full-screen frame.']},
   {v:240, d:'2026-11-21', items:['Rounds: the dark shadow is gone — the board behind is just softly blurred. In Split view, intake and output show as ⊕ and ⊖ instead of “In” and “Out”.']},
