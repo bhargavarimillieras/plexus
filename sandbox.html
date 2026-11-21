@@ -1510,7 +1510,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '224';
+const APP_VERSION = '225';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3695,9 +3695,9 @@ function renderRounds(){
   if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
   const filt = [ui.intern && `Intern: ${ui.intern}`, ui.filter === 'open' && 'Open daily boxes', ui.filter === 'flagged' && 'Flagged', ui.search && `Search: “${ui.search}”`].filter(Boolean);
   const seenN = list.filter(rdSeen).length, ord = roundsOrder();
-  const strip = list.length ? `<div class="rstrip" role="tablist" aria-label="Patients">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<span class="rsi">${esc(q.intern || 'Unassigned')}</span>` : ''}<button type="button" class="rchip ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'seen' : ''}" data-rgo="${q.id}" title="${esc((q.problem || '') + (rdSeen(q) ? ' — seen' : ''))}">${rdSeen(q) ? '✓ ' : ''}${esc(q.bed || '—')}</button>`).join('')}</div>` : '';
+  const strip = list.length ? `<div class="rstrip" role="tablist" aria-label="Patients">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<span class="rsi">${esc(q.intern || 'Unassigned')}</span>` : ''}<button type="button" class="rchip ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'seen' : ''}" data-rgo="${q.id}" title="${esc((q.problem || '') + (rdSeen(q) ? ' — discussed' : ''))}">${rdSeen(q) ? '✓ ' : ''}${esc(q.bed || '—')}</button>`).join('')}</div>` : '';
   const bar = `<div class="rbar"><h3>Rounds</h3><span class="rcount">${list.length ? `${i+1} / ${list.length}` : '0 patients'}</span>
-    <span class="rseen" title="Patients marked seen today">✓ ${seenN}/${list.length} seen</span>
+    <span class="rseen" title="Patients discussed on rounds today (separate from the Visit box)">✓ ${seenN}/${list.length} discussed</span>
     <span class="seg rord" role="group" aria-label="Order">${[['intern', 'By intern'], ['bed', 'By bed'], ['list', 'Census order']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
     ${list.length ? `<select id="rJump" title="Jump to a patient">${list.map((p,j) => `<option value="${p.id}" ${j===i?'selected':''}>${j+1}. ${esc(p.bed || '(no bed)')} — ${esc(p.intern || 'unassigned')}${p.problem ? ' · ' + esc(p.problem) : ''}</option>`).join('')}</select>` : ''}
     ${filt.length ? `<span class="muted small">Following the Census filter: ${esc(filt.join(' · '))}</span>` : ''}
@@ -3712,7 +3712,7 @@ function renderRounds(){
       return `<div class="rtile"><div class="rlab" title="${esc(cfg.h)}">${esc(cfg.h)}</div>${cellHTML(p.cells[c.k], cfg, 'p', p.id, 0, ci, false)}${cm[c.k] ? `<div class="rcmt">${esc(cm[c.k])}</div>` : ''}</div>`; }).join('')}</div></div>`).join('');
   body.innerHTML = bar + `<div class="rbody">
     <div class="rhead">
-      <div class="rbed">${esc(p.bed || '(no bed)')}<button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Seen today — tap to undo' : 'Mark seen (Next does this for you)'}">${rdSeen(p) ? '✓ Seen' : 'Mark seen'}</button><small>${n === null ? 'No admission date' : `Hospital day ${n}`}${adm ? ` · admission ${admitSigned(adm)}/${ADMIT_ITEMS.length} signed` : ''}</small></div>
+      <div class="rbed">${esc(p.bed || '(no bed)')}<button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (Next does this for you). Separate from the Visit box.'}">${rdSeen(p) ? '✓ Discussed' : 'Mark discussed'}</button><small>${n === null ? 'No admission date' : `Hospital day ${n}`}${adm ? ` · admission ${admitSigned(adm)}/${ADMIT_ITEMS.length} signed` : ''}</small></div>
       <div class="rfields">
         <div class="wide2"><label>Problem / one-liner</label><input data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" placeholder="One-liner / problem"></div>
         <div><label>Intern</label>${selHTML('intern', p.intern, state.settings.interns, {kind:'p', id:p.id})}</div>
@@ -7297,10 +7297,11 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:225, d:'2026-11-21', items:['Rounds: “Mark seen” is now <b>Mark discussed</b> (and “✓ 3/8 discussed”), so it isn’t confused with the <b>Visit</b> box — it only tracks who’s been talked through on rounds.']},
   {v:224, d:'2026-11-21', items:['<b>I/O goal</b> (optional): set a goal net in the I/O box — e.g. −1L, −500 or even. The popup says “✓ met” or how much is left to go; on the board the box turns <b>green</b> when the goal is met and <b>red</b> when it isn’t, with the goal shown small in the corner. The goal carries over to the next day until you change or clear it.']},
   {v:223, d:'2026-11-21', items:['<b>I/O</b> is now numbers, not a status: tap it and enter <b>Intake</b> and <b>Output</b> (mL, or litres like 1.2L, or sums like 800+450). Plexus works out the <b>Net</b> and shows it on the board — blue when negative, amber when positive — with In / Out / Net on hover. Add an optional note (e.g. goal net −1 L). It counts as done once both are in, and clears each new day like the other daily boxes. Old I/O statuses still show until you enter numbers.']},
   {v:222, d:'2026-11-21', items:['Avatar: <b>S-G catheter</b> (Swan-Ganz) is now a built-in choice under Vascular access, after IABP.']},
-  {v:221, d:'2026-11-21', items:['<b>Rounds</b>: choose the order at the top — <b>By intern</b>, <b>By bed</b> or <b>Census order</b>. A strip of beds lets you jump to any patient when rounds go out of order. Leaving a patient with <b>Next</b> marks them <b>✓ seen</b>, and Next then goes to the next patient not yet seen, so you pick up where you left off. “✓ 3/8 seen” keeps count; it starts fresh each day.']},
+  {v:221, d:'2026-11-21', items:['<b>Rounds</b>: choose the order at the top — <b>By intern</b>, <b>By bed</b> or <b>Census order</b>. A strip of beds lets you jump to any patient when rounds go out of order. Leaving a patient with <b>Next</b> marks them <b>✓ discussed</b>, and Next then goes to the next patient not yet discussed, so you pick up where you left off. “✓ 3/8 discussed” keeps count; it starts fresh each day.']},
   {v:220, d:'2026-11-20', items:['iPad tab bar order: <b>Overview · Census · Tasks · Admissions · Transfers/Discharges · More</b>.']},
   {v:219, d:'2026-11-20', items:['Diet: <b>TF</b> (tube feeds) is now a built-in choice, just before NPO.']},
   {v:218, d:'2026-11-20', items:['The <b>Left hospital</b> button no longer pops up over the Problem box. With a mouse it now appears in the flags line underneath. On iPad it only shows there once the discharge checklist is signed (or for a transfer or AMA); otherwise it’s on the <b>Discharges</b> and <b>Transfers</b> tabs.']},
