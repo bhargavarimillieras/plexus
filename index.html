@@ -1593,7 +1593,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '237';
+const APP_VERSION = '238';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3595,7 +3595,7 @@ function openPop(cellEl, focusEditor=false){
     // Disposition: leaving the hospital vs. moving within it
     const ob = (o, i) => `<button class="optbtn ${cell.t===o.label?'on':''}" data-o="${esc(o.label)}"><i class="oc oc-${o.color||'none'}">${i<9?i+1:''}</i>${esc(o.label)}</button>`;
     const all = col.opts.map((o, i) => ({o, i})), inH = all.filter(x => isDispoIn(x.o.label)), outH = all.filter(x => !isDispoIn(x.o.label));
-    const gOut = `<div class="optgrp">Leaving the hospital</div>${outH.map(x => ob(x.o, x.i)).join('')}`, gIn = `<div class="optgrp">Within the hospital</div>${inH.map(x => ob(x.o, x.i)).join('')}`;
+    const gOut = `<div class="optgrp">Leaving hospital</div>${outH.map(x => ob(x.o, x.i)).join('')}`, gIn = `<div class="optgrp">Within hospital</div>${inH.map(x => ob(x.o, x.i)).join('')}`;
     body += `<div class="opts">${isCritCare() ? gIn + gOut : gOut + gIn}
       ${cell.t && !optOf(col, cell.t) ? `<div class="muted" style="font-size:11px;margin-top:4px">Current value “${esc(cell.t)}” isn't in the list.</div>` : ''}</div>`;
   } else if(col.type === 'choice'){
@@ -7532,6 +7532,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:238, d:'2026-11-21', items:['Disposition groups renamed <b>Leaving hospital</b> and <b>Within hospital</b>.']},
   {v:237, d:'2026-11-21', items:['<b>Destination</b> is now <b>Disposition</b>, in two groups: <b>Leaving the hospital</b> (Home, SAR/SNF, LTACH, Nursing Home, Hospice, ALF, Shelter, Acute Rehab, Safe Haven, LOH) and <b>Within the hospital</b> (Floor, SDU, cSDU, MICU, CCU, ALOC, Uptriage). On ICU and CCU boards the in-hospital group comes first.']},
   {v:236, d:'2026-11-21', items:['<b>SW</b> is now a simple checkbox (notes ready for social work rounds).', 'Every checkbox (Visit, Attest, Handoff, Ord Rev, SW, Lab Ord…) can be set to <b>N/A</b>: <b>press and hold</b> it on the iPad, right-click it with a mouse, or press <b>N</b>. Do the same again to clear it. N/A counts as done.']},
   {v:235, d:'2026-11-21', items:['Rounds now sits in a clear <b>framed panel</b> (rounded corners, shadow) over a dimmed board, and in Split view the left list’s header and footer line up with the right side’s.']},
