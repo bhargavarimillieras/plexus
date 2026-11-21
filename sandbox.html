@@ -1523,7 +1523,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '230';
+const APP_VERSION = '231';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1776,7 +1776,11 @@ function orderedKeys(g){
   const keys = g.cols.map(c => c.k), order = ((state.settings.colOrder || {})[g.k] || []).filter(k => keys.includes(k));
   return [...order, ...keys.filter(k => !order.includes(k))];
 }
-const visibleCols = g => orderedKeys(g).filter(k => !(state.settings.hiddenCols || []).includes(k)).map(k => COLMAP[k]);
+// Hospital course is hidden on every board unless turned on in ⚙ Settings (a setting for this device, not per board)
+const SHOWHC_KEY = `${KEY_PREFIX}.showHospCourse`;
+const showHC = () => { try{ return localStorage.getItem(SHOWHC_KEY) === '1'; }catch(e){ return false; } };
+const colHidden = k => (k === 'hc' && !showHC()) || (state.settings.hiddenCols || []).includes(k);
+const visibleCols = g => orderedKeys(g).filter(k => !colHidden(k)).map(k => COLMAP[k]);
 const dcSigned = p => DC_KEYS.filter(k => p.cells[k].t === 'Signed').length;
 function dcBucket(p, d = state.boardDate){
   if(p.status === 'Discharge') return 'today';
@@ -2470,7 +2474,7 @@ function flagsFor(p){
   else if(dcDay && dcSigned(p) < DC_KEYS.length) f.push(['info',`DC ${dcSigned(p)}/${DC_KEYS.length} signed`]);
   return f;
 }
-const openCount = p => DAILY_KEYS.filter(k => !isDone(colCfg(k), p.cells[k])).length;
+const openCount = p => DAILY_KEYS.filter(k => !colHidden(k) && !isDone(colCfg(k), p.cells[k])).length;
 /* Hospital day: admission date = HD 1. */
 const hospDay = p => isISO(p.admitDate) ? daysBetween(p.admitDate, state.boardDate) + 1 : null;
 function hdCell(p, ro){
@@ -4119,6 +4123,7 @@ function settings(){
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>Board: ${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${esc(siteOf(activeType).label)}</span></span><button class="btn sm" id="bSwitchBoard">⇆ Switch board…</button>${isRot(activeType) ? '<button class="btn sm" id="bSched">🗓 Edit schedule…</button>' : ''}<button class="btn sm" id="bRotExp" ${Object.keys(ROTS).length ? '' : 'hidden'}>Save rotation schedules…</button><span class="muted">Opens the launch screen. Plexus also shows it every time it opens.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Layout <select id="sLayout"><option value="auto" ${LAYOUT === 'auto' ? 'selected' : ''}>Automatic (${touchMQ.matches ? 'touch on this device' : 'desktop on this device'})</option><option value="touch" ${LAYOUT === 'touch' ? 'selected' : ''}>Touch — iPad style</option><option value="desktop" ${LAYOUT === 'desktop' ? 'selected' : ''}>Desktop</option></select></label><span class="muted">Touch: tab bar at the bottom, swipe tasks, long-press a bed to change it.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Older shifts: move out anything older than <select id="sTidyDays">${TIDY_DAYS.map(d => `<option value="${d}" ${TIDY.days === d ? 'selected' : ''}>${d} days</option>`).join('')}</select></label><button class="btn sm" id="bTidy">🗄 Move older shifts out…</button><span class="muted">Keeps the data file small. Plexus also offers this when you start a new shift.</span></div>
+    <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="sShowHC" ${showHC() ? 'checked' : ''}> Show the <b>Hosp Course</b> column <span class="muted small">— on every board and rotation; hidden by default</span></label>
     <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
     <hr>
     <b>This board</b>
@@ -4203,6 +4208,7 @@ function settings(){
       toast('Settings saved');
     }]], m => {
       m.querySelector('#bCols').onclick = () => { closeModal(); columnsEditor(); };
+      m.querySelector('#sShowHC').onchange = e => { try{ localStorage.setItem(SHOWHC_KEY, e.target.checked ? '1' : '0'); }catch(err){} renderAll(); toast(e.target.checked ? 'Hosp Course column shown on every board' : 'Hosp Course column hidden'); };
       m.querySelector('#bKeys').onclick = () => { closeModal(); shortcutEditor(); };
       m.querySelector('#bDiag').onclick = () => { closeModal(); diagnostics(); };
       const il = m.querySelector('#sInternList');
@@ -4393,7 +4399,7 @@ function layoutEditor(){
       m.querySelector('#lyBody').innerHTML = CENSUS_GROUPS().map(g => {
         const keys = orderedKeys(g);
         return `<div class="lygrp"><div class="lyhead g-${g.k}">${esc(g.label)} <span class="muted">${keys.filter(k => !hidden.includes(k)).length}/${keys.length} shown</span></div>` +
-          keys.map((k,i) => `<div class="lyrow ${hidden.includes(k)?'off':''}"><label><input type="checkbox" data-ly="show" data-k="${k}" ${hidden.includes(k)?'':'checked'}> ${esc(colCfg(k).h)}</label>
+          keys.map((k,i) => `<div class="lyrow ${hidden.includes(k)?'off':''}"><label><input type="checkbox" data-ly="show" data-k="${k}" ${hidden.includes(k)?'':'checked'} ${k === 'hc' && !showHC() ? 'disabled' : ''}> ${esc(colCfg(k).h)}${k === 'hc' && !showHC() ? ' <span class="muted small">— off for every board (⚙ Settings)</span>' : ''}</label>
             <span><button class="ib" data-ly="up" data-g="${g.k}" data-i="${i}" ${i===0?'disabled':''} title="Move left">▲</button><button class="ib" data-ly="down" data-g="${g.k}" data-i="${i}" ${i===keys.length-1?'disabled':''} title="Move right">▼</button></span></div>`).join('') + `</div>`;
       }).join('');
     };
@@ -6592,7 +6598,7 @@ function printSheetHTML(){
     let s = `<h3>Census · ${state.patients.length}</h3><table class="ptab"><thead><tr><th class="pc"></th><th>Bed</th><th>HD</th><th>Problem</th><th>Status · EDD</th><th>Diet · DVT</th><th>Lines</th><th>Open today</th><th>Tasks / to-dos</th><th>Dispo</th><th class="pnotes">Notes</th></tr></thead><tbody>`;
     Object.keys(by).sort((a, b) => (a === 'No intern') - (b === 'No intern') || a.localeCompare(b)).forEach(intern => {
       s += `<tr class="pgrp"><td colspan="11">${esc(intern)} · ${by[intern].length}</td></tr>`;
-      by[intern].forEach(p => { const open = DAILY_KEYS.filter(k => colCfg(k).type !== 'ldt' && !isDone(colCfg(k), p.cells[k])).map(k => colCfg(k).h);
+      by[intern].forEach(p => { const open = DAILY_KEYS.filter(k => colCfg(k).type !== 'ldt' && !colHidden(k) && !isDone(colCfg(k), p.cells[k])).map(k => colCfg(k).h);
         const lines = ldtActive(p.cells.avatar || {}).map(it => `${esc(ldtLabel(it))}${isISO(it.d) ? ' d' + ldtAge(it) : ''}`).join(', ');
         s += `<tr><td class="pc">${box(false)}</td><td><b>${esc(p.bed || '—')}</b></td><td>${hospDay(p) || ''}</td><td>${esc(p.problem || '')}</td><td>${esc(p.status || '')}${isISO(p.cells.edd && p.cells.edd.t) ? ' · ' + fmtShort(p.cells.edd.t) : ''}</td>
           <td>${esc([p.cells.diet && p.cells.diet.t, p.cells.dvt && p.cells.dvt.t].filter(Boolean).join(' · '))}</td><td>${lines}</td><td class="psm">${esc(open.join(', '))}</td><td class="psm">${tkTxt(openTasksFor(p.bed, p.id))}</td><td class="psm">${esc((p.cells.dest && p.cells.dest.t) || '')}</td><td class="pnotes"></td></tr>`; });
@@ -7352,6 +7358,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:231, d:'2026-11-21', items:['The <b>Hosp Course</b> column is now hidden on every board (and no longer counts toward “boxes open”). Turn it back on in ⚙ Settings → <b>Show the Hosp Course column</b>.']},
   {v:230, d:'2026-11-21', items:['Census: a <b>💬</b> button beside each bed (next to the pre-charted ✓) marks the patient <b>discussed</b> on rounds — the same mark as Rounds mode, so the two stay in step. It turns green when ticked and resets each day.']},
   {v:229, d:'2026-11-21', items:['Avatar: <b>CVC, arterial line, IABP, S-G catheter and ETT</b> only appear on ICU and CCU boards. On other boards they’re hidden unless the patient already has one (e.g. after transfer from the ICU); you can still add one by typing it in “Add another”.']},
   {v:228, d:'2026-11-21', items:['Avatar: a <b>✕ Mark removed</b> button on each line, drain or tube. It moves to a <b>Removed</b> list with the date (editable) and how many days it was in, and shows struck through on the board for a day (e.g. <s>Foley</s>). <b>↺ Put back</b> undoes it. Unticking still deletes outright, for mistakes.']},
