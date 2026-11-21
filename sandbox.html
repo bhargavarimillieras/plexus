@@ -652,6 +652,15 @@ body.tkfull #hclocks{margin-right:4px}
 .ldtgrp{position:sticky;top:0;z-index:1;padding:5px 8px 3px;font:800 10px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--panel2,var(--bg));border-top:1px solid var(--line)}
 .ldtgrp:first-child{border-top:0}
 .ldtgrp+.ldtrow{border-top:0}
+.ldtrmb{grid-column:2/-1;justify-self:start;border:1px solid #f0b8b3;background:#fff;color:#b3261e;border-radius:999px;font:700 11.5px inherit;font-family:inherit;cursor:pointer;padding:2px 9px;margin:0 0 4px}
+body.touch .ldtrmb{padding:5px 12px;font-size:13px}
+@media (prefers-color-scheme: dark){.ldtrmb{background:transparent;border-color:rgba(234,67,53,.5);color:#ff9b91}}
+.ldtrow:not(.on) .ldtrmb{display:none}
+.ldtgone-list .ldtgone-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 8px;border-top:1px solid var(--line);font-size:13px}
+.ldtgone-row s{font-weight:700;color:var(--muted)}
+.ldtgone-row input{font:inherit;font-size:12px;padding:2px 4px;border:1px solid var(--line2);border-radius:6px;background:var(--panel);color:var(--ink)}
+.ldtback{margin-left:auto;border:0;background:none;color:var(--accent);font:700 12px inherit;font-family:inherit;cursor:pointer}
+s.ldtgone{opacity:.6;font-weight:600}
 .ldtloc{grid-column:2/-1;display:flex;gap:5px;align-items:center;margin:-1px 0 2px}
 .ldtloc select{font:inherit;font-size:12px;padding:2px 4px;border:1px solid var(--line2);border-radius:6px;background:var(--panel);color:var(--ink)}
 .ldtloc select:disabled,.ldtloc button:disabled{opacity:.45}
@@ -1510,7 +1519,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '227';
+const APP_VERSION = '228';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2344,7 +2353,7 @@ function cellDesc(cfg, c){
     case 'status': case 'statusChoice': return [SMAP[c.s] ? SMAP[c.s].label : (c.s ? c.s : ''), c.t].filter(Boolean).join(' · ') || 'cleared';
     case 'check': return c.t ? 'checked' : 'unchecked';
     case 'proc': return c.t || c.d ? `${c.t || 'procedure'}${isISO(c.d) ? ' on ' + fmtShort(c.d) : ''}` : 'cleared';
-    case 'ldt': return ldtItems(c).length ? ldtItems(c).map(i => ldtLabel(i) + (isISO(i.d) ? ' ' + fmtShort(i.d) : '')).join(', ') : 'none';
+    case 'ldt': return ldtItems(c).length ? ldtItems(c).map(i => ldtLabel(i) + (i.rm ? ' removed ' + fmtShort(i.rm) : isISO(i.d) ? ' ' + fmtShort(i.d) : '')).join(', ') : 'none';
     case 'io': return ioText(c) || (c.t ? q(c.t) : 'cleared');
     case 'checkNote': return (c.c ? 'checked' : 'unchecked') + (c.t ? ' · ' + c.t : '');
     case 'date': return c.t ? (isISO(c.t) ? fmtShort(c.t) : c.t) : 'cleared';
@@ -2484,9 +2493,13 @@ function admitDateModal(id){
 
 /* ---------- lines / drains / tubes (Avatar) ---------- */
 const LDT_SHORT = {'Foley catheter':'Foley', 'Arterial line':'A-line', 'HD catheter':'HD cath', 'G-tube / PEG':'G-tube', 'Chest tube':'Chest tube', 'NG tube':'NGT', 'OG tube':'OGT', 'JP drain':'JP', 'Rectal tube':'Rectal tube'};
-const ldtAge = it => isISO(it.d) ? daysBetween(it.d, state.boardDate) : null;          // days in place
-const ldtOld = it => { const a = ldtAge(it); return a !== null && a > state.settings.ldtDays; };
+const ldtAge = it => isISO(it.d) ? daysBetween(it.d, isISO(it.rm) ? it.rm : state.boardDate) : null;          // days in place (until removal)
+const ldtOld = it => { if(it.rm) return false; const a = ldtAge(it); return a !== null && a > state.settings.ldtDays; };
 const ldtItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
+// removed devices stay on record (it.rm = date removed): the board shows them struck through for a day, then only in the details
+const ldtActive = cell => ldtItems(cell).filter(it => !it.rm);
+const ldtRemoved = cell => ldtItems(cell).filter(it => it.rm);
+const ldtRecentGone = cell => ldtRemoved(cell).filter(it => isISO(it.rm) && daysBetween(it.rm, state.boardDate) <= 1);
 // where it is (PIVs: side + site) and how many — a PIV can be listed more than once
 // the Avatar list is shown in groups, in this order; anything else (your own additions) goes under Other
 const LDT_GROUPS = [['Vascular access', ['PIV', 'Midline', 'PICC', 'CVC', 'Arterial line', 'HD catheter', 'Port', 'IABP', 'S-G catheter', 'Impella', 'ECMO cannula', 'Swan-Ganz', 'PA catheter', 'Temporary pacing wire']],
@@ -2501,20 +2514,28 @@ const LDT_SITE_SHORT = {forearm:'FA', 'upper arm':'UA'};
 const ldtLoc = it => [it.side, it.site].filter(Boolean).join(' ');
 const ldtLocShort = it => [it.side, LDT_SITE_SHORT[it.site] || it.site].filter(Boolean).join(' ');
 const ldtLabel = it => it.k + (ldtLoc(it) ? ' ' + ldtLoc(it) : '');
-function ldtSummary(cell){ return ldtItems(cell).map(it => `${ldtLabel(it)}${isISO(it.d) ? ` (since ${fmtShort(it.d)}, day ${ldtAge(it)})` : ' (no date)'}`).join('; '); }
+function ldtSummary(cell){ const a = ldtActive(cell).map(it => `${ldtLabel(it)}${isISO(it.d) ? ` (since ${fmtShort(it.d)}, day ${ldtAge(it)})` : ' (no date)'}`).join('; ');
+  const g = ldtRemoved(cell).map(it => `${ldtLabel(it)} removed ${isISO(it.rm) ? fmtShort(it.rm) : ''}${ldtAge(it) !== null ? ` (in ${ldtAge(it)} day${ldtAge(it) === 1 ? '' : 's'})` : ''}`).join('; ');
+  return [a, g && 'Removed: ' + g].filter(Boolean).join(' — '); }
 // cell text: "PIV R AC · PIV L FA · Foley", identical ones collapsed ("PIV ×2")
 function ldtCellTxt(items){ const out = [];
   items.forEach(it => { const t = `${LDT_SHORT[it.k] || it.k}${ldtLocShort(it) ? ' ' + ldtLocShort(it) : ''}${ldtOld(it) ? ' ' + ldtAge(it) + 'd' : ''}`;
     const last = out[out.length - 1]; if(last && last.t === t) last.n++; else out.push({t, n:1}); });
   return out.map(x => x.t + (x.n > 1 ? ' ×' + x.n : '')).join(' · '); }
 function ldtPopHTML(col, cell){
-  const items = ldtItems(cell), names = [...new Set([...col.opts.map(o => o.label), ...items.map(i => i.k).filter(k => !col.opts.some(o => o.label === k))])];
+  const items = ldtActive(cell), names = [...new Set([...col.opts.map(o => o.label), ...items.map(i => i.k).filter(k => !col.opts.some(o => o.label === k))])];
   const rows = n => { const its = items.filter(i => i.k === n); return (LDT_MULTI.has(n) && its.length > 1 ? its : [its[0]]).map(it => ldtRowHTML(n, it)).join(''); };
   const order = names.map((n, i) => ({n, i, g:ldtGroupOf(n)})).sort((a, b) => a.g - b.g || a.i - b.i);
   let html = '', g = -1; order.forEach(o => { if(o.g !== g){ g = o.g; html += `<div class="ldtgrp">${esc(g < LDT_GROUPS.length ? LDT_GROUPS[g][0] : 'Other')}</div>`; } html += rows(o.n); });
   return `<div class="ldtlist">${html}</div>
     <div class="ed ldtaddrow"><input type="text" data-ldtnew placeholder="Add another (e.g. Nephrostomy tube)"><button class="btn sm" data-ldtadd>Add</button></div>
-    <div class="muted" style="font-size:11px;margin-top:2px">Tick what's in, with the date it was placed. Red after more than ${state.settings.ldtDays} days.</div>`;
+    <div class="ldtgone-list" ${ldtRemoved(cell).length ? '' : 'hidden'}><div class="ldtgrp">Removed</div>${ldtRemoved(cell).map(ldtGoneRowHTML).join('')}</div>
+    <div class="muted" style="font-size:11px;margin-top:2px">Tick what's in, with the date it was placed. Red after more than ${state.settings.ldtDays} days. <b>Removed</b> keeps a record; unticking deletes it (for mistakes).</div>`;
+}
+function ldtGoneRowHTML(it){
+  return `<div class="ldtgone-row" data-rmk="${esc(it.k)}" data-rmd="${esc(it.d || '')}" data-rmside="${esc(it.side || '')}" data-rmsite="${esc(it.site || '')}">
+    <s>${esc(ldtLabel(it))}</s><span class="muted">${isISO(it.d) ? 'placed ' + fmtShort(it.d) + ' · ' : ''}removed</span><input type="date" data-ldtrm value="${esc(isISO(it.rm) ? it.rm : state.boardDate)}" max="${state.boardDate}" title="Date removed">
+    <button type="button" class="ldtback" data-ldtback title="It's still in — put it back">↺ Put back</button></div>`;
 }
 function ldtRowHTML(n, it, extra){
   const age = it ? ldtAge(it) : null, old = it && ldtOld(it), sites = LDT_SITES[n], dis = it ? '' : 'disabled';
@@ -2522,12 +2543,13 @@ function ldtRowHTML(n, it, extra){
     <input type="date" data-ldtd value="${esc(it && isISO(it.d) ? it.d : '')}" max="${state.boardDate}" ${dis} title="Date placed"><span class="ldtage">${age !== null ? `day ${age}` : ''}</span>
     ${sites ? `<span class="ldtloc"><select data-ldtside ${dis} aria-label="Side"><option value="">R / L</option>${['R', 'L'].map(x => `<option ${it && it.side === x ? 'selected' : ''}>${x}</option>`).join('')}</select>
       <select data-ldtsite ${dis} aria-label="Site"><option value="">Site…</option>${sites.map(x => `<option ${it && it.site === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
-      ${LDT_MULTI.has(n) ? `<button type="button" class="ldtmore" data-ldtmore="${esc(n)}" ${dis} title="Add another ${esc(n)}">＋ another</button>` : ''}</span>` : ''}</label>`;
+      ${LDT_MULTI.has(n) ? `<button type="button" class="ldtmore" data-ldtmore="${esc(n)}" ${dis} title="Add another ${esc(n)}">＋ another</button>` : ''}</span>` : ''}
+    <button type="button" class="ldtrmb" data-ldtrmb ${dis} title="Mark ${esc(n)} as removed (keeps a record)">✕ Mark removed</button></label>`;
 }
 function wireLdtPop(el){
   const refreshRow = lab => { const cb = lab.querySelector('[data-ldt]'), d = lab.querySelector('[data-ldtd]'), ag = lab.querySelector('.ldtage');
     d.disabled = !cb.checked; if(cb.checked && !d.value) d.value = state.boardDate;
-    lab.querySelectorAll('.ldtloc select, .ldtloc button').forEach(x => x.disabled = !cb.checked);
+    lab.querySelectorAll('.ldtloc select, .ldtloc button, [data-ldtrmb]').forEach(x => x.disabled = !cb.checked);
     const age = cb.checked && isISO(d.value) ? daysBetween(d.value, state.boardDate) : null;
     lab.classList.toggle('on', cb.checked); lab.classList.toggle('old', age !== null && age > state.settings.ldtDays); ag.textContent = age !== null ? `day ${age}` : ''; };
   el.querySelector('.ldtlist').addEventListener('change', e => { const lab = e.target.closest('.ldtrow'); if(lab) refreshRow(lab); });
@@ -2539,6 +2561,21 @@ function wireLdtPop(el){
     lab.querySelector('[data-ldt]').checked = true; refreshRow(lab); lab.scrollIntoView({block:'nearest'}); nw.focus(); };
   el.querySelector('[data-ldtadd]').addEventListener('click', add);
   // ＋ another PIV: a new row right after the last one of that kind
+  // Removed: the device moves to the Removed list (with today's date) and its row is free for a new one
+  el.addEventListener('click', e => { const rb = e.target.closest('[data-ldtrmb]'), bk = e.target.closest('[data-ldtback]'); if(!rb && !bk) return; e.preventDefault(); e.stopPropagation();
+    const gl = el.querySelector('.ldtgone-list');
+    if(rb){ const lab = rb.closest('.ldtrow'), cb = lab.querySelector('[data-ldt]'), d = lab.querySelector('[data-ldtd]'), sd = lab.querySelector('[data-ldtside]'), st = lab.querySelector('[data-ldtsite]');
+      const it = {k:cb.dataset.ldt, d:isISO(d.value) ? d.value : '', side:sd ? sd.value : '', site:st ? st.value : '', rm:state.boardDate};
+      const tmp = document.createElement('div'); tmp.innerHTML = ldtGoneRowHTML(it); gl.appendChild(tmp.firstElementChild); gl.hidden = false;
+      if(cb.dataset.extra){ lab.remove(); } else { cb.checked = false; d.value = ''; if(sd) sd.value = ''; if(st) st.value = ''; refreshRow(lab); }
+      return; }
+    const row = bk.closest('.ldtgone-row'), k = row.dataset.rmk, it = {k, d:row.dataset.rmd, side:row.dataset.rmside, site:row.dataset.rmsite};
+    let lab = [...el.querySelectorAll('.ldtrow')].find(l => { const c = l.querySelector('[data-ldt]'); return c.dataset.ldt === k && !c.checked; });
+    if(!lab){ const same = [...el.querySelectorAll('.ldtrow')].filter(l => l.querySelector('[data-ldt]').dataset.ldt === k), tmp = document.createElement('div');
+      tmp.innerHTML = ldtRowHTML(k, null, true); lab = tmp.firstElementChild; (same.length ? same[same.length - 1] : el.querySelector('.ldtlist').lastElementChild).after(lab); }
+    lab.querySelector('[data-ldt]').checked = true; lab.querySelector('[data-ldtd]').value = it.d || ''; refreshRow(lab);
+    const sd = lab.querySelector('[data-ldtside]'), st = lab.querySelector('[data-ldtsite]'); if(sd) sd.value = it.side || ''; if(st) st.value = it.site || '';
+    row.remove(); if(!gl.querySelector('.ldtgone-row')) gl.hidden = true; });
   el.querySelector('.ldtlist').addEventListener('click', e => { const b = e.target.closest('[data-ldtmore]'); if(!b) return; e.preventDefault(); e.stopPropagation();
     const n = b.dataset.ldtmore, same = [...el.querySelectorAll('.ldtrow')].filter(l => l.querySelector('[data-ldt]').dataset.ldt === n), lastRow = same[same.length - 1];
     const tmp = document.createElement('div'); tmp.innerHTML = ldtRowHTML(n, null, true); const lab = tmp.firstElementChild; lastRow.after(lab);
@@ -2549,6 +2586,10 @@ function commitLdt(p, r, el){
   const items = [...el.querySelectorAll('.ldtrow')].map(l => ({cb:l.querySelector('[data-ldt]'), d:l.querySelector('[data-ldtd]'), side:l.querySelector('[data-ldtside]'), site:l.querySelector('[data-ldtsite]')}))
     .filter(x => x.cb.checked).map(x => { const it = {k:x.cb.dataset.ldt, d:isISO(x.d.value) ? x.d.value : ''};
       if(x.side && x.side.value) it.side = x.side.value; if(x.site && x.site.value) it.site = x.site.value; return it; });
+  // removed devices stay on record for 30 days
+  [...el.querySelectorAll('.ldtgone-row')].forEach(g => { const rm = g.querySelector('[data-ldtrm]').value, it = {k:g.dataset.rmk, d:g.dataset.rmd || ''};
+    if(g.dataset.rmside) it.side = g.dataset.rmside; if(g.dataset.rmsite) it.site = g.dataset.rmsite; it.rm = isISO(rm) ? rm : state.boardDate;
+    if(daysBetween(it.rm, state.boardDate) <= 30) items.push(it); });
   const fresh = [...el.querySelectorAll('[data-ldt][data-new]')].filter(x => x.checked).map(x => x.dataset.ldt);
   if(JSON.stringify(items) === JSON.stringify(ldtItems(r.cells[p.k])) && !fresh.length) return;
   mutate(() => {
@@ -2577,10 +2618,10 @@ function cellHTML(cell, col, kind, id, ri, ci, ro){
     return `<div class="tc t-io io-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}</span>${g !== null ? `<i class="iogoal">◎${esc(g === 0 ? 'even' : ioSigned(g).replace(' ', ''))}</i>` : ''}</div>`;
   }
   if(col.type === 'ldt'){
-    const items = ldtItems(cell), old = items.some(ldtOld), st = !items.length ? 'none' : old ? 'old' : 'ok';
-    const txt = ldtCellTxt(items);
-    const title = `${col.h}: ${items.length ? ldtSummary(cell) : 'no lines / drains / tubes'}`;
-    return `<div class="tc t-ldt ldt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}</span></div>`;
+    const items = ldtActive(cell), gone = ldtRecentGone(cell), old = items.some(ldtOld), st = !items.length && !gone.length ? 'none' : old ? 'old' : 'ok';
+    const txt = ldtCellTxt(items), goneH = gone.map(it => `<s class="ldtgone">${esc(LDT_SHORT[it.k] || it.k)}</s>`).join(' ');
+    const title = `${col.h}: ${ldtItems(cell).length ? ldtSummary(cell) : 'no lines / drains / tubes'}`;
+    return `<div class="tc t-ldt ldt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}${txt && goneH ? ' · ' : ''}${goneH}</span></div>`;
   }
   const statusy = isStatusType(col.type);
   const st = statusy ? SMAP[cell.s] : null;
@@ -4215,7 +4256,7 @@ function download(name, text, type){
 function validationFindings(){
   const statusCols = ALL_COLS.filter(c => isStatusType(colCfg(c.k).type));
   const out = {R:[], X:[], npo:[], proc:[], held:[], todo:[], ldt:[]};
-  state.patients.forEach(p => ldtItems(p.cells.avatar).filter(ldtOld).forEach(it => out.ldt.push({p, col:'avatar', what:ldtLabel(it), note:`day ${ldtAge(it)} (placed ${fmtShort(it.d)})`})));
+  state.patients.forEach(p => ldtActive(p.cells.avatar).filter(ldtOld).forEach(it => out.ldt.push({p, col:'avatar', what:ldtLabel(it), note:`day ${ldtAge(it)} (placed ${fmtShort(it.d)})`})));
   liveTodos().filter(t => t.pid && !t.done && todoState(t) === 'over').sort(byDue).forEach(t => out.todo.push({p:todoPatient(t), col:'', what:t.text, note:`due ${hhmmOf(t.due)}`}));
   const lc = v => String(v||'').trim().toLowerCase();
   state.patients.forEach(p => {
@@ -6540,7 +6581,7 @@ function printSheetHTML(){
     Object.keys(by).sort((a, b) => (a === 'No intern') - (b === 'No intern') || a.localeCompare(b)).forEach(intern => {
       s += `<tr class="pgrp"><td colspan="11">${esc(intern)} · ${by[intern].length}</td></tr>`;
       by[intern].forEach(p => { const open = DAILY_KEYS.filter(k => colCfg(k).type !== 'ldt' && !isDone(colCfg(k), p.cells[k])).map(k => colCfg(k).h);
-        const lines = ldtItems(p.cells.avatar || {}).map(it => `${esc(ldtLabel(it))}${isISO(it.d) ? ' d' + ldtAge(it) : ''}`).join(', ');
+        const lines = ldtActive(p.cells.avatar || {}).map(it => `${esc(ldtLabel(it))}${isISO(it.d) ? ' d' + ldtAge(it) : ''}`).join(', ');
         s += `<tr><td class="pc">${box(false)}</td><td><b>${esc(p.bed || '—')}</b></td><td>${hospDay(p) || ''}</td><td>${esc(p.problem || '')}</td><td>${esc(p.status || '')}${isISO(p.cells.edd && p.cells.edd.t) ? ' · ' + fmtShort(p.cells.edd.t) : ''}</td>
           <td>${esc([p.cells.diet && p.cells.diet.t, p.cells.dvt && p.cells.dvt.t].filter(Boolean).join(' · '))}</td><td>${lines}</td><td class="psm">${esc(open.join(', '))}</td><td class="psm">${tkTxt(openTasksFor(p.bed, p.id))}</td><td class="psm">${esc((p.cells.dest && p.cells.dest.t) || '')}</td><td class="pnotes"></td></tr>`; });
     });
@@ -7299,6 +7340,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:228, d:'2026-11-21', items:['Avatar: a <b>✕ Mark removed</b> button on each line, drain or tube. It moves to a <b>Removed</b> list with the date (editable) and how many days it was in, and shows struck through on the board for a day (e.g. <s>Foley</s>). <b>↺ Put back</b> undoes it. Unticking still deletes outright, for mistakes.']},
   {v:227, d:'2026-11-21', items:['Rounds: <b>Next</b> no longer ticks <b>Discussed</b> for you — you tick it yourself. Next still skips patients you’ve already marked discussed.']},
   {v:226, d:'2026-11-21', items:['Rounds: if you untick <b>✓ Discussed</b> yourself, pressing <b>Next</b> no longer ticks it straight back.']},
   {v:225, d:'2026-11-21', items:['Rounds: “Mark seen” is now <b>Mark discussed</b> (and “✓ 3/8 discussed”), so it isn’t confused with the <b>Visit</b> box — it only tracks who’s been talked through on rounds.']},
