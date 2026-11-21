@@ -1593,7 +1593,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '238';
+const APP_VERSION = '239';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1833,7 +1833,7 @@ const GROUPS = [
     {k:'dcord',h:'DC Order',type:'choice',size:'mid',opts:DC_OPTS()},
     {k:'transport',h:'Transportation',type:'choice',size:'mid',opts:['Family / friend','Taxi / rideshare','Medical transport','Ambulance (BLS)','Ambulance (ALS)','Facility transport','Public transit'].map(x=>O(x))}]},
   {k:'dispo', label:'Dispo', cols:[
-    {k:'dest',h:'Disposition',type:'choice',size:'mid',opts:['Home','SAR/SNF','LTACH','Nursing Home','Hospice','ALF','Shelter','Acute Rehab','Safe Haven','LOH','Floor','SDU','cSDU','MICU','CCU','ALOC','Uptriage'].map(x=>O(x))},
+    {k:'dest',h:'Disposition',type:'choice',size:'mid',opts:['Home','SAR/SNF','LTACH','Nursing Home','Hospice','ALF','Shelter','Acute Rehab','Safe Haven','LOH','Floor','SDU','cSDU','MICU','CCU','ALOC'].map(x=>O(x))},
     {k:'services',h:'Services',type:'text',size:'mid'},
     {k:'dispo',h:'Dispo notes',type:'text',size:'wide'}]},
 ];
@@ -2147,6 +2147,8 @@ function normalize(s){
   if(s.settings.shift !== 'night') s.settings.shift = 'day';
   if(typeof s.settings.autoBackup !== 'boolean') s.settings.autoBackup = true;
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
+  // v239: Uptriage dropped from Disposition (it's just SDU / cSDU / MICU / CCU) — once
+  if(!s.settings.noUptriage){ const dc = s.settings.columns.dest; if(dc && Array.isArray(dc.opts)) dc.opts = dc.opts.filter(o => (o.label || '').toLowerCase() !== 'uptriage'); s.settings.noUptriage = 1; }
   // v237: Destination → Disposition, with in-hospital choices (once)
   if(!s.settings.dispoIn){ const dc = s.settings.columns.dest;
     if(dc){ if(dc.h === 'Destination') delete dc.h;
@@ -7532,6 +7534,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:239, d:'2026-11-21', items:['Disposition: <b>Uptriage</b> removed — pick SDU, cSDU, MICU or CCU instead.']},
   {v:238, d:'2026-11-21', items:['Disposition groups renamed <b>Leaving hospital</b> and <b>Within hospital</b>.']},
   {v:237, d:'2026-11-21', items:['<b>Destination</b> is now <b>Disposition</b>, in two groups: <b>Leaving the hospital</b> (Home, SAR/SNF, LTACH, Nursing Home, Hospice, ALF, Shelter, Acute Rehab, Safe Haven, LOH) and <b>Within the hospital</b> (Floor, SDU, cSDU, MICU, CCU, ALOC, Uptriage). On ICU and CCU boards the in-hospital group comes first.']},
   {v:236, d:'2026-11-21', items:['<b>SW</b> is now a simple checkbox (notes ready for social work rounds).', 'Every checkbox (Visit, Attest, Handoff, Ord Rev, SW, Lab Ord…) can be set to <b>N/A</b>: <b>press and hold</b> it on the iPad, right-click it with a mouse, or press <b>N</b>. Do the same again to clear it. N/A counts as done.']},
