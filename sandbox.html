@@ -686,8 +686,9 @@ body.touch .ldtloc select{font-size:14px;padding:5px 6px}
 .ldtaddrow input{flex:1}
 .pop:has(.ldtlist){width:360px}
 /* Rounds is a framed panel over a dimmed board: the backdrop is #rounds, the panel (which scrolls) is #roundsBody */
-.rounds{position:fixed;inset:0;z-index:40;background:rgba(18,22,30,.66);padding:14px;box-sizing:border-box;display:flex;flex-direction:column}
-.rounds #roundsBody{flex:1;min-height:0;overflow:auto;background:var(--bg);border-radius:18px;border:1px solid rgba(255,255,255,.08);box-shadow:0 24px 70px rgba(0,0,0,.45);position:relative}
+.rounds{position:fixed;inset:0;z-index:40;background:rgba(240,242,246,.35);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);padding:14px;box-sizing:border-box;display:flex;flex-direction:column}
+@media (prefers-color-scheme: dark){.rounds{background:rgba(10,12,16,.35)}}
+.rounds #roundsBody{flex:1;min-height:0;overflow:auto;background:var(--bg);border-radius:18px;border:1px solid var(--line2);box-shadow:0 2px 10px rgba(0,0,0,.06);position:relative}
 .rounds .rbar{border-radius:18px 18px 0 0}
 body.touch #rJump{display:none}   /* the bed strip does the jumping on iPad — keeps the bar to one line */
 .rounds[hidden]{display:none}
@@ -752,6 +753,7 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 .rs-gv .tc{min-height:36px;justify-content:flex-start;padding:0 10px;text-align:left}
 .rs-io{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.rs-io>.tc{flex:0 0 130px}
 .rs-iodet{font-size:13.5px;color:var(--muted)}.rs-iodet b{color:var(--ink);font-family:ui-monospace,"SF Mono",Menlo,monospace}
+.iosym{display:inline-grid;place-items:center;width:17px;height:17px;border:1.5px solid currentColor;border-radius:50%;font:800 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-style:normal;margin:0 4px 0 0;vertical-align:-2px;color:var(--muted)}
 .rs-iodet .met{color:#1e7e34;font-weight:700}.rs-iodet .miss{color:#b3261e;font-weight:700}
 .rs-chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
 .rs-ck2{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -1593,7 +1595,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '239';
+const APP_VERSION = '240';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3896,8 +3898,8 @@ function renderRoundsSplit(){
   if(!list.length){ body.innerHTML = `<div class="rs">${rail}<section class="rs-main"><div class="rempty">No patients in this view.</div><div class="rs-foot"><span style="flex:1"></span><button class="btn" data-r="close">✕ Close</button></div></section></div>`; return; }
   const p = list[i], fl = flagsFor(p), n = hospDay(p), cm = p.comments || {};
   const tile = k => { const cfg = colCfg(k); return cellHTML(p.cells[k], cfg, 'p', p.id, 0, 0, false) + (cm[k] ? `<div class="rcmt">${esc(cm[k])}</div>` : ''); };
-  const ioDet = c => { if(!c) return ''; const parts = [ioNum(c.in) && `In <b>${esc(ioVol(c.in))}</b>`, ioNum(c.out) && `Out <b>${esc(ioVol(c.out))}</b>`].filter(Boolean);
-    const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join(' · ')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
+  const ioDet = c => { if(!c) return ''; const parts = [ioNum(c.in) && `<i class="iosym" title="Intake" aria-label="Intake">+</i><b>${esc(ioVol(c.in))}</b>`, ioNum(c.out) && `<i class="iosym" title="Output" aria-label="Output">−</i><b>${esc(ioVol(c.out))}</b>`].filter(Boolean);
+    const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
   const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''}">${tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
   const daily = DAILY_KEYS.filter(k => !RS_GLANCE.includes(k) && !colHidden(k)), doneN = daily.filter(k => isDone(colCfg(k), p.cells[k])).length;
   const chk = daily.map(k => `<div class="rs-ck2 ${isDone(colCfg(k), p.cells[k]) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('');
@@ -7534,6 +7536,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:240, d:'2026-11-21', items:['Rounds: the dark shadow is gone — the board behind is just softly blurred. In Split view, intake and output show as ⊕ and ⊖ instead of “In” and “Out”.']},
   {v:239, d:'2026-11-21', items:['Disposition: <b>Uptriage</b> removed — pick SDU, cSDU, MICU or CCU instead.']},
   {v:238, d:'2026-11-21', items:['Disposition groups renamed <b>Leaving hospital</b> and <b>Within hospital</b>.']},
   {v:237, d:'2026-11-21', items:['<b>Destination</b> is now <b>Disposition</b>, in two groups: <b>Leaving the hospital</b> (Home, SAR/SNF, LTACH, Nursing Home, Hospice, ALF, Shelter, Acute Rehab, Safe Haven, LOH) and <b>Within the hospital</b> (Floor, SDU, cSDU, MICU, CCU, ALOC, Uptriage). On ICU and CCU boards the in-hospital group comes first.']},
