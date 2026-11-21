@@ -1510,7 +1510,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '225';
+const APP_VERSION = '226';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3681,7 +3681,7 @@ function openRounds(id){ closePop(); rounds.open = true; const list = roundsList
 function closeRounds(){ closePop(); rounds.open = false; $('#rounds').hidden = true; document.body.style.overflow = ''; lastFocus = null;
   const tr = rounds.id && document.querySelector(`#censusGrid tr[data-id="${rounds.id}"]`); if(tr){ tr.scrollIntoView({block:'center'}); tr.classList.add('rowpulse'); setTimeout(() => tr.classList.remove('rowpulse'), 1600); } }
 function roundsGo(step, plain){ const list = roundsList(); if(!list.length) return; let i = list.findIndex(p => p.id === rounds.id); const cur = list[i];
-  if(step > 0 && !plain && cur){ rdMark(cur, true);   // done with this one → the next not yet seen (wrapping round), else just the next
+  if(step > 0 && !plain && cur){ if(!(rounds.keepOpen && rounds.keepOpen.has(cur.id))) rdMark(cur, true);   // done with this one (unless you unticked it yourself) → the next not yet discussed, else just the next
     const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(p => !rdSeen(p));
     if(nx){ roundsTo(nx.id); return; } }
   i = Math.min(list.length - 1, Math.max(0, (i < 0 ? 0 : i) + step)); roundsTo(list[i].id); }
@@ -3735,7 +3735,9 @@ $('#roundsBtn').addEventListener('click', () => openRounds());
 $('#roundsBody').addEventListener('click', e => {
   const g = e.target.closest('[data-rgo]'); if(g){ roundsTo(g.dataset.rgo); return; }
   const o = e.target.closest('[data-rord]'); if(o){ ui.roundsOrder = o.dataset.rord; saveUI(); renderRounds(); const c = document.querySelector('#roundsBody .rchip.on'); if(c) c.scrollIntoView({block:'nearest', inline:'center'}); return; }
-  const sb = e.target.closest('[data-rseen]'); if(sb){ const q = rowOf('p', sb.dataset.rseen); rdMark(q, !rdSeen(q)); renderRounds(); return; }
+  const sb = e.target.closest('[data-rseen]'); if(sb){ const q = rowOf('p', sb.dataset.rseen), on = !rdSeen(q); rdMark(q, on);
+    rounds.keepOpen = rounds.keepOpen || new Set(); if(on) rounds.keepOpen.delete(q.id); else rounds.keepOpen.add(q.id);   // unticked by hand: Next leaves it unticked
+    renderRounds(); return; }
   const b = e.target.closest('[data-r]'); if(!b || b.disabled) return; const r = b.dataset.r; if(r === 'close') closeRounds(); else roundsGo(r === 'next' ? 1 : -1); });
 wireTodoRows($('#roundsBody'), () => {});
 $('#roundsBody').addEventListener('change', e => { if(e.target.id === 'rJump'){ closePop(); rounds.id = e.target.value; lastFocus = null; renderRounds(); focusRounds(); } });
@@ -7297,6 +7299,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:226, d:'2026-11-21', items:['Rounds: if you untick <b>✓ Discussed</b> yourself, pressing <b>Next</b> no longer ticks it straight back.']},
   {v:225, d:'2026-11-21', items:['Rounds: “Mark seen” is now <b>Mark discussed</b> (and “✓ 3/8 discussed”), so it isn’t confused with the <b>Visit</b> box — it only tracks who’s been talked through on rounds.']},
   {v:224, d:'2026-11-21', items:['<b>I/O goal</b> (optional): set a goal net in the I/O box — e.g. −1L, −500 or even. The popup says “✓ met” or how much is left to go; on the board the box turns <b>green</b> when the goal is met and <b>red</b> when it isn’t, with the goal shown small in the corner. The goal carries over to the next day until you change or clear it.']},
   {v:223, d:'2026-11-21', items:['<b>I/O</b> is now numbers, not a status: tap it and enter <b>Intake</b> and <b>Output</b> (mL, or litres like 1.2L, or sums like 800+450). Plexus works out the <b>Net</b> and shows it on the board — blue when negative, amber when positive — with In / Out / Net on hover. Add an optional note (e.g. goal net −1 L). It counts as done once both are in, and clears each new day like the other daily boxes. Old I/O statuses still show until you enter numbers.']},
