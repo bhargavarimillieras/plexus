@@ -1107,7 +1107,7 @@ tr.grprow td{background:var(--head);height:28px;padding:0}
 .dcbar{display:flex;gap:2px;height:8px;border-radius:4px;overflow:hidden}
 .dcbar i{flex:1;display:block}
 .dcbar.wide{height:6px}
-.dcbar .sg,.legend2 .sg{background:#34A853}.dcbar .pd,.legend2 .pd{background:#FF9900}.dcbar .ic,.legend2 .ic{background:#EA4335}.dcbar .no,.legend2 .no{background:var(--line)}
+.dcbar .sg,.legend2 .sg{background:#34A853}.dcbar .pd,.legend2 .pd{background:#FF9900}.dcbar .ic,.legend2 .ic{background:#EA4335}.dcbar .no,.legend2 .no{background:var(--line)}.dcbar .na{background:#9aa0a6}
 .dcrow{padding:6px 0;border-top:1px solid var(--line);cursor:pointer}
 .dcrow:hover .dctop b{text-decoration:underline}
 .dctop{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;font-size:12.5px}
@@ -1635,7 +1635,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '255';
+const APP_VERSION = '256';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1907,7 +1907,8 @@ const SHOWHC_KEY = `${KEY_PREFIX}.showHospCourse`;
 const showHC = () => { try{ return localStorage.getItem(SHOWHC_KEY) === '1'; }catch(e){ return false; } };
 const colHidden = k => (k === 'hc' && !showHC()) || (COLMAP[k] && COLMAP[k].icu && !isCritCare()) || (state.settings.hiddenCols || []).includes(k);
 const visibleCols = g => orderedKeys(g).filter(k => !colHidden(k)).map(k => COLMAP[k]);
-const dcSigned = p => DC_KEYS.filter(k => p.cells[k].t === 'Signed').length;
+const dcOk = t => t === 'Signed' || t === 'N/A';   // N/A counts as done
+const dcSigned = p => DC_KEYS.filter(k => dcOk(p.cells[k].t)).length;
 function dcBucket(p, d = state.boardDate){
   if(p.status === 'Discharge') return 'today';
   if(!isISO(p.cells.edd.t)) return null;
@@ -1932,7 +1933,7 @@ const ADMIT_PHASES = [
 ];
 const ADMIT_ITEMS = ADMIT_PHASES.flatMap(p => p.keys);
 // A checklist item is done when Signed or N/A; Diet / DVT PPx are done once a value is chosen.
-const itemDone = (a, k) => { const t = (a.cells[k] || {}).t, c = ADMIT_COLMAP[k]; return c.from ? !!t : c.check ? t === 'Yes' : (t === 'Signed' || t === 'N/A'); };
+const itemDone = (a, k) => { const t = (a.cells[k] || {}).t, c = ADMIT_COLMAP[k]; return c.from ? !!t : c.check ? (t === 'Yes' || t === 'N/A') : (t === 'Signed' || t === 'N/A'); };
 const admitSigned = a => ADMIT_ITEMS.filter(k => itemDone(a, k)).length;
 const phaseStats = a => ADMIT_PHASES.map(ph => ({...ph, done: ph.keys.filter(k => itemDone(a, k)).length, total: ph.keys.length}));
 const currentPhase = a => { const st = phaseStats(a); const i = st.findIndex(x => x.done < x.total); return i < 0 ? 4 : st[i].n; };   // 4 = all done
@@ -2917,9 +2918,9 @@ function armLeft(id){
 }
 function unfinishedFor(p){
   if(p.ama) return [...AMA_CHECKS.filter(([k]) => !(p.ama.checks || {})[k]).map(([,l]) => ({what:l, state:'Not checked'})),
-                    ...DC_KEYS.filter(k => p.cells[k].t !== 'Signed').map(k => ({what:colCfg(k).h, state:p.cells[k].t || 'Not started'}))];
+                    ...DC_KEYS.filter(k => !dcOk(p.cells[k].t)).map(k => ({what:colCfg(k).h, state:p.cells[k].t || 'Not started'}))];
   if(p.status === 'Transfer') return XFER_CHECKS.filter(([k]) => !xferOf(p).checks[k]).map(([,l]) => ({what:l, state:'Not checked'}));
-  return DC_KEYS.filter(k => p.cells[k].t !== 'Signed').map(k => ({what:colCfg(k).h, state:p.cells[k].t || 'Not started'}));
+  return DC_KEYS.filter(k => !dcOk(p.cells[k].t)).map(k => ({what:colCfg(k).h, state:p.cells[k].t || 'Not started'}));
 }
 // Every "Left hospital" / "Transferred off" goes through here: warns if tasks are unfinished.
 function requestLeft(id){
@@ -3037,7 +3038,7 @@ function ringSVG(n, cap, what = 'Census'){
 }
 const DC_ABBR = {dcint:'INT', dcmdr:'MDR', dcsum:'SUM', dcord:'ORD'};
 function dcBar(p){
-  const seg = k => { const t = p.cells[k].t; const c = t === 'Signed' ? 'sg' : t === 'Pended' ? 'pd' : t === 'Incomplete' ? 'ic' : 'no'; return `<i class="${c}" title="${esc(colCfg(k).h)}: ${esc(t || 'not started')}"></i>`; };
+  const seg = k => { const t = p.cells[k].t; const c = t === 'Signed' ? 'sg' : t === 'N/A' ? 'na' : t === 'Pended' ? 'pd' : t === 'Incomplete' ? 'ic' : 'no'; return `<i class="${c}" title="${esc(colCfg(k).h)}: ${esc(t || 'not started')}"></i>`; };
   return `<div class="dcbar">${DC_KEYS.map(seg).join('')}</div><div class="dcabbr">${DC_KEYS.map(k => `<span title="${esc(colCfg(k).h)}">${DC_ABBR[k]}</span>`).join('')}</div>`;
 }
 /* Intern workload: census per intern vs the intern cap, new admits, DCs today, unfinished daily tasks, and who's next up. */
@@ -7700,6 +7701,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:256, d:'2026-11-22', items:['<b>N/A counts as done everywhere</b>: Discharge paperwork (Intern / MDR / Summary / Orders) marked N/A now counts toward “x/4 signed” and Ready for DC, and no longer shows as outstanding. Census and Admission boxes already did.']},
   {v:255, d:'2026-11-22', items:['<b>AM / PM / Dispo</b> switcher is now on the real Plexus (see v253 below): one chunk’s columns at a time, AM / PM box counts, and pre-charted ticks itself once a patient’s AM boxes are done.']},
   {v:254, d:'2026-11-22', items:['<b>Lab Ord</b>: new <b>🏖 Lab holiday</b> button in its pop-up for patients you’re not ordering labs on. It counts as done; tap the box again to clear it.']},
   {v:253, d:'2026-11-22', items:['<b>AM / PM / Dispo</b> chunks. A switcher above the Census shows just one chunk’s columns: <b>AM</b> (pre-charting: Vitals, I/O, FSG, GTT, Lab Rev, Imaging, Last BM, T&amp;S), <b>PM</b> (after rounds: Avatar, Diet, DVT PPx, Disposition, Visit, Note, Attest, Lab Ord, Handoff, Ord Rev, Proc) or <b>Dispo</b> (SW, PT, OT, Services, Dispo notes) — or <b>All</b>. The little numbers are open boxes.', 'Box counts are split into AM and PM (Interns card), and Open boxes follows the chunk you’re on.', '<b>Pre-charted ticks itself</b> once a patient’s AM boxes are all done (untick it and it stays off for that day). Mark discussed stays manual.', 'Rounds · Split: the checklist is now <b>AM rounds</b>, <b>PM rounds</b> and <b>Dispo</b> cards.']},
