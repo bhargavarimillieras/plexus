@@ -159,6 +159,9 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .prow input{min-width:0}
 .pop:has(.plist){width:400px}
 .tc.t-proc .pmore{font-size:10.5px;font-weight:800;margin-left:4px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.08)}
+.tc.t-newadm{background:#f1f3f5;justify-content:center;cursor:default}
+.nadpill{font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#5b6470;background:#e2e6eb;border-radius:999px;padding:3px 8px;white-space:nowrap}
+@media (prefers-color-scheme: dark){ .tc.t-newadm{background:#2a2d33} .nadpill{background:#3a3f47;color:#aab1bb} }
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
@@ -1697,7 +1700,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '267';
+const APP_VERSION = '268';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2396,6 +2399,7 @@ function mutate(fn, {render=true, label=null, cat='system'} = {}){
   pushUndo(); redoStack.length = 0; const before = undoStack[undoStack.length-1];
   if(SANDBOX){ try{ localStorage.removeItem(PRACTICE_PRISTINE); }catch(e){} }
   fn();
+  try{ syncAdmitNotes(); }catch(e){}
   try{ const got = autoPc(); if(got.length) setTimeout(() => toast(`${got.join(', ')}: pre-charted ✓ (AM boxes done)`), 0); }catch(e){}
   let prev = null; try{ prev = JSON.parse(before); }catch(e){}
   if(prev) syncLinked(prev);
@@ -2699,7 +2703,18 @@ const CHUNK = Object.fromEntries(CHUNKS.map(c => [c.k, c]));
 const chunkKeys = ck => CHUNK[ck].keys.filter(k => COLMAP[k] && !colHidden(k));
 const OPTIONAL_KEYS = new Set(['services', 'dispo']);   // nice-to-have notes: never count as open
 const chunkReq = ck => chunkKeys(ck).filter(k => !OPTIONAL_KEYS.has(k));
-const chunkOpen = (p, ck) => chunkReq(ck).filter(k => !isDone(colCfg(k), p.cells[k] || {})).length;
+/* New admits, on the day they come in: the admission already covered these, so they're greyed out with a “New admit” pill
+   and never count as open. From the next day (status → Existing) they're ordinary boxes again. */
+const NEW_COVERED = new Set(['vitals', 'io', 'fsg', 'labrev', 'img', 'vst', 'attest', 'hc']);
+const newCovers = (p, k) => !!p && p.status === 'New' && NEW_COVERED.has(k);
+const chunkOpen = (p, ck) => chunkReq(ck).filter(k => !newCovers(p, k) && !isDone(colCfg(k), p.cells[k] || {})).length;
+// a new admit's Note follows the admission: signed (or N/A) on the Admissions tab → Complete on the census
+function syncAdmitNotes(){
+  state.patients.forEach(p => { if(p.status !== 'New') return; const a = admitOf(p), c = p.cells.note; if(!a || !c || !a.cells.note) return;
+    const signed = ['Signed', 'N/A'].includes(a.cells.note.t);
+    if(signed && c.s !== 'C'){ c.s = 'C'; if(!c.t) c.t = 'H&P'; c.auto = 1; }
+    else if(!signed && c.auto){ c.s = ''; delete c.auto; } });
+}
 const openCount = p => chunkOpen(p, 'am') + chunkOpen(p, 'pm') + chunkOpen(p, 'dispo');   // “boxes open” = AM + PM + Dispo (SW / PT / OT)
 const amComplete = p => chunkOpen(p, 'am') === 0;
 /* Pre-charted ticks itself when every AM box is done (and unticks if one is cleared again, unless you ticked it yourself).
@@ -2993,7 +3008,9 @@ const procLine = it => `${String(it.t || '').trim() || 'Procedure'}${isISO(it.d)
 const procSummary = c => procSorted(c).map(procLine).join('; ');
 const procRowHTML = (it = {t:'', d:''}) => `<div class="prow"><input type="text" data-proct value="${esc(it.t || '')}" placeholder="Procedure (e.g. EGD, TTE, IR drain)" autocomplete="off"><input type="date" data-procd value="${esc(isISO(it.d) ? it.d : '')}" title="Anticipated date"><button class="btn sm" data-prdel title="Remove">✕</button></div>`;
 const cellIsNA = (cell, col) => !!cell && (isStatusType(col.type) ? cell.s === 'N' : col.type === 'checkNote' ? !!cell.c && cell.t === 'N/A' : cell.t === 'N/A');
+const newAdmitCellHTML = col => `<div class="tc t-newadm ${col.size || ''}" title="${esc(col.h)}: covered by today's admission — back to normal from tomorrow"><span class="nadpill">New admit</span></div>`;
 function cellHTML(cell, col, kind, id, ri, ci, ro){
+  if(kind === 'p' && NEW_COVERED.has(col.k)){ const r = rowOf('p', id); if(newCovers(r, col.k)) return newAdmitCellHTML(col); }
   const h = cellHTML0(cell, col, kind, id, ri, ci, ro);
   return cellIsNA(cell, col) ? h.replace('class="tc ', 'class="tc tc-na ') : h;   // N/A cells are lightly greyed out
 }
@@ -6275,7 +6292,7 @@ function applyAll(pkg){
   if(pkg.shortcuts && typeof pkg.shortcuts === 'object'){ scOverrides = pkg.shortcuts; try{ localStorage.setItem(SC_KEY, JSON.stringify(scOverrides)); }catch(e){} }
   if(pkg.colWidths && typeof pkg.colWidths === 'object'){ ui.colW = pkg.colWidths; saveUI(); widthCSS(); }
   if(pkg.activeType && knownBoard(pkg.activeType)){ activeType = pkg.activeType; try{ localStorage.setItem(TYPE_KEY, activeType); }catch(e){} }
-  state = load(); try{ if(autoPc().length) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(activeType).tab; saveUI(); try{ localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){}   // the tidied-up board, so the browser copy matches the screen
+  state = load(); try{ syncAdmitNotes(); if(autoPc().length) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(activeType).tab; saveUI(); try{ localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){}   // the tidied-up board, so the browser copy matches the screen
   try{ localStorage.setItem(LOCAL_SAVED_KEY, pkg.savedAt || new Date().toISOString()); }catch(e){}
   renderAll();
 }
@@ -6531,7 +6548,7 @@ async function dfStartNew(k, d, name, start, bk){
     try{ localStorage.setItem(storeKeyFor(bid), JSON.stringify(board)); localStorage.setItem(logKeyFor(bid), '[]'); }catch(e){}
   });
   activeType = k; try{ localStorage.setItem(TYPE_KEY, k); }catch(e){}
-  state = load(); try{ if(autoPc().length) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(k).tab; if(typeOf(k).admitOnly) ui.admitView = 'today'; saveUI();
+  state = load(); try{ syncAdmitNotes(); if(autoPc().length) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(k).tab; if(typeOf(k).admitOnly) ui.admitView = 'today'; saveUI();
   logAdd([{cat:'shift', msg:`Started a new data file ${h.name} — ${typeOf(k).label}, from ${fmtNoYear(d)}`}]);
   DF.handle = h; DF.name = h.name; DF.status = 'ok'; DF.lastMod = 0; await idbSet(h);
   renderAll(); await dfWrite();
@@ -7054,7 +7071,7 @@ function tabLock(){
 async function tabTakeOver(){
   tabLocked = false; $('#tabLock').hidden = true;
   try{ const k = localStorage.getItem(TYPE_KEY); if(knownBoard(k)) activeType = k; }catch(e){}
-  state = load(); try{ if(autoPc().length) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} loadLog(); undoStack.length = 0; redoStack.length = 0; tabClaim(); renderAll();
+  state = load(); try{ syncAdmitNotes(); if(autoPc().length) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} loadLog(); undoStack.length = 0; redoStack.length = 0; tabClaim(); renderAll();
   if(DF.handle && DF.status === 'ok'){ try{ const f = await DF.handle.getFile(); DF.lastMod = f.lastModified; }catch(e){} }
   toast('This tab is now the active one');
 }
@@ -7934,6 +7951,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:268, d:'2026-11-22', items:['<b>New admits</b> (Sandbox preview): on the day they come in, Vitals, I/O, FSG, Lab Rev, Imaging, Visit and Attest are greyed out with a <b>New admit</b> pill — the admission covered them — and don’t count as open. Fill in Lab Ord, Handoff, Ord Rev and the columns to the right as usual. From the next day they’re ordinary boxes again.', 'A new admit’s <b>Note</b> turns Complete by itself once Note is <b>Signed</b> on the Admissions tab.']},
   {v:267, d:'2026-11-22', items:['The <b>Avatar body map</b> is now on the real Plexus (see v266 below): tap the little figure in an Avatar box.']},
   {v:266, d:'2026-11-22', items:['<b>Avatar body map</b>: tap the little figure in an Avatar box to see every line, drain and tube on a body diagram, numbered, with <b>days in</b> or <b>date placed</b>. Red ring = in longer than your line-days limit.', 'Avatar now asks for <b>side and site</b> for more devices (CVC IJ / subclavian / femoral, A-line radial / brachial / femoral…, HD catheter, PICC, Midline, IABP, chest tubes, drains), so they land in the right place on the map. Chest tubes and drains can be listed more than once.']},
   {v:265, d:'2026-11-22', items:['<b>Stale dates no longer count as done.</b> An <b>expired T&amp;S</b> is an open box until you enter the new one (or N/A). A <b>Last BM</b> older than yesterday is open each morning until you update it — or tap <b>“Still no BM — mark checked”</b> in its pop-up.', '<b>PT / OT</b> now hold the recommendation: Pending, Home, Home w/ services, Acute Rehab, SAR, LTACH, Signed off or N/A. <b>Pending</b> counts as open. Dates already entered show as “Seen 11/20”.']},
