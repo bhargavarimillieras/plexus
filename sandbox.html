@@ -1697,7 +1697,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '266';
+const APP_VERSION = '267';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7934,7 +7934,8 @@ function rotExport(){
 }
 
 const CHANGELOG = [
-  {v:266, d:'2026-11-22', items:['<b>Avatar body map</b> (Sandbox preview): tap the little figure in an Avatar box to see every line, drain and tube on a body diagram, numbered, with <b>days in</b> or <b>date placed</b>. Red ring = in longer than your line-days limit.', 'Avatar now asks for <b>side and site</b> for more devices (CVC IJ / subclavian / femoral, A-line radial / brachial / femoral…, HD catheter, PICC, Midline, IABP, chest tubes, drains), so they land in the right place on the map. Chest tubes and drains can be listed more than once.']},
+  {v:267, d:'2026-11-22', items:['The <b>Avatar body map</b> is now on the real Plexus (see v266 below): tap the little figure in an Avatar box.']},
+  {v:266, d:'2026-11-22', items:['<b>Avatar body map</b>: tap the little figure in an Avatar box to see every line, drain and tube on a body diagram, numbered, with <b>days in</b> or <b>date placed</b>. Red ring = in longer than your line-days limit.', 'Avatar now asks for <b>side and site</b> for more devices (CVC IJ / subclavian / femoral, A-line radial / brachial / femoral…, HD catheter, PICC, Midline, IABP, chest tubes, drains), so they land in the right place on the map. Chest tubes and drains can be listed more than once.']},
   {v:265, d:'2026-11-22', items:['<b>Stale dates no longer count as done.</b> An <b>expired T&amp;S</b> is an open box until you enter the new one (or N/A). A <b>Last BM</b> older than yesterday is open each morning until you update it — or tap <b>“Still no BM — mark checked”</b> in its pop-up.', '<b>PT / OT</b> now hold the recommendation: Pending, Home, Home w/ services, Acute Rehab, SAR, LTACH, Signed off or N/A. <b>Pending</b> counts as open. Dates already entered show as “Seen 11/20”.']},
   {v:264, d:'2026-11-22', items:['<b>GTT</b> pop-up has a <b>search bar</b>: type part of a name, brand or nickname (levo, neo, prop, dex, midaz, cardene…) to filter the list. Enter ticks the top match; if nothing matches, Enter (or Add) adds it as a new drip.']},
   {v:263, d:'2026-11-22', items:['<b>Outstanding</b>: type <b>outstanding</b> (or <b>left</b>, or <b>view outstanding</b>) in the command bar to see what’s left to check off, patient by patient, grouped AM / PM / Dispo. Add <b>am</b>, <b>pm</b>, <b>dispo</b> or a bed to narrow it. Tap any box to jump straight to it.', 'On the iPad: <b>More → Outstanding boxes</b>, and <b>More → Command bar</b>.']},

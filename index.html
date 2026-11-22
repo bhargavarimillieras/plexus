@@ -700,11 +700,49 @@ body.touch .gttsearch input{font-size:16px;padding:9px 11px}
 .gttdot.g-arr,.gttpill.g-arr{background-color:rgba(219,68,155,.14)} .gttdot.g-arr{background:#DB449B}
 .gttpill.g-press{border-color:rgba(234,67,53,.45)}
 .tc.t-ldt{justify-content:flex-start;font-weight:600}
+.tc.t-ldt{position:relative;padding-right:28px}
+.avbtn{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:6px;border:1px solid var(--line2);background:var(--panel);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:var(--accent)}
+.avbtn svg{width:13px;height:13px;fill:currentColor}
+.avbtn:hover{border-color:var(--accent)}
+body.touch .avbtn{width:28px;height:28px}
+body.touch .tc.t-ldt{padding-right:34px}
+.bmhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}.bmhead h3{margin:0;flex:1}
+.bmseg button{font-size:12px;padding:4px 10px}
+.bmwrap{display:grid;grid-template-columns:minmax(320px,470px) 1fr;gap:16px;align-items:start}
+@media (max-width:640px){ .bmwrap{grid-template-columns:1fr} }
+.bmsvg{position:relative;background:var(--head);border:1px solid var(--line);border-radius:12px;padding:8px}
+.bmsvg svg{width:100%;height:auto;display:block;max-height:62vh}
+.bmside{position:absolute;top:8px;left:12px;right:12px;display:flex;justify-content:space-between;font:800 11px/1 inherit;font-family:inherit;color:var(--muted);letter-spacing:.06em}
+.bmfig path,.bmfig circle{fill:var(--panel);stroke:#9aa3ae;stroke-width:1.6;stroke-linejoin:round}
+.bmfig .bmmid{fill:none;stroke:#d5dae0;stroke-dasharray:3 4;stroke-width:1}
+.bmm circle{stroke:#fff;stroke-width:2;cursor:pointer}
+.bmm.old circle{stroke:#d93025;stroke-width:3}
+.bmm.unset circle{stroke-dasharray:2.5 2;stroke:#5f6368;stroke-width:1.6}
+.bmm .bmn{font:800 9px/1 -apple-system,BlinkMacSystemFont,sans-serif;fill:#fff;text-anchor:middle;pointer-events:none}
+.bmm .bmt{font:600 11.5px/1 -apple-system,BlinkMacSystemFont,sans-serif;fill:var(--muted)}
+.bmm .bmtn{font-weight:800;fill:var(--ink)}
+.bmlead{fill:none;stroke:#b4bcc6;stroke-width:1}
+.bmm.old .bmlead{stroke:#e8a09a}
+.bmm.hl .bmlead{stroke:var(--accent);stroke-width:1.6}
+.bmm.hl .bmtn{fill:var(--accent)}
+.bmm.old .bmtd{fill:#c5221f;font-weight:800}
+.bmm.hl circle{r:10}
+.bmleg{display:flex;flex-direction:column;gap:2px;max-height:62vh;overflow:auto}
+.bml{display:flex;gap:9px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:default}
+.bml i{flex:0 0 20px;height:20px;border-radius:50%;color:#fff;font:800 11px/20px inherit;font-family:inherit;font-style:normal;text-align:center}
+.bml.hl{background:var(--info-bg)}
+.bml.old b.bmold{color:#c5221f}
+.bml.gone{color:var(--muted);font-size:12.5px;padding:3px 8px}
+.bmgh{margin-top:10px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 8px}
+.bmwarn{font-size:11px;font-weight:700;color:#b06000;background:#fef3e0;border-radius:4px;padding:1px 5px}
+
 .tc.ldt-none{background:var(--ldt-none);color:var(--muted)}
 .tc.ldt-ok{background:var(--panel);color:var(--ink);box-shadow:inset 3px 0 0 #4285F4}
 .tc.ldt-old{background:#EA4335;color:#fff}
 .tc.ldt-ok:focus{box-shadow:inset 3px 0 0 #4285F4, inset 0 0 0 2px var(--focus)}
 .ldtlist{display:flex;flex-direction:column;max-height:300px;overflow:auto;border:1px solid var(--line);border-radius:8px;margin-bottom:6px}
+.ldtlist:not(.gttlist){max-height:min(52vh,520px)}
+body.touch .ldtlist:not(.gttlist){max-height:min(56vh,600px)}
 .ldtrow{display:grid;grid-template-columns:20px 1fr 128px 46px;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
 .ldtrow:first-child{border-top:0}
 .ldtgrp{position:sticky;top:0;z-index:1;padding:5px 8px 3px;font:800 10px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--panel2,var(--bg));border-top:1px solid var(--line)}
@@ -1659,7 +1697,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '265';
+const APP_VERSION = '267';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2164,12 +2202,12 @@ function practiceDemo(r){
   const mk = (bed, intern, problem, status, ago, set) => { const p = {id:uid(), bed, intern, problem, status, admitDate:addDays(bd, -ago), cells:blankCells(ALL_COLS)};
     Object.entries(set).forEach(([k, v]) => { p.cells[k] = Array.isArray(v) ? {s:v[0], t:v[1]} : (typeof v === 'object' ? Object.assign({s:'', t:''}, v) : {s:v, t:''}); }); return p; };
   return normalize({version:1, boardDate:bd, patients:[
-      mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:{in:1800, out:2100}, avatar:'C', labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
-      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {gtt:{items:[{k:'Lasix'}]}, vitals:'C', io:{in:1500, out:2700, t:'goal net −2 L'}, avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
-      mk('CCU-3', 'Intern A', 'Complete heart block → PPM today', 'Existing', 1, {vitals:'C', io:{in:1200, out:1000}, avatar:['A', 'Temp wire in R IJ'], labrev:'C', note:['', 'Progress'], diet:['', 'NPO after midnight'], dvt:['', 'HELD'], proc:['', 'PPM placement'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
-      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {gtt:{items:[{k:'Norepinephrine'}, {k:'Milrinone'}]}, vitals:['R', 'MAP 62–65'], io:{in:2400, out:1650}, avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
-      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {gtt:{items:[{k:'Amiodarone'}, {k:'Lidocaine'}]}, vitals:'C', io:{in:1600, out:1900}, avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
-      mk('CCU-6', 'Intern B', 'Severe AS, pre-TAVR workup', 'Existing', 5, {hc:Y, vitals:'C', io:{in:1400, out:1300}, avatar:'C', labrev:'C', vst:Y, note:['', 'Progress'], attest:Y, bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'LMWH'], pt:['', addDays(bd, -2)], ot:['', addDays(bd, -2)], proc:['', 'CTA TAVR protocol'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
+      mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:{in:1800, out:2100}, avatar:{items:[{k:'PIV', d:addDays(bd, -3), side:'R', site:'forearm'}, {k:'PIV', d:addDays(bd, -1), side:'L', site:'AC'}]}, labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
+      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {gtt:{items:[{k:'Lasix'}]}, vitals:'C', io:{in:1500, out:2700, t:'goal net −2 L'}, avatar:{items:[{k:'PICC', d:addDays(bd, -6), side:'R', site:'upper arm'}, {k:'PIV', d:addDays(bd, -4), side:'L', site:'hand'}, {k:'Foley catheter', d:addDays(bd, -4)}]}, labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
+      mk('CCU-3', 'Intern A', 'Complete heart block → PPM today', 'Existing', 1, {vitals:'C', io:{in:1200, out:1000}, avatar:{items:[{k:'Temporary pacing wire', d:addDays(bd, -1), side:'R', site:'IJ'}, {k:'PIV', d:addDays(bd, -2), side:'R', site:'AC'}, {k:'Foley catheter', d:addDays(bd, -1)}]}, labrev:'C', note:['', 'Progress'], diet:['', 'NPO after midnight'], dvt:['', 'HELD'], proc:['', 'PPM placement'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
+      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {gtt:{items:[{k:'Norepinephrine'}, {k:'Milrinone'}]}, vitals:['R', 'MAP 62–65'], io:{in:2400, out:1650}, avatar:{items:[{k:'ETT', d:addDays(bd, -5)}, {k:'OG tube', d:addDays(bd, -5)}, {k:'CVC', d:addDays(bd, -9), side:'L', site:'IJ'}, {k:'S-G catheter', d:addDays(bd, -5), side:'R', site:'IJ'}, {k:'Arterial line', d:addDays(bd, -5), side:'R', site:'radial'}, {k:'IABP', d:addDays(bd, -2), side:'L', site:'femoral'}, {k:'Foley catheter', d:addDays(bd, -9)}]}, labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
+      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {gtt:{items:[{k:'Amiodarone'}, {k:'Lidocaine'}]}, vitals:'C', io:{in:1600, out:1900}, avatar:{items:[{k:'CVC', d:addDays(bd, -2), side:'R', site:'IJ'}, {k:'Arterial line', d:addDays(bd, -2), side:'L', site:'radial'}, {k:'PIV', d:addDays(bd, -3), side:'L', site:'forearm'}, {k:'Foley catheter', d:addDays(bd, -2)}]}, labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
+      mk('CCU-6', 'Intern B', 'Severe AS, pre-TAVR workup', 'Existing', 5, {hc:Y, vitals:'C', io:{in:1400, out:1300}, avatar:{items:[{k:'PIV', d:addDays(bd, -1), side:'R', site:'hand'}]}, labrev:'C', vst:Y, note:['', 'Progress'], attest:Y, bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'LMWH'], pt:['', addDays(bd, -2)], ot:['', addDays(bd, -2)], proc:['', 'CTA TAVR protocol'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
     ], admits:[], archive:[], history:[],
     settings:{team:'', interns:['Intern A', 'Intern B'], internCaps:{'Intern A':5, 'Intern B':5}, tsHours:72, bmDays:3, ptotDays:2, shiftType:r.id}});
 }
@@ -2714,8 +2752,11 @@ const LDT_GROUPS = [['Vascular access', ['PIV', 'Midline', 'PICC', 'CVC', 'Arter
   ['Airway', ['ETT', 'Trach']],
   ['Drains', ['Chest tube', 'JP drain', 'Pigtail drain', 'Biliary drain', 'EVD']]];
 const ldtGroupOf = n => { const l = String(n).toLowerCase(), i = LDT_GROUPS.findIndex(g => g[1].some(x => x.toLowerCase() === l)); return i < 0 ? LDT_GROUPS.length : i; };
-const LDT_SITES = {'PIV':['hand', 'wrist', 'forearm', 'AC', 'upper arm', 'EJ', 'foot']};
-const LDT_MULTI = new Set(['PIV']);
+const LDT_SITES = {'PIV':['hand', 'wrist', 'forearm', 'AC', 'upper arm', 'EJ', 'foot'], 'Midline':['upper arm', 'forearm'], 'PICC':['upper arm'],
+  'CVC':['IJ', 'subclavian', 'femoral'], 'Arterial line':['radial', 'brachial', 'axillary', 'femoral', 'dorsalis pedis'], 'HD catheter':['IJ', 'femoral', 'subclavian'], 'Port':['chest'],
+  'IABP':['femoral', 'axillary'], 'Impella':['femoral', 'axillary'], 'ECMO cannula':['IJ', 'femoral'], 'S-G catheter':['IJ', 'subclavian', 'femoral'], 'Swan-Ganz':['IJ', 'subclavian', 'femoral'],
+  'PA catheter':['IJ', 'subclavian', 'femoral'], 'Temporary pacing wire':['IJ', 'femoral'], 'Chest tube':['chest'], 'Pigtail drain':['chest', 'abdomen'], 'JP drain':['abdomen', 'chest', 'neck'], 'Nephrostomy tube':['flank']};
+const LDT_MULTI = new Set(['PIV', 'Chest tube', 'JP drain', 'Pigtail drain']);
 const LDT_SITE_SHORT = {forearm:'FA', 'upper arm':'UA'};
 const ldtLoc = it => [it.side, it.site].filter(Boolean).join(' ');
 const ldtLocShort = it => [it.side, LDT_SITE_SHORT[it.site] || it.site].filter(Boolean).join(' ');
@@ -2731,6 +2772,74 @@ function ldtCellTxt(items){ const out = [];
 // ICU/CCU-only devices: hidden from the Avatar list on other boards, unless the patient already has one (e.g. arrived from the ICU)
 const LDT_ICU_ONLY = ['CVC', 'Arterial line', 'IABP', 'S-G catheter', 'ETT'];
 const ldtIcuOnly = n => LDT_ICU_ONLY.some(x => x.toLowerCase() === String(n).toLowerCase());
+
+/* ---------- Avatar body map: where each line / drain / tube sits, and for how long ----------
+   Front view in anatomical position: the patient's RIGHT is on the viewer's LEFT. Coordinates below are for the patient's right side;
+   left-sided devices are mirrored. Midline devices (ETT, Foley…) ignore side. */
+const BM_SITE = {hand:[34,262], wrist:[38,240], forearm:[43,212], AC:[49,176], 'upper arm':[55,134], EJ:[88,78], foot:[82,452],
+  IJ:[91,84], subclavian:[76,103], femoral:[85,262], radial:[38,236], brachial:[50,168], axillary:[64,113], 'dorsalis pedis':[81,446],
+  chest:[66,160], port:[80,116], abdomen:[86,214], neck:[90,80], flank:[68,212]};
+const BM_MID = {'ETT':[100,57], 'Trach':[100,82], 'NG tube':[100,47], 'OG tube':[100,59], 'Dobhoff':[100,47], 'Foley catheter':[100,266], 'Suprapubic catheter':[100,248], 'Condom catheter':[100,270],
+  'Rectal tube':[100,278], 'Flexi-Seal':[100,278], 'G-tube / PEG':[113,196], 'J-tube':[113,212], 'Biliary drain':[83,190], 'EVD':[100,24]};
+const BM_DEFAULT = {PIV:'forearm', Midline:'upper arm', PICC:'upper arm', CVC:'IJ', 'Arterial line':'radial', 'HD catheter':'IJ', Port:'port', IABP:'femoral', Impella:'femoral',
+  'ECMO cannula':'femoral', 'S-G catheter':'IJ', 'Swan-Ganz':'IJ', 'PA catheter':'IJ', 'Temporary pacing wire':'IJ', 'Chest tube':'chest', 'Pigtail drain':'chest', 'JP drain':'abdomen', 'Nephrostomy tube':'flank'};
+const BM_COLOR = ['#d93025', '#e8a200', '#188038', '#1a73e8', '#8e44ad', '#5f6368'];   // vascular, urinary, GI, airway, drains, other
+function bmPoint(it){
+  const mid = Object.keys(BM_MID).find(k => k.toLowerCase() === String(it.k).toLowerCase());
+  if(mid) return {xy:BM_MID[mid], set:true, mid:true};
+  const site = it.site === 'chest' && it.k === 'Port' ? 'port' : it.site, xy0 = BM_SITE[site] || BM_SITE[BM_DEFAULT[it.k]] || BM_SITE.chest;
+  const xy = it.side === 'L' ? [200 - xy0[0], xy0[1]] : xy0;
+  return {xy, set:!!(BM_SITE[site] && it.side), mid:false};
+}
+const BM_FIGURE = `<g class="bmfig">
+  <circle cx="100" cy="40" r="23"/><path d="M92 62 h16 v14 h-16z"/>
+  <path d="M66 82 Q100 72 134 82 L140 96 Q146 150 134 196 L132 244 Q100 256 68 244 L66 196 Q54 150 60 96 Z"/>
+  <path d="M64 86 Q52 92 52 112 L46 172 L38 238 L32 256 Q30 270 38 272 Q44 270 44 258 L50 240 L58 176 L66 118"/>
+  <path d="M136 86 Q148 92 148 112 L154 172 L162 238 L168 256 Q170 270 162 272 Q156 270 156 258 L150 240 L142 176 L134 118"/>
+  <path d="M70 246 L74 340 L76 432 L72 452 Q72 460 86 458 L88 432 L94 340 L98 258"/><path d="M130 246 L126 340 L124 432 L128 452 Q128 460 114 458 L112 432 L106 340 L102 258"/>
+  <path class="bmmid" d="M100 84 V240"/></g>`;
+function bodyMapHTML(cell, mode){
+  const items = ldtActive(cell).map((it, i) => ({it, i:i + 1, p:bmPoint(it), g:Math.min(ldtGroupOf(it.k), 5)}));
+  // keep markers from sitting on top of each other: nudge outward until there's room
+  const placed = []; items.forEach(m => { let [x, y] = m.p.xy; const dir = m.p.mid ? 1 : x < 100 ? -1 : 1; let n = 0;
+    while(placed.some(q => Math.hypot(q[0] - x, q[1] - y) < 15) && n < 8){ x += dir * 15; n++; } placed.push([x, y]); m.xy = [x, y]; });
+  // labels go in columns either side of the figure (patient's right on the left), spread out so they never overlap, with a leader line
+  let alt = 0; items.forEach(m => { m.side = m.p.mid ? (alt++ % 2 ? 'L' : 'R') : m.xy[0] < 100 ? 'R' : 'L'; });
+  ['R', 'L'].forEach(sd => { const col = items.filter(m => m.side === sd).sort((a, b) => a.xy[1] - b.xy[1]); let last = -1e9;
+    col.forEach(m => { m.ly = Math.max(m.xy[1], last + 22); last = m.ly; });
+    const over = last - 455; if(over > 0) col.forEach(m => { m.ly -= over; }); });
+  const tag = it => mode === 'date' ? (isISO(it.d) ? fmtShort(it.d) : 'no date') : (isISO(it.d) ? 'day ' + ldtAge(it) : 'no date');
+  const marks = items.map(m => { const [x, y] = m.xy, L = m.side === 'R', lx = L ? -6 : 206, old = ldtOld(m.it);
+    return `<g class="bmm ${old ? 'old' : ''} ${m.p.set ? '' : 'unset'}" data-bmi="${m.i}">
+      <polyline class="bmlead" points="${x},${y} ${L ? 18 : 182},${m.ly} ${lx},${m.ly}"/>
+      <text x="${L ? lx - 4 : lx + 4}" y="${m.ly + 4}" class="bmt" text-anchor="${L ? 'end' : 'start'}"><tspan class="bmtn">${esc(LDT_SHORT[m.it.k] || m.it.k)}</tspan> <tspan class="bmtd">${esc(tag(m.it))}</tspan></text>
+      <circle cx="${x}" cy="${y}" r="7.5" fill="${BM_COLOR[m.g]}"/><text x="${x}" y="${y + 3.3}" class="bmn">${m.i}</text></g>`; }).join('');
+  const legend = items.map(m => { const it = m.it, age = ldtAge(it), old = ldtOld(it), loc = ldtLoc(it);
+    const where = loc ? esc(loc) : m.p.mid ? '' : `<span class="bmwarn" title="Set side and site in Edit lines to place it exactly">location not set</span>`;
+    return `<div class="bml ${old ? 'old' : ''}" data-bmi="${m.i}"><i style="background:${BM_COLOR[m.g]}">${m.i}</i><div><b>${esc(it.k)}</b> ${where}
+      <div class="muted">${isISO(it.d) ? `placed ${esc(fmtShort(it.d))} · <b class="${old ? 'bmold' : ''}">day ${age}</b>` : 'no date placed'}</div></div></div>`; }).join('');
+  const gone = ldtRemoved(cell).map(it => `<div class="bml gone"><s>${esc(ldtLabel(it))}</s> <span class="muted">removed ${isISO(it.rm) ? esc(fmtShort(it.rm)) : ''}${ldtAge(it) !== null ? ` after ${ldtAge(it)} day${ldtAge(it) === 1 ? '' : 's'}` : ''}</span></div>`).join('');
+  return `<div class="bmwrap"><div class="bmsvg"><div class="bmside"><span>Patient’s R</span><span>Patient’s L</span></div>
+      <svg viewBox="-132 0 464 470" role="img" aria-label="Body diagram of lines, drains and tubes">${BM_FIGURE}${marks}</svg></div>
+    <div class="bmleg">${items.length ? legend : '<div class="muted">No lines, drains or tubes in.</div>'}${gone ? `<div class="bmgh">Removed (last 30 days)</div>${gone}` : ''}
+      <div class="muted small" style="margin-top:8px">Red = in longer than ${state.settings.ldtDays} days. Dashed circle = side / site not set yet (shown at the usual spot).</div></div></div>`;
+}
+function openBodyMap(kind, id){
+  const r = rowOf(kind, id); if(!r) return; let mode = 'days';
+  try{ mode = localStorage.getItem(`${KEY_PREFIX}.bmMode`) || 'days'; }catch(e){}
+  const head = () => `<div class="bmhead"><h3>${esc(r.bed || 'Patient')} · Lines, drains &amp; tubes</h3><div class="seg sm bmseg"><button data-bmmode="days" class="${mode === 'days' ? 'on' : ''}">Days in</button><button data-bmmode="date" class="${mode === 'date' ? 'on' : ''}">Date placed</button></div></div>`;
+  modal(`<div id="bmBody">${head()}${bodyMapHTML(r.cells.avatar, mode)}</div>`, [['Edit lines', '', () => setTimeout(() => {
+      const el = document.querySelector(`.tc.t-ldt[data-id="${id}"][data-kind="${kind}"]`); if(el) openPop(el); }, 30)], ['Close', 'primary']], m => {
+    m.classList.add('wide', 'bmmodal');
+    m.addEventListener('click', e => { const b = e.target.closest('[data-bmmode]'); if(b){ mode = b.dataset.bmmode; try{ localStorage.setItem(`${KEY_PREFIX}.bmMode`, mode); }catch(err){} m.querySelector('#bmBody').innerHTML = head() + bodyMapHTML(r.cells.avatar, mode); return; }
+      const h = e.target.closest('[data-bmi]'); m.querySelectorAll('[data-bmi]').forEach(x => x.classList.toggle('hl', !!h && x.dataset.bmi === h.dataset.bmi)); });
+    m.addEventListener('mouseover', e => { const h = e.target.closest('[data-bmi]'); m.querySelectorAll('[data-bmi]').forEach(x => x.classList.toggle('hl', !!h && x.dataset.bmi === h.dataset.bmi)); });
+  });
+}
+// the little figure in the Avatar cell opens the map (and doesn't open the edit pop-up)
+window.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-avbody]'); if(!b) return; e.preventDefault(); e.stopImmediatePropagation(); openBodyMap(b.dataset.kind, b.dataset.avbody); }, true);
+['pointerdown', 'mousedown'].forEach(t => window.addEventListener(t, e => { if(e.target.closest && e.target.closest('[data-avbody]')) e.stopPropagation(); }, true));
+const AV_ICON = `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="3" r="2.2"/><path d="M4.2 6.2h7.6l-1.3 4.2H9.6L9.2 15H6.8l-.4-4.6H5.5z"/></svg>`;
 function ldtPopHTML(col, cell){
   const items = ldtActive(cell), icu = isCritCare();
   const names = [...new Set([...col.opts.map(o => o.label), ...items.map(i => i.k).filter(k => !col.opts.some(o => o.label === k))])].filter(n => icu || !ldtIcuOnly(n) || items.some(i => i.k === n));
@@ -2912,7 +3021,7 @@ function cellHTML0(cell, col, kind, id, ri, ci, ro){
     const items = ldtActive(cell), gone = ldtRecentGone(cell), old = items.some(ldtOld), st = !items.length && !gone.length ? 'none' : old ? 'old' : 'ok';
     const txt = ldtCellTxt(items), goneH = gone.map(it => `<s class="ldtgone">${esc(LDT_SHORT[it.k] || it.k)}</s>`).join(' ');
     const title = `${col.h}: ${ldtItems(cell).length ? ldtSummary(cell) : 'no lines / drains / tubes'}`;
-    return `<div class="tc t-ldt ldt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}${txt && goneH ? ' · ' : ''}${goneH}</span></div>`;
+    return `<div class="tc t-ldt ldt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}${txt && goneH ? ' · ' : ''}${goneH}</span>${ldtItems(cell).length ? `<button type="button" class="avbtn" data-avbody="${id}" data-kind="${kind}" title="Body map — where each line is and how long it's been in" aria-label="Body map">${AV_ICON}</button>` : ''}</div>`;
   }
   const statusy = isStatusType(col.type);
   const st = statusy ? SMAP[cell.s] : null;
@@ -7825,6 +7934,8 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:267, d:'2026-11-22', items:['The <b>Avatar body map</b> is now on the real Plexus (see v266 below): tap the little figure in an Avatar box.']},
+  {v:266, d:'2026-11-22', items:['<b>Avatar body map</b>: tap the little figure in an Avatar box to see every line, drain and tube on a body diagram, numbered, with <b>days in</b> or <b>date placed</b>. Red ring = in longer than your line-days limit.', 'Avatar now asks for <b>side and site</b> for more devices (CVC IJ / subclavian / femoral, A-line radial / brachial / femoral…, HD catheter, PICC, Midline, IABP, chest tubes, drains), so they land in the right place on the map. Chest tubes and drains can be listed more than once.']},
   {v:265, d:'2026-11-22', items:['<b>Stale dates no longer count as done.</b> An <b>expired T&amp;S</b> is an open box until you enter the new one (or N/A). A <b>Last BM</b> older than yesterday is open each morning until you update it — or tap <b>“Still no BM — mark checked”</b> in its pop-up.', '<b>PT / OT</b> now hold the recommendation: Pending, Home, Home w/ services, Acute Rehab, SAR, LTACH, Signed off or N/A. <b>Pending</b> counts as open. Dates already entered show as “Seen 11/20”.']},
   {v:264, d:'2026-11-22', items:['<b>GTT</b> pop-up has a <b>search bar</b>: type part of a name, brand or nickname (levo, neo, prop, dex, midaz, cardene…) to filter the list. Enter ticks the top match; if nothing matches, Enter (or Add) adds it as a new drip.']},
   {v:263, d:'2026-11-22', items:['<b>Outstanding</b>: type <b>outstanding</b> (or <b>left</b>, or <b>view outstanding</b>) in the command bar to see what’s left to check off, patient by patient, grouped AM / PM / Dispo. Add <b>am</b>, <b>pm</b>, <b>dispo</b> or a bed to narrow it. Tap any box to jump straight to it.', 'On the iPad: <b>More → Outstanding boxes</b>, and <b>More → Command bar</b>.']},
