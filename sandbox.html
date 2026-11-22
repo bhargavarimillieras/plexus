@@ -677,6 +677,11 @@ body.touch #tkBedSel{font-size:15px;padding:8px}#tkTeam{width:130px}#tkText{flex
 .tc.gtt-on:focus,.tc.gtt-press:focus{box-shadow:inset 3px 0 0 currentColor, inset 0 0 0 2px var(--focus)}
 .pop:has(.gttlist){width:260px}
 .gttlist{max-height:340px}
+.gttsearch{display:flex;gap:6px;margin-bottom:6px}
+.gttsearch input{flex:1;min-width:0;padding:6px 9px;border:1px solid var(--line2);border-radius:7px;background:var(--panel);font:inherit;font-size:13px}
+body.touch .gttsearch input{font-size:16px;padding:9px 11px}
+.gttnone{padding:10px;font-size:12px}
+.gttrow[hidden],.ldtgrp[hidden]{display:none}
 .gttrow{display:grid;grid-template-columns:20px 1fr;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
 .ldtgrp+.gttrow{border-top:0}
 .gttrow.on{background:var(--info-bg)}
@@ -1654,7 +1659,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '263';
+const APP_VERSION = '264';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2813,26 +2818,42 @@ const gttLabel = it => it.k;
 const gttSummary = cell => gttItems(cell).map(gttLabel).join('; ');
 // census cell: "Norepi · Vaso · Prop" (no doses — nursing titrates them)
 const gttCellTxt = cell => gttItems(cell).map(it => GTT_SHORT[it.k] || it.k).join(' · ');
-const gttRowHTML = (n, on) => `<label class="gttrow ${on ? 'on' : ''}"><input type="checkbox" data-gtt="${esc(n)}" ${on ? 'checked' : ''}><span class="gttn"><i class="gttdot g-${gttCat(n)}"></i>${esc(n)}</span></label>`;
+// other names people type for each drip (generic ↔ brand ↔ slang)
+const GTT_ALIAS = {Epinephrine:'epi adrenaline', Norepinephrine:'norepi levophed levo ne', Vasopressin:'vaso pitressin', Phenylephrine:'phenyl neo neosynephrine', 'Angiotensin II':'ang ii giapreza at2', Dopamine:'dopa',
+  Dobutamine:'dobut dobu', Milrinone:'milri', Nicardipine:'nicard cardene', Nitroglycerin:'nitro ntg tng', Nitroprusside:'nipride snp', Esmolol:'brevibloc', Lasix:'furosemide', Bumex:'bumetanide',
+  Insulin:'insulin gtt', Versed:'midazolam', Propofol:'diprivan prop', Precedex:'dexmedetomidine dex', Ativan:'lorazepam', Morphine:'mso4', Dilaudid:'hydromorphone', Fentanyl:'fent',
+  Amiodarone:'amio', Lidocaine:'lido', Diltiazem:'dilt cardizem'};
+const gttRowHTML = (n, on) => `<label class="gttrow ${on ? 'on' : ''}" data-q="${esc((n + ' ' + (GTT_SHORT[n] || '') + ' ' + (GTT_ALIAS[n] || '')).toLowerCase())}"><input type="checkbox" data-gtt="${esc(n)}" ${on ? 'checked' : ''}><span class="gttn"><i class="gttdot g-${gttCat(n)}"></i>${esc(n)}</span></label>`;
 function gttPopHTML(cell){
   const items = gttItems(cell), find = n => items.find(i => i.k.toLowerCase() === n.toLowerCase());
   const known = new Set(GTT_GROUPS.flatMap(g => g[1].map(x => x.toLowerCase()))), extra = items.filter(i => !known.has(i.k.toLowerCase()));
   const html = GTT_GROUPS.map(([h, list]) => `<div class="ldtgrp">${esc(h)}</div>${list.map(n => gttRowHTML(n, find(n))).join('')}`).join('')
     + `<div class="ldtgrp gttoth" ${extra.length ? '' : 'hidden'}>Other</div>${extra.map(it => gttRowHTML(it.k, true)).join('')}`;
-  return `<div class="ldtlist gttlist">${html}</div>
-    <div class="ed"><input type="text" data-gttnew placeholder="Add another drip (e.g. Heparin, Ketamine)"><button class="btn sm" data-gttadd>Add</button></div>
-    <div class="muted" style="font-size:11px;margin-top:5px">Tick what's running. Only shows on ICU / CCU boards.</div>`;
+  return `<div class="gttsearch"><input type="search" data-gttq placeholder="Search or add a drip (levo, prop…)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button class="btn sm" data-gttadd hidden>Add</button></div>
+    <div class="ldtlist gttlist">${html}<div class="muted gttnone" hidden></div></div>
+    <div class="muted" style="font-size:11px;margin-top:5px">Tick what's running. Enter ticks the top match, or adds a new drip if nothing matches. Only shows on ICU / CCU boards.</div>`;
 }
 function wireGttPop(el){
-  const list = el.querySelector('.gttlist');
+  const list = el.querySelector('.gttlist'), q = el.querySelector('[data-gttq]'), addB = el.querySelector('[data-gttadd]'), none = list.querySelector('.gttnone');
   list.addEventListener('change', e => { const lab = e.target.closest('.gttrow'); if(lab) lab.classList.toggle('on', lab.querySelector('[data-gtt]').checked); });
-  const nw = el.querySelector('[data-gttnew]');
-  const add = () => { const n = nw.value.trim(); if(!n) return; nw.value = '';
-    let lab = [...list.querySelectorAll('.gttrow')].find(l => l.querySelector('[data-gtt]').dataset.gtt.toLowerCase() === n.toLowerCase());
-    if(!lab){ const tmp = document.createElement('div'); tmp.innerHTML = gttRowHTML(n); lab = tmp.firstElementChild; list.appendChild(lab); list.querySelector('.gttoth').hidden = false; }
-    lab.querySelector('[data-gtt]').checked = true; lab.classList.add('on'); lab.scrollIntoView({block:'nearest'}); nw.focus(); };
-  el.querySelector('[data-gttadd]').addEventListener('click', e => { e.stopPropagation(); add(); });
-  nw.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); add(); } });
+  const rows = () => [...list.querySelectorAll('.gttrow')];
+  const filter = () => { const t = q.value.trim().toLowerCase(); let hdr = null, any = false, shown = 0;
+    [...list.children].forEach(c => { if(c.classList.contains('ldtgrp')){ if(hdr) hdr.hidden = !any || (hdr.classList.contains('gttoth') && !hdr.dataset.has); hdr = c; any = false; }
+      else if(c.classList.contains('gttrow')){ const ok = !t || t.split(/\s+/).every(w => c.dataset.q.split(/[\s/-]+/).some(x => x.startsWith(w))); c.hidden = !ok; if(ok){ any = true; shown++; } } });
+    if(hdr) hdr.hidden = !any;
+    none.hidden = !t || shown > 0; none.textContent = t ? `No drip called “${q.value.trim()}” — press Enter or Add to add it.` : '';
+    addB.hidden = !t || shown > 0; if(t) list.scrollTop = 0; };
+  const add = () => { const n = q.value.trim(); if(!n) return;
+    const vis = rows().filter(r => !r.hidden);
+    let lab = rows().find(l => l.querySelector('[data-gtt]').dataset.gtt.toLowerCase() === n.toLowerCase()) || vis[0];
+    if(!lab){ const tmp = document.createElement('div'); tmp.innerHTML = gttRowHTML(n.replace(/^./, ch => ch.toUpperCase())); lab = tmp.firstElementChild; list.insertBefore(lab, none); list.querySelector('.gttoth').dataset.has = '1'; }
+    const cb = lab.querySelector('[data-gtt]'); cb.checked = true; lab.classList.add('on');
+    q.value = ''; filter(); lab.scrollIntoView({block:'nearest'}); toast(`${cb.dataset.gtt} ✓`); if(!document.body.classList.contains('touch')) q.focus(); };
+  q.addEventListener('input', filter);
+  q.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); add(); } else if(e.key === 'Escape' && q.value){ e.preventDefault(); e.stopPropagation(); q.value = ''; filter(); } });
+  addB.addEventListener('click', e => { e.stopPropagation(); add(); });
+  if(list.querySelector('.gttoth:not([hidden])')) list.querySelector('.gttoth').dataset.has = '1';
+  if(!document.body.classList.contains('touch')) setTimeout(() => q.focus(), 30);
 }
 function commitGtt(p, r, el){
   const seen = new Set(), items = [];
@@ -7791,6 +7812,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:264, d:'2026-11-22', items:['<b>GTT</b> pop-up has a <b>search bar</b>: type part of a name, brand or nickname (levo, neo, prop, dex, midaz, cardene…) to filter the list. Enter ticks the top match; if nothing matches, Enter (or Add) adds it as a new drip.']},
   {v:263, d:'2026-11-22', items:['<b>Outstanding</b>: type <b>outstanding</b> (or <b>left</b>, or <b>view outstanding</b>) in the command bar to see what’s left to check off, patient by patient, grouped AM / PM / Dispo. Add <b>am</b>, <b>pm</b>, <b>dispo</b> or a bed to narrow it. Tap any box to jump straight to it.', 'On the iPad: <b>More → Outstanding boxes</b>, and <b>More → Command bar</b>.']},
   {v:262, d:'2026-11-22', items:['<b>Proc</b> can be marked <b>N/A</b> (no procedures planned): the N/A button in its pop-up, or long-press the box like the other checkboxes. It greys out like other N/A cells.']},
   {v:261, d:'2026-11-22', items:['<b>EDD can be Unknown</b>: tap the <b>?</b> next to an empty EDD (Census, Discharges, Rounds). It shows an “Unknown” pill; tap the pill to pick a date instead.']},
