@@ -1648,7 +1648,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '261';
+const APP_VERSION = '262';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2840,7 +2840,7 @@ const gttPills = cell => gttItems(cell).map(it => `<span class="gttpill g-${gttC
 /* ---------- rendering: shared cell ---------- */
 function procWhen(d){ if(!isISO(d)) return ''; const n = daysBetween(state.boardDate, d); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 0 ? 'past' : 'later'; }
 /* Proc holds a list of procedures [{t, d}]; older boards kept one in cell.t / cell.d */
-const procItems = c => !c ? [] : Array.isArray(c.items) && c.items.length ? c.items : (String(c.t || '').trim() || isISO(c.d)) ? [{t:c.t || '', d:c.d || ''}] : [];
+const procItems = c => !c || c.t === 'N/A' ? [] : Array.isArray(c.items) && c.items.length ? c.items : (String(c.t || '').trim() || isISO(c.d)) ? [{t:c.t || '', d:c.d || ''}] : [];
 const procRank = it => { const w = procWhen(it.d); return w === 'today' ? 0 : w === 'tomorrow' ? 1 : w === 'later' ? 2 : !w ? 3 : 4; };
 const procSorted = c => procItems(c).slice().sort((a, b) => procRank(a) - procRank(b) || String(a.d || '').localeCompare(String(b.d || '')));
 const procWhenTxt = d => { const w = procWhen(d); return w === 'today' ? 'today' : w === 'tomorrow' ? 'tomorrow' : isISO(d) ? fmtShort(d) : 'no date'; };
@@ -2854,6 +2854,7 @@ function cellHTML(cell, col, kind, id, ri, ci, ro){
 }
 function cellHTML0(cell, col, kind, id, ri, ci, ro){
   if(col.type === 'proc'){
+    if(cell.t === 'N/A') return `<div class="tc t-proc proc-none ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h)}: N/A — no procedures planned"><span class="txt">N/A</span></div>`;
     const its = procSorted(cell), f = its[0] || {}, name = String(f.t || '').trim(), d = f.d || '', w = procWhen(d), st = !its.length ? 'none' : w || 'nodate';
     const when = w === 'today' ? 'today' : w === 'tomorrow' ? 'tmrw' : d ? fmtShort(d) : '';
     const title = `${col.h}: ` + (its.length ? its.map(it => `${String(it.t || '').trim() || '(no name)'} — ${isISO(it.d) ? fmtLong(it.d) + (procWhen(it.d) === 'past' ? ' (date has passed)' : '') : 'no date set'}`).join('; ') : 'none');
@@ -3799,7 +3800,7 @@ function openPop(cellEl, focusEditor=false){
   } else if(col.type === 'proc'){
     const its = procSorted(cell);
     body += `<div class="plist">${(its.length ? its : [{t:'', d:''}]).map(procRowHTML).join('')}</div>
-      <div class="ed"><button class="btn sm" data-pradd>+ Add procedure</button><span style="flex:1"></span><button class="btn sm" data-pday="0">Today</button><button class="btn sm" data-pday="1">Tomorrow</button><button class="btn sm" data-pday="2">+2d</button></div>
+      <div class="ed"><button class="btn sm" data-pradd>+ Add procedure</button><button class="btn sm ${cell.t === 'N/A' ? 'primary' : ''}" data-procna title="No procedures planned">N/A</button><span style="flex:1"></span><button class="btn sm" data-pday="0">Today</button><button class="btn sm" data-pday="1">Tomorrow</button><button class="btn sm" data-pday="2">+2d</button></div>
       <div class="muted" style="font-size:11px;margin-top:5px">Today / Tomorrow / +2d set the date on the procedure you're typing in. ✕ removes one.</div>`;
   } else if(col.type === 'statusChoice'){
     const list = [...col.opts.map(o => o.label)]; if(cell.t && !list.includes(cell.t)) list.unshift(cell.t);
@@ -3860,6 +3861,7 @@ function openPop(cellEl, focusEditor=false){
       edEl.focus(); return;
     }
     if(b.hasAttribute('data-na')){ finish({t: cell.t==='N/A' ? '' : 'N/A'}); return; }
+    if(b.hasAttribute('data-procna')){ finish(cell.t === 'N/A' ? {t:'', items:[], d:''} : {t:'N/A', items:[], d:''}); return; }
     if(b.hasAttribute('data-labhol')){ finish(cell.c && cell.t === 'Lab holiday' ? {c:false, t:''} : {c:true, t:'Lab holiday'}); return; }
     if(b.dataset.editopts){ closePop(false); columnsEditor(b.dataset.editopts); return; }
     if(b.hasAttribute('data-done')) closePop(true);
@@ -7367,9 +7369,10 @@ function toggleNA(cellEl){ const kind = cellEl.dataset.kind, id = cellEl.dataset
   const c = r.cells[col] || {}, isNA = c.t === 'N/A';
   if(cfg.type === 'check') setCell(kind, id, col, {t:isNA ? '' : 'N/A', s:''});
   else if(cfg.type === 'checkNote') setCell(kind, id, col, isNA ? {c:false, t:''} : {c:true, t:'N/A'});
+  else if(cfg.type === 'proc'){ if(!isNA && procItems(c).length){ toast(`${cfg.h}: remove the procedures first`); return; } setCell(kind, id, col, {t:isNA ? '' : 'N/A', items:[], d:''}); }
   else return;
   toast(`${cfg.h}: ${isNA ? 'cleared' : 'N/A'}`); }
-const naCell = t => { const el = t && t.closest && t.closest('.tc.t-check, .tc.t-checkNote'); return el && el.hasAttribute('tabindex') ? el : null; };
+const naCell = t => { const el = t && t.closest && t.closest('.tc.t-check, .tc.t-checkNote, .tc.t-proc'); return el && el.hasAttribute('tabindex') ? el : null; };
 { let lp = null, swallow = false;
   document.addEventListener('pointerdown', e => { const el = naCell(e.target); if(!el || e.pointerType === 'mouse') return; el.classList.add('lp');
     lp = {el, x:e.clientX, y:e.clientY, t:setTimeout(() => { el.classList.remove('lp'); lp = null; swallow = true; toggleNA(el); try{ navigator.vibrate && navigator.vibrate(15); }catch(err){} }, 550)}; });
@@ -7751,6 +7754,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:262, d:'2026-11-22', items:['<b>Proc</b> can be marked <b>N/A</b> (no procedures planned): the N/A button in its pop-up, or long-press the box like the other checkboxes. It greys out like other N/A cells.']},
   {v:261, d:'2026-11-22', items:['<b>EDD can be Unknown</b>: tap the <b>?</b> next to an empty EDD (Census, Discharges, Rounds). It shows an “Unknown” pill; tap the pill to pick a date instead.']},
   {v:260, d:'2026-11-22', items:['Cells marked <b>N/A</b> are lightly greyed out.', '<b>Proc</b> holds several procedures, each with its own date — <b>+ Add procedure</b> in the pop-up, ✕ to remove one. The census shows the soonest one with “+2” for the rest; Validation lists them all.']},
   {v:259, d:'2026-11-22', items:['<b>SW, PT and OT</b> now count toward a patient being done (box counts, Open boxes, and the green bed cell). <b>Services</b> and <b>Dispo notes</b> are optional and never count as open.']},
