@@ -1053,6 +1053,12 @@ tr:hover .bedpen,.bedpen:focus-visible{opacity:1}.bedpen:hover{color:var(--ink);
 .vcount{margin-left:auto;background:var(--bad-bg);color:var(--bad-ink);border-radius:10px;padding:0 8px;font-size:12px}
 .vcount.zero{background:var(--g-standing);color:#2f8a46}
 .vnone{padding:7px 12px;color:var(--muted)}
+.osrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 10px}
+.osck{font-size:10.5px;font-weight:800;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+.ossep{width:10px}
+.oschip{border:1px solid var(--line2);background:var(--panel);border-radius:999px;padding:4px 10px;font:600 12.5px/1.2 inherit;font-family:inherit;cursor:pointer;color:var(--ink)}
+.oschip:hover{border-color:var(--accent);color:var(--accent)}
+body.touch .oschip{padding:7px 12px;font-size:14px}
 .vitem{display:block;width:100%;text-align:left;border:0;border-top:1px solid var(--line);background:var(--panel);padding:7px 12px;cursor:pointer}
 .vitem:first-of-type{border-top:0}
 .vitem:hover{background:var(--hover)}
@@ -1648,7 +1654,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '262';
+const APP_VERSION = '263';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4716,7 +4722,27 @@ function jumpToAdmit(id, col){
   const el = document.querySelector(`#admitGrid [data-field="acell:${col}"][data-id="${id}"]`);
   if(el){ const td = el.closest('td'); td.scrollIntoView({block:'center', inline:'center'}); el.focus({preventScroll:true}); td.classList.add('pulsetd'); setTimeout(() => td.classList.remove('pulsetd'), 1600); }
 }
+/* Outstanding: what's still open for each patient (AM / PM / Dispo — Services and Dispo notes are optional) */
+function outstanding(ck, onlyId){
+  const cks = ck ? [ck] : CHUNKS.map(c => c.k);
+  return censusOrder().filter(p => !onlyId || p.id === onlyId).map(p => ({p, by:cks.map(c => ({c, keys:chunkReq(c).filter(k => !isDone(colCfg(k), p.cells[k] || {}))})).filter(x => x.keys.length)})).filter(x => x.by.length);
+}
+const censusOrder = () => state.patients.slice();   // the census is kept in the order you've arranged it
+function showOutstanding(ck, onlyId){
+  const list = outstanding(ck, onlyId), total = list.reduce((n, x) => n + x.by.reduce((m, b) => m + b.keys.length, 0), 0);
+  const scope = (ck ? CHUNK[ck].label + ' ' : '') + 'boxes';
+  const h = `<h3>Outstanding${onlyId && list[0] ? ' · ' + esc(list[0].p.bed || '') : ''}</h3>
+    <p class="muted" style="margin-top:-4px">${total ? `<b>${total}</b> open ${esc(scope)} across <b>${list.length}</b> patient${list.length === 1 ? '' : 's'}. Tap one to jump to it.` : `✓ Nothing outstanding — every ${esc(scope.replace(/boxes$/, 'box'))} is done.`} <span class="small">Services and Dispo notes are optional.</span></p>
+    ${list.map(({p, by}) => `<div class="vsec"><div class="vhead">${esc(p.bed || '—')} <span class="muted" style="font-weight:500">${esc(p.intern || '')}${p.problem ? ' · ' + esc(p.problem) : ''}</span></div>
+      <div class="osrow">${by.map(b => `<span class="osck">${esc(CHUNK[b.c].label)}</span>${b.keys.map(k => `<button class="oschip" data-jump="${p.id}" data-col="${k}">${esc(colCfg(k).h)}</button>`).join('')}`).join('<span class="ossep"></span>')}</div></div>`).join('')}`;
+  const text = () => list.map(({p, by}) => `${p.bed || '—'}${p.intern ? ' (' + p.intern + ')' : ''}: ` + by.map(b => `${CHUNK[b.c].label} — ${b.keys.map(k => colCfg(k).h).join(', ')}`).join('; ')).join('\n') || 'Nothing outstanding';
+  modal(h, [...(total ? [['Copy as text', '', () => copyText('Outstanding\n' + text())]] : []), ['Close', 'primary']], m => {
+    m.classList.add('wide');
+    m.addEventListener('click', e => { const b = e.target.closest('.oschip'); if(!b) return; closeModal(); if(ui.tab !== 'census') scGoTab('census'); jumpTo(b.dataset.jump, b.dataset.col); });
+  });
+}
 function jumpTo(id, col){
+  if(CHUNK[ui.chunk] && !CHUNK[ui.chunk].keys.includes(col)){ const c = CHUNKS.find(c => c.keys.includes(col)); ui.chunk = c ? c.k : 'all'; }
   ui.tab = 'census'; ui.filter = 'all'; ui.intern = ''; ui.search = ''; $('#search').value = '';
   const g = GROUPS.find(g => g.cols.some(c => c.k === col)); if(g) ui.hidden = ui.hidden.filter(x => x !== g.k);
   if(state.settings.hiddenCols.includes(col)){ mutate(() => { state.settings.hiddenCols = state.settings.hiddenCols.filter(x => x !== col); }); toast(`Showing the ${colCfg(col).h} column again`); }
@@ -6567,6 +6593,7 @@ const CMD_VERBS = [
   ['validate', 'validate', 'Run Validation for this tab'], ['signback', 'signback', 'Copy the night-task sign-back'],
   ['signout', 'signout', 'Copy the morning sign-out list (admitting nights)'], ['full', 'full', 'Tasks timeline full screen on / off'],
   ['rounds', 'rounds', 'Start Rounds'], ['print', 'print', 'Print the sign-out sheet'], ['take', 'take', 'Take with me — copy to carry to the next computer'], ['hide', 'hide', 'Hide the screen (privacy)'], ['whatsnew', 'whatsnew', 'What’s new in this version'], ['tidy', 'tidy', 'Move shifts older than 2 weeks out of the data file'], ['backup', 'backup', 'Back up now'], ['newshift', 'newshift', 'Start a new shift'], ['endshift', 'endshift', 'End this shift'],
+  ['outstanding', 'outstanding', 'What’s left to check off — add am / pm / dispo or a bed (also: left, view outstanding)'],
   ['help', 'help', 'Show every command'],
 ];
 function cmdParse(input){
@@ -6614,6 +6641,14 @@ function cmdParse(input){
         });
         scGoTab('admits'); if(ui.admitView === 'open'){ ui.admitView = 'today'; saveUI(); renderAdmits(); }
         cmdPulse('a', id); return `${hold ? 'Moonlighter hold' : 'Admission'} added — ${bed}`; }};
+  }
+  if(['outstanding', 'out', 'left', 'remaining', 'open'].includes(v) || (v === 'view' && /^(out|left|rem|open)/.test((rest[0] || '').toLowerCase()))){
+    const args = (v === 'view' ? rest.slice(1) : rest).map(w => w.toLowerCase()), ck = args.find(w => CHUNK[w]), bw = (v === 'view' ? rest.slice(1) : rest).filter(w => !CHUNK[w.toLowerCase()]);
+    let one = null; if(bw.length){ const b = cmdBed(bw, ents); one = b.ent && b.ent.p; if(!one) return {err:'outstanding [am / pm / dispo] [bed]', sugg:(b.cands || []).filter(e => e.p).slice(0, 8).map(e => ({label:esc(e.bed), fill:`outstanding ${ck ? ck + ' ' : ''}${e.bed}`}))}; }
+    const list = outstanding(ck, one && one.id), n = list.reduce((x, o) => x + o.by.reduce((m, b) => m + b.keys.length, 0), 0);
+    return {nav:true, html:n ? `Show <b>${n}</b> outstanding ${ck ? CHUNK[ck].label + ' ' : ''}box${n === 1 ? '' : 'es'}${one ? ` for <b>${esc(one.bed)}</b>` : ` · ${list.length} patient${list.length === 1 ? '' : 's'}`}` : `✓ Nothing outstanding${one ? ' for ' + esc(one.bed) : ''}`,
+      run:() => { showOutstanding(ck, one && one.id); return ''; },
+      sugg:list.slice(0, 6).map(o => ({label:`${esc(o.p.bed || '—')} <span class="muted">${esc(o.by.map(b => b.keys.map(k => colCfg(k).h).join(', ')).join(' · '))}</span>`, fill:`outstanding ${o.p.bed}`}))};
   }
   if(v === 'pc'){
     if(!rest.length){ const left = pcPool().filter(p => !isPc(p));
@@ -6805,7 +6840,7 @@ function cmdHelp(){
   const ex = [['ED15L visit complete', 'Tick Visit (also: ED15L visit — no word needed)'], ['ED15L visit undo', 'Untick it'], ['ED-21 medrec pended', 'Set an Admissions dropdown — signed, pended, incomplete, N/A, clear'],
     ['ED-21 dvt heparin', 'Diet / DVT PPx — any option, first letters are enough'], ['ED-21 team GM2', 'Admission fields: team, timein, arrived, problem, from'], ['ED-21 bed 14E05/01', 'New bed (ED → floor) — the tasks move with the patient'], ['14E12/02 arrived now', 'Tisch: patient is on the floor (or arrived 21:40)'],
     ['7W05 vitals done', 'Census status — complete, revisit, pending, ordered, panic, N/A, comments, ALOC, or 1–8'], ['7W05 io revisit low UOP', 'Status with a note'], ['7W05 edd tomorrow', 'Dates — today, tomorrow, +2, 10/30'],
-    ['7W05 dest home', 'Census dropdowns'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['pc 7W05', 'Pre-charted ✓ (just “pc” shows who’s left)'], ['snooze ED-21 lactate 30', 'Push a task back'],
+    ['7W05 dest home', 'Census dropdowns'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['pc 7W05', 'Pre-charted ✓ (just “pc” shows who’s left)'], ['outstanding', 'What’s left to check off, patient by patient — or “outstanding am”, “outstanding 7W05”'], ['snooze ED-21 lactate 30', 'Push a task back'],
     ['admit ED-14 sepsis', 'New admission'], ['hold ED-30 CAP from Dr K', 'New moonlighter hold'], ['go census', 'Change tab — overview, census, admits, discharges, transfers, tasks, history, analytics, log (just “tasks” or “go adm” works too)']];
   modal(`<h3>Command bar</h3><p class="muted" style="margin-top:-4px">Open with <kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>:</kbd>. Beds can be typed without dashes or slashes (<b>ed15l</b>, <b>14e1202</b>); column names can be shortened (<b>ed</b>, <b>pl</b>, <b>mr</b>, <b>so</b>). You see what will happen before Enter, and <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes it.</p>
     <table class="sctab">${ex.map(([c, d]) => `<tr><td><code class="cmdcode">${esc(c)}</code></td><td>${esc(d)}</td></tr>`).join('')}</table>
@@ -7327,6 +7362,8 @@ function moreSheet(){
   sheet(`<h5>Pages</h5>
     ${tbSwap()[1] === 'transfers' ? '<button class="row" data-do="tab:transfers"><span class="ic">⇄</span>Transfers</button>' : '<button class="row" data-do="tab:discharges"><span class="ic">⇥</span>Discharges</button>'}
     <button class="row" data-do="tab:history"><span class="ic">🗂</span>History &amp; Archive</button>
+    <button class="row" data-do="outstanding"><span class="ic">☐</span>Outstanding boxes<span class="sub">${(() => { const n = state.patients.reduce((x, p) => x + openCount(p), 0); return n ? n + ' open' : 'all done'; })()}</span></button>
+    <button class="row" data-do="cmdbar"><span class="ic">⌘</span>Command bar</button>
     ${$('#tabs button[data-tab=census]').hidden ? '' : ''}
     <h5>Shift</h5>
     <button class="row" data-do="switch"><span class="ic">⇆</span>Switch board…<span class="sub">${esc(typeOf(activeType).label)}</span></button>
@@ -7338,7 +7375,7 @@ function moreSheet(){
     <button class="row" data-do="restore"><span class="ic">↺</span>Restore from Files…</button>
     <button class="row" data-do="privBtn"><span class="ic">👁</span>Hide screen</button>
     <button class="row" data-do="settingsBtn"><span class="ic">⚙</span>Settings</button>`,
-  d => { if(d.startsWith('tab:')) touchTab(d.slice(4)); else if(d === 'files') filesBackup(); else if(d === 'restore') filesRestorePick(); else if(d === 'switch') switchBoardFlow(); else if(d === 'sched') showRotSetup({edit:activeType}); else { const b = document.getElementById(d); if(b) b.click(); } });
+  d => { if(d.startsWith('tab:')) touchTab(d.slice(4)); else if(d === 'outstanding') showOutstanding(); else if(d === 'cmdbar') cmdOpen(); else if(d === 'files') filesBackup(); else if(d === 'restore') filesRestorePick(); else if(d === 'switch') switchBoardFlow(); else if(d === 'sched') showRotSetup({edit:activeType}); else { const b = document.getElementById(d); if(b) b.click(); } });
 }
 // ---- command bar: tappable starters ----
 function cmdChips(){
@@ -7754,6 +7791,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:263, d:'2026-11-22', items:['<b>Outstanding</b>: type <b>outstanding</b> (or <b>left</b>, or <b>view outstanding</b>) in the command bar to see what’s left to check off, patient by patient, grouped AM / PM / Dispo. Add <b>am</b>, <b>pm</b>, <b>dispo</b> or a bed to narrow it. Tap any box to jump straight to it.', 'On the iPad: <b>More → Outstanding boxes</b>, and <b>More → Command bar</b>.']},
   {v:262, d:'2026-11-22', items:['<b>Proc</b> can be marked <b>N/A</b> (no procedures planned): the N/A button in its pop-up, or long-press the box like the other checkboxes. It greys out like other N/A cells.']},
   {v:261, d:'2026-11-22', items:['<b>EDD can be Unknown</b>: tap the <b>?</b> next to an empty EDD (Census, Discharges, Rounds). It shows an “Unknown” pill; tap the pill to pick a date instead.']},
   {v:260, d:'2026-11-22', items:['Cells marked <b>N/A</b> are lightly greyed out.', '<b>Proc</b> holds several procedures, each with its own date — <b>+ Add procedure</b> in the pop-up, ✕ to remove one. The census shows the soonest one with “+2” for the rest; Validation lists them all.']},
