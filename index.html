@@ -189,6 +189,8 @@ body.touch .dmod{padding:7px 12px;font-size:14px}
 .ionet b{font:800 18px ui-monospace,"SF Mono",Menlo,monospace}
 .ionet b.neg{color:#1a56b8}.ionet b.pos{color:#9a5b00}.ionet b.bad{color:#c5221f;font-size:13px}
 @media (prefers-color-scheme: dark){.tc.io-neg{background:rgba(66,133,244,.2);color:#9cc3ff}.tc.io-pos{background:rgba(245,184,61,.18);color:#f5c86a}.tc.io-even,.tc.io-part{background:rgba(255,255,255,.06);color:#c3cad6}.ionet b.neg{color:#9cc3ff}.ionet b.pos{color:#f5c86a}}
+.tc.t-check .box.na,.tc.t-checkNote .box.na{width:auto}
+.tc .box.na.hol{padding:0 6px;color:#0b6e63;background:#d9f2ee;border-color:#9fd8cf;letter-spacing:0;white-space:nowrap}
 .tc .box.na{width:auto;min-width:30px;padding:0 4px;font:800 10px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.04em;color:#5f6673;background:#eceef2;border-color:#c9ced8}
 .tc.lp{transform:scale(.94);transition:transform .45s}
 body.touch .tc.t-check,body.touch .tc.t-checkNote{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
@@ -1622,7 +1624,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '252';
+const APP_VERSION = '254';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2823,7 +2825,7 @@ function cellHTML(cell, col, kind, id, ri, ci, ro){
   if(col.type === 'check' || col.type === 'checkNote') txt = '';
   const glyph = st ? `<i class="sglyph" aria-hidden="true">${st.g}</i>` : '';
   const cls = `tc s-${(statusy && cell.s)||'0'} ${ocls} t-${col.type} ${col.size||''} ${glyph && !txt ? 'gonly' : ''}`;
-  return `<div class="${cls}" style="${style}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}">${col.type === 'checkNote' ? `<span class="cnwrap">${cell.c && cell.t === 'N/A' ? '<span class="box na" data-box="1">N/A</span>' : `<span class="box ${cell.c?'on':''}" data-box="1">${cell.c?'✓':''}</span>${cell.t ? `<span class="cntimes">${esc(cell.t)}</span>` : ''}`}</span>` : col.type === 'check' ? (cell.t === 'N/A' ? '<span class="box na">N/A</span>' : `<span class="box ${cell.t?'on':''}">${cell.t?'✓':''}</span>`) : `${glyph}<span class="txt">${esc(txt)}</span>`}</div>`;
+  return `<div class="${cls}" style="${style}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}">${col.type === 'checkNote' ? `<span class="cnwrap">${cell.c && cell.t === 'N/A' ? '<span class="box na" data-box="1">N/A</span>' : cell.c && cell.t === 'Lab holiday' ? '<span class="box na hol" data-box="1" title="Lab holiday — no labs planned">🏖 Holiday</span>' : `<span class="box ${cell.c?'on':''}" data-box="1">${cell.c?'✓':''}</span>${cell.t ? `<span class="cntimes">${esc(cell.t)}</span>` : ''}`}</span>` : col.type === 'check' ? (cell.t === 'N/A' ? '<span class="box na">N/A</span>' : `<span class="box ${cell.t?'on':''}">${cell.t?'✓':''}</span>`) : `${glyph}<span class="txt">${esc(txt)}</span>`}</div>`;
 }
 function selHTML(field, val, opts, {blank=true, cls='cell', ro=false, kind, id} = {}){
   const list = [...opts]; if(val && !list.includes(val)) list.unshift(val);
@@ -3725,7 +3727,7 @@ function openPop(cellEl, focusEditor=false){
   } else if(col.type === 'checkNote'){
     body += `<label class="cnrow"><input type="checkbox" data-cn ${cell.c ? 'checked' : ''}> Done</label>
       <div class="ed"><input type="text" data-ed value="${esc(cell.t)}" placeholder="Times, e.g. 9 am, 9 pm"><button class="btn sm" data-now title="Add the current time">+ Now</button></div>
-      <div class="muted" style="font-size:11px;margin-top:5px">Separate rounds with commas. Typing a time ticks the box.</div>`;
+      <div class="muted" style="font-size:11px;margin-top:5px">Separate rounds with commas. Typing a time ticks the box.</div>${col.k === 'labord' ? `<button class="btn sm ${cell.c && cell.t === 'Lab holiday' ? 'primary' : ''}" data-labhol style="margin-top:8px;width:100%">🏖 Lab holiday${cell.c && cell.t === 'Lab holiday' ? ' ✓' : ''}</button>` : ''}`;
   } else if(col.type === 'date'){
     body += `<div class="ed"><input type="date" data-ed value="${esc(isISO(cell.t)?cell.t:'')}" ${cell.t==='N/A'?'disabled':''}><button class="btn sm" data-today>Today</button><button class="btn sm ${cell.t==='N/A'?'primary':''}" data-na>N/A</button></div>`;
   } else {
@@ -3771,6 +3773,7 @@ function openPop(cellEl, focusEditor=false){
       edEl.focus(); return;
     }
     if(b.hasAttribute('data-na')){ finish({t: cell.t==='N/A' ? '' : 'N/A'}); return; }
+    if(b.hasAttribute('data-labhol')){ finish(cell.c && cell.t === 'Lab holiday' ? {c:false, t:''} : {c:true, t:'Lab holiday'}); return; }
     if(b.dataset.editopts){ closePop(false); columnsEditor(b.dataset.editopts); return; }
     if(b.hasAttribute('data-done')) closePop(true);
   });
@@ -3796,6 +3799,7 @@ function onCellClick(e){
   lastFocus = {kind,id,col};
   if(colOf(kind,col).type === 'checkNote' && e.target.closest('[data-box]')){
     const r = rowOf(kind,id), ticking = !r.cells[col].c;
+    if(r.cells[col].c && r.cells[col].t === 'Lab holiday'){ setCell(kind,id,col,{c:false, t:''}); return; }   // tapping the holiday box clears it
     setCell(kind,id,col,{c: ticking});
     if(ticking){   // ticking the box opens the times field right away
       const el = document.querySelector(`.tc[data-kind="${kind}"][data-id="${id}"][data-col="${col}"]`);
@@ -7660,6 +7664,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:254, d:'2026-11-22', items:['<b>Lab Ord</b>: new <b>🏖 Lab holiday</b> button in its pop-up for patients you’re not ordering labs on. It counts as done; tap the box again to clear it.']},
   {v:252, d:'2026-11-22', items:['<b>GTT</b>: Nitroglycerin added under Anti-HTN.']},
   {v:251, d:'2026-11-22', items:['Rounds · Split: <b>GTT</b> now sits between Diet and DVT PPx in At a glance.']},
   {v:250, d:'2026-11-22', items:['<b>GTT</b>: new <b>Diuretics</b> group (Lasix, Bumex).']},
