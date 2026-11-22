@@ -149,6 +149,8 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .chunkseg .chn{font-style:normal;font-size:10.5px;font-weight:800;margin-left:5px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.08);vertical-align:1px}
 .chunkseg button.on .chn{background:rgba(255,255,255,.28)}
 #groupToggles.chunked{display:none}
+#censusGrid td.stk.alldone{background:#e3f4e7 !important}
+@media (prefers-color-scheme: dark){ #censusGrid td.stk.alldone{background:#1f3a28 !important} }
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
@@ -1635,7 +1637,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '256';
+const APP_VERSION = '257';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2986,7 +2988,8 @@ function gridHTML(patients, {ro=false} = {}){
     }
     h += `<tr class="${p.status==='Discharge'?'dc':''}" data-id="${p.id}" data-intern="${esc(p.intern||'')}">`;
     h += `<td class="stk" style="${stkStyle(0)}"><div class="seqc">${ro ? '' : `<span class="drag" draggable="true" data-drag="${p.id}" title="Drag to move this patient">⠿</span>`}<span>${ri+1}</span>${ro?'':`<span class="rowbtns"><button data-act="up" data-id="${p.id}" title="Move up">▲</button><button data-act="down" data-id="${p.id}" title="Move down">▼</button><button data-act="del" data-id="${p.id}" title="Remove patient">✕</button></span>`}</div></td>`;
-    h += `<td class="stk" style="${stkStyle(1)}"><div class="bedpc">${bedBoxHTML('p', p, ro, ro ? 60 : 56)}${pcBtn(p, ro)}${rdBtn(p, ro)}</div></td>`;
+    const allDone = openCount(p) === 0;   // every AM + PM box done (N/A and Lab holiday count)
+    h += `<td class="stk ${allDone ? 'alldone' : ''}" style="${stkStyle(1)}" ${allDone ? 'title="All boxes done for today"' : ''}><div class="bedpc">${bedBoxHTML('p', p, ro, ro ? 60 : 56)}${pcBtn(p, ro)}${rdBtn(p, ro)}</div></td>`;
     h += `<td class="stk" style="${stkStyle(2)}">${selHTML('intern', p.intern, state.settings.interns, {ro, kind:'p', id:p.id})}</td>`;
     h += `<td class="stk hdtd" style="${stkStyle(3)}">${hdCell(p, ro)}</td>`;
     h += `<td class="stk last" style="${stkStyle(4)}"><div class="probwrap"><input class="cell" data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" ${ro?'disabled':''} placeholder="One-liner / problem">${(fl.length || !ro) ? `<div class="flags">${flagsHTML(p, fl, ro)}${ro ? '' : leftBtn(p, dcSigned(p) === DC_KEYS.length)}</div>` : ''}</div></td>`;
@@ -7701,6 +7704,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:257, d:'2026-11-22', items:['The <b>bed cell turns light green</b> on the Census once every AM and PM box for that patient is done (N/A and Lab holiday count), so you can see who you’re finished with for the day.']},
   {v:256, d:'2026-11-22', items:['<b>N/A counts as done everywhere</b>: Discharge paperwork (Intern / MDR / Summary / Orders) marked N/A now counts toward “x/4 signed” and Ready for DC, and no longer shows as outstanding. Census and Admission boxes already did.']},
   {v:255, d:'2026-11-22', items:['<b>AM / PM / Dispo</b> switcher is now on the real Plexus (see v253 below): one chunk’s columns at a time, AM / PM box counts, and pre-charted ticks itself once a patient’s AM boxes are done.']},
   {v:254, d:'2026-11-22', items:['<b>Lab Ord</b>: new <b>🏖 Lab holiday</b> button in its pop-up for patients you’re not ordering labs on. It counts as done; tap the box again to clear it.']},
