@@ -151,6 +151,14 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 #groupToggles.chunked{display:none}
 #censusGrid td.stk.alldone{background:#e3f4e7 !important}
 @media (prefers-color-scheme: dark){ #censusGrid td.stk.alldone{background:#1f3a28 !important} }
+.grid .tc.tc-na{background:#eef0f3 !important;color:#8a919c !important;box-shadow:none !important}
+.grid .tc.tc-na .box,.grid .tc.tc-na .cn{opacity:.75}
+@media (prefers-color-scheme: dark){ .grid .tc.tc-na{background:#2a2d33 !important;color:#8a919c !important} }
+.plist{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;margin-bottom:6px}
+.prow{display:grid;grid-template-columns:1fr 138px auto;gap:6px;align-items:center}
+.prow input{min-width:0}
+.pop:has(.plist){width:400px}
+.tc.t-proc .pmore{font-size:10.5px;font-weight:800;margin-left:4px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.08)}
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
@@ -1637,7 +1645,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '259';
+const APP_VERSION = '260';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2505,7 +2513,7 @@ function cellDesc(cfg, c){
   switch(cfg.type){
     case 'status': case 'statusChoice': return [SMAP[c.s] ? SMAP[c.s].label : (c.s ? c.s : ''), c.t].filter(Boolean).join(' · ') || 'cleared';
     case 'check': return c.t ? 'checked' : 'unchecked';
-    case 'proc': return c.t || c.d ? `${c.t || 'procedure'}${isISO(c.d) ? ' on ' + fmtShort(c.d) : ''}` : 'cleared';
+    case 'proc': return procItems(c).length ? procSummary(c) : 'cleared';
     case 'ldt': return ldtItems(c).length ? ldtItems(c).map(i => ldtLabel(i) + (i.rm ? ' removed ' + fmtShort(i.rm) : isISO(i.d) ? ' ' + fmtShort(i.d) : '')).join(', ') : 'none';
     case 'gtt': return gttItems(c).length ? gttSummary(c) : 'none';
     case 'io': return ioText(c) || (c.t ? q(c.t) : 'cleared');
@@ -2828,12 +2836,25 @@ const gttPills = cell => gttItems(cell).map(it => `<span class="gttpill g-${gttC
 
 /* ---------- rendering: shared cell ---------- */
 function procWhen(d){ if(!isISO(d)) return ''; const n = daysBetween(state.boardDate, d); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 0 ? 'past' : 'later'; }
+/* Proc holds a list of procedures [{t, d}]; older boards kept one in cell.t / cell.d */
+const procItems = c => !c ? [] : Array.isArray(c.items) && c.items.length ? c.items : (String(c.t || '').trim() || isISO(c.d)) ? [{t:c.t || '', d:c.d || ''}] : [];
+const procRank = it => { const w = procWhen(it.d); return w === 'today' ? 0 : w === 'tomorrow' ? 1 : w === 'later' ? 2 : !w ? 3 : 4; };
+const procSorted = c => procItems(c).slice().sort((a, b) => procRank(a) - procRank(b) || String(a.d || '').localeCompare(String(b.d || '')));
+const procWhenTxt = d => { const w = procWhen(d); return w === 'today' ? 'today' : w === 'tomorrow' ? 'tomorrow' : isISO(d) ? fmtShort(d) : 'no date'; };
+const procLine = it => `${String(it.t || '').trim() || 'Procedure'}${isISO(it.d) ? ' · ' + fmtShort(it.d) : ''}`;
+const procSummary = c => procSorted(c).map(procLine).join('; ');
+const procRowHTML = (it = {t:'', d:''}) => `<div class="prow"><input type="text" data-proct value="${esc(it.t || '')}" placeholder="Procedure (e.g. EGD, TTE, IR drain)" autocomplete="off"><input type="date" data-procd value="${esc(isISO(it.d) ? it.d : '')}" title="Anticipated date"><button class="btn sm" data-prdel title="Remove">✕</button></div>`;
+const cellIsNA = (cell, col) => !!cell && (isStatusType(col.type) ? cell.s === 'N' : col.type === 'checkNote' ? !!cell.c && cell.t === 'N/A' : cell.t === 'N/A');
 function cellHTML(cell, col, kind, id, ri, ci, ro){
+  const h = cellHTML0(cell, col, kind, id, ri, ci, ro);
+  return cellIsNA(cell, col) ? h.replace('class="tc ', 'class="tc tc-na ') : h;   // N/A cells are lightly greyed out
+}
+function cellHTML0(cell, col, kind, id, ri, ci, ro){
   if(col.type === 'proc'){
-    const name = (cell.t || '').trim(), d = cell.d || '', w = procWhen(d), st = !name && !d ? 'none' : w || 'nodate';
+    const its = procSorted(cell), f = its[0] || {}, name = String(f.t || '').trim(), d = f.d || '', w = procWhen(d), st = !its.length ? 'none' : w || 'nodate';
     const when = w === 'today' ? 'today' : w === 'tomorrow' ? 'tmrw' : d ? fmtShort(d) : '';
-    const title = `${col.h}: ${name || '(no name)'}${d ? ' — ' + fmtLong(d) + (w === 'today' ? ' (today)' : w === 'tomorrow' ? ' (tomorrow)' : w === 'past' ? ' (date has passed)' : '') : name ? ' — no date set' : ''}`;
-    return `<div class="tc t-proc proc-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}">${name || d ? `<span class="txt">${esc(name || 'Procedure')}</span>${when ? `<span class="pdate">${esc(when)}</span>` : ''}` : ''}</div>`;
+    const title = `${col.h}: ` + (its.length ? its.map(it => `${String(it.t || '').trim() || '(no name)'} — ${isISO(it.d) ? fmtLong(it.d) + (procWhen(it.d) === 'past' ? ' (date has passed)' : '') : 'no date set'}`).join('; ') : 'none');
+    return `<div class="tc t-proc proc-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}">${its.length ? `<span class="txt">${esc(name || 'Procedure')}</span>${when ? `<span class="pdate">${esc(when)}</span>` : ''}${its.length > 1 ? `<span class="pmore">+${its.length - 1}</span>` : ''}` : ''}</div>`;
   }
   if(col.type === 'io'){
     const n = ioNet(cell), legacy = n === null && !ioNum(cell.in) && !ioNum(cell.out) && SMAP[cell.s];
@@ -3708,8 +3729,8 @@ function closePop(commit=true){
         const patch = {t, s:''}; patch.in = a === null ? undefined : a; patch.out = b === null ? undefined : b; patch.goal = g === null ? undefined : g; setCell(p.kind, p.id, p.k, patch); } }
     else if(gl && r) commitGtt(p, r, p.el);
     else if(lw && r) commitLdt(p, r, p.el);
-    else if(pd && r){ const t = p.el.querySelector('[data-proct]').value.trim(), d = isISO(pd.value) ? pd.value : '', c = r.cells[p.k];
-      if(t !== (c.t || '') || d !== (c.d || '')) setCell(p.kind, p.id, p.k, {t, d}); }
+    else if(pd && r){ const items = [...p.el.querySelectorAll('.plist .prow')].map(x => ({t:x.querySelector('[data-proct]').value.trim(), d:isISO(x.querySelector('[data-procd]').value) ? x.querySelector('[data-procd]').value : ''})).filter(it => it.t || it.d);
+      if(JSON.stringify(items) !== JSON.stringify(procSorted(r.cells[p.k]))) setCell(p.kind, p.id, p.k, {items, t:'', d:''}); }
     else if(cb && r){
       const t = ed.value.trim(), cell = r.cells[p.k];
       let c = cb.checked; if(t && t !== (cell.t||'') && !cell.c && c === !!cell.c) c = true;   // typing a new time ticks the box
@@ -3763,8 +3784,10 @@ function openPop(cellEl, focusEditor=false){
   } else if(col.type === 'ldt'){
     body += ldtPopHTML(col, cell);
   } else if(col.type === 'proc'){
-    body += `<div class="ed"><input type="text" data-ed data-proct value="${esc(cell.t || '')}" placeholder="Procedure (e.g. EGD, TTE, IR drain)"></div>
-      <div class="ed"><input type="date" data-procd value="${esc(isISO(cell.d) ? cell.d : '')}" title="Anticipated date"><button class="btn sm" data-pday="0">Today</button><button class="btn sm" data-pday="1">Tomorrow</button><button class="btn sm" data-pday="2">+2d</button></div>`;
+    const its = procSorted(cell);
+    body += `<div class="plist">${(its.length ? its : [{t:'', d:''}]).map(procRowHTML).join('')}</div>
+      <div class="ed"><button class="btn sm" data-pradd>+ Add procedure</button><span style="flex:1"></span><button class="btn sm" data-pday="0">Today</button><button class="btn sm" data-pday="1">Tomorrow</button><button class="btn sm" data-pday="2">+2d</button></div>
+      <div class="muted" style="font-size:11px;margin-top:5px">Today / Tomorrow / +2d set the date on the procedure you're typing in. ✕ removes one.</div>`;
   } else if(col.type === 'statusChoice'){
     const list = [...col.opts.map(o => o.label)]; if(cell.t && !list.includes(cell.t)) list.unshift(cell.t);
     body += `<div class="ed"><select data-ed><option value=""></option>${list.map(o => `<option${o===cell.t?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
@@ -3790,7 +3813,14 @@ function openPop(cellEl, focusEditor=false){
       const g = ioParseGoal(el.querySelector('[data-iogoal]').value), gs = el.querySelector('[data-iogs]'), net = !bad && a !== null && b !== null ? a - b : null;
       gs.textContent = Number.isNaN(g) ? 'check the goal' : g === null ? '' : ioGoalTxt(net, g); gs.className = 'iogs ' + (Number.isNaN(g) ? 'bad' : g !== null && net !== null ? (ioGoalMet(net, g) ? 'met' : 'miss') : ''); };
     el.addEventListener('input', upd); upd(); }
-  if(col.type === 'proc') el.querySelectorAll('[data-pday]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); el.querySelector('[data-procd]').value = addDays(state.boardDate, +b.dataset.pday); el.querySelector('[data-proct]').focus(); }));
+  if(col.type === 'proc'){
+    const list = el.querySelector('.plist'); let cur = list.querySelector('.prow');
+    list.addEventListener('focusin', e => { const r = e.target.closest('.prow'); if(r) cur = r; });
+    list.addEventListener('click', e => { const x = e.target.closest('[data-prdel]'); if(!x) return; e.stopPropagation(); const r = x.closest('.prow');
+      if(list.querySelectorAll('.prow').length > 1) r.remove(); else { r.querySelector('[data-proct]').value = ''; r.querySelector('[data-procd]').value = ''; } cur = list.querySelector('.prow'); });
+    el.querySelector('[data-pradd]').addEventListener('click', e => { e.stopPropagation(); const tmp = document.createElement('div'); tmp.innerHTML = procRowHTML(); cur = tmp.firstElementChild; list.appendChild(cur); cur.querySelector('[data-proct]').focus(); });
+    el.querySelectorAll('[data-pday]').forEach(b => b.addEventListener('click', ev => { ev.stopPropagation(); if(!cur || !list.contains(cur)) cur = list.querySelector('.prow'); cur.querySelector('[data-procd]').value = addDays(state.boardDate, +b.dataset.pday); cur.querySelector('[data-proct]').focus(); }));
+  }
   const rc = cellEl.getBoundingClientRect(), pw = el.offsetWidth, ph = el.offsetHeight;
   let x = Math.min(rc.left, window.innerWidth - pw - 8), y = rc.bottom + 4;
   if(y + ph > window.innerHeight - 8) y = Math.max(8, rc.top - ph - 4);
@@ -3808,7 +3838,7 @@ function openPop(cellEl, focusEditor=false){
     if(b.dataset.o !== undefined){ const dm = el.querySelector('.dmods'); finish({t:dm ? dietJoin(b.dataset.o, dietParse(dm.dataset.val).mods) : b.dataset.o}); return; }
     if(b.hasAttribute('data-clear')){ finish(edEl ? {s:'', t:edEl.value} : {s:''}); return; }
     if(b.dataset.pday !== undefined) return;
-    if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:''} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
+    if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:'', items:[]} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
     if(b.hasAttribute('data-today')){ finish({t:state.boardDate}); return; }
     if(b.hasAttribute('data-now')){
       const d = new Date(), h = d.getHours(), now = `${h % 12 || 12}:${pad(d.getMinutes())} ${h < 12 ? 'am' : 'pm'}`;
@@ -3875,7 +3905,7 @@ function onCellKey(e){
     else if(cfg.type === 'choice'){ if(cfg.opts[n]){ e.preventDefault(); setCell(kind,id,col,{t:col === 'diet' ? dietJoin(cfg.opts[n].label, dietParse(rowOf(kind,id).cells.diet.t).mods) : cfg.opts[n].label}); } }
   }
   else if(e.key === '0' || e.key === 'Delete' || e.key === 'Backspace'){
-    e.preventDefault(); const ty = colOf(kind,col).type; setCell(kind,id,col, isStatusType(ty) ? {s:''} : ty === 'checkNote' ? {t:'', c:false} : ty === 'ldt' || ty === 'gtt' ? {t:'', items:[]} : ty === 'proc' ? {t:'', d:''} : ty === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:''});
+    e.preventDefault(); const ty = colOf(kind,col).type; setCell(kind,id,col, isStatusType(ty) ? {s:''} : ty === 'checkNote' ? {t:'', c:false} : ty === 'ldt' || ty === 'gtt' ? {t:'', items:[]} : ty === 'proc' ? {t:'', d:'', items:[]} : ty === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:''});
   }
   else if(e.key === 'Enter' || e.key === ' '){
     e.preventDefault();
@@ -4561,7 +4591,7 @@ function toCSV(){
   const head = ['#','Bed','Intern','Problem','Status','Admitted','Flags', ...ALL_COLS.map(c => colCfg(c.k).h)];
   const q = v => `"${String(v??'').replace(/"/g,'""')}"`;
   const rows = state.patients.map((p,i) => [i+1, p.bed, p.intern, p.problem, p.status, p.admitDate, flagsFor(p).map(f=>f[1]).join('; '),
-    ...ALL_COLS.map(c => { const x = p.cells[c.k]; const ty = colCfg(c.k).type; if(ty === 'ldt') return ldtSummary(x); if(ty === 'gtt') return gttSummary(x); if(ty === 'proc') return [x.t, isISO(x.d) ? x.d : ''].filter(Boolean).join(' · '); if(ty === 'checkNote') return [x.c ? '✓' : '', x.t].filter(Boolean).join(' '); return [isStatusType(ty) ? SMAP[x.s]?.label : '', x.t].filter(Boolean).join(' | '); })]);
+    ...ALL_COLS.map(c => { const x = p.cells[c.k]; const ty = colCfg(c.k).type; if(ty === 'ldt') return ldtSummary(x); if(ty === 'gtt') return gttSummary(x); if(ty === 'proc') return procSorted(x).map(it => [it.t, isISO(it.d) ? it.d : ''].filter(Boolean).join(' · ')).join('; '); if(ty === 'checkNote') return [x.c ? '✓' : '', x.t].filter(Boolean).join(' '); return [isStatusType(ty) ? SMAP[x.s]?.label : '', x.t].filter(Boolean).join(' | '); })]);
   return [head, ...rows].map(r => r.map(q).join(',')).join('\r\n');
 }
 function download(name, text, type){
@@ -4583,7 +4613,7 @@ function validationFindings(){
       if(cell.s === 'R' || cell.s === 'X') out[cell.s].push({p, col:c.k, what:colCfg(c.k).h, note:cell.t});
     });
     if(lc(dietParse(p.cells.diet.t).base) === 'npo') out.npo.push({p, col:'diet', what:'Diet', note:'NPO'});
-    { const c = p.cells.proc; if(String(c.t||'').trim() || isISO(c.d)) out.proc.push({p, col:'proc', what:'Proc', note:`${c.t || 'Procedure'}${isISO(c.d) ? ` — ${procWhen(c.d) === 'today' ? 'today' : procWhen(c.d) === 'tomorrow' ? 'tomorrow' : fmtShort(c.d)}` : ' — no date'}`}); }
+    procSorted(p.cells.proc).forEach(it => out.proc.push({p, col:'proc', what:'Proc', note:`${String(it.t || '').trim() || 'Procedure'} — ${procWhenTxt(it.d)}`}));
     if(lc(p.cells.dvt.t) === 'held') out.held.push({p, col:'dvt', what:'DVT PPx', note:'HELD'});
   });
   return out;
@@ -5004,21 +5034,21 @@ function scRun(a, ctx){
       openCmtEditor({dataset:{kind, id, cmt:col}, getBoundingClientRect:() => c.getBoundingClientRect()}); return; }
     case 'today': case 'tomorrow': {
       const iso = a.id === 'today' ? state.boardDate : addDays(state.boardDate, 1);
-      if(c){ setCell(kind, id, col, colOf(kind, col).type === 'proc' ? {d:iso} : {t:iso}); }
+      if(c){ if(colOf(kind, col).type === 'proc'){ const its = procSorted(rowOf(kind, id).cells[col]).map(x => ({...x})); if(its.length) its[0].d = iso; else its.push({t:'', d:iso}); setCell(kind, id, col, {items:its, t:'', d:''}); } else setCell(kind, id, col, {t:iso}); }
       else { ctx.t.value = iso; ctx.t.dispatchEvent(new Event('change', {bubbles:true})); }
       toast(`${a.id === 'today' ? 'Today' : 'Tomorrow'} · ${fmtShort(iso)}`); return; }
     case 'copy': {
       const cfg = colOf(kind, col), cell = rowOf(kind, id).cells[col];
       scClip = {type:cfg.type, cell:clone(cell), h:cfg.h};
       const st = isStatusType(cfg.type) && SMAP[cell.s];
-      const txt = cfg.type === 'ldt' ? ldtSummary(cell) : cfg.type === 'gtt' ? gttSummary(cell) : cfg.type === 'proc' ? [cell.t, isISO(cell.d) ? fmtShort(cell.d) : ''].filter(Boolean).join(' · ') : [st && st.label, cfg.type === 'checkNote' ? (cell.c ? '✓' : '') : '', cfg.type === 'check' ? (cell.t ? '✓' : '') : cell.t].filter(Boolean).join(' · ');
+      const txt = cfg.type === 'ldt' ? ldtSummary(cell) : cfg.type === 'gtt' ? gttSummary(cell) : cfg.type === 'proc' ? procSummary(cell) : [st && st.label, cfg.type === 'checkNote' ? (cell.c ? '✓' : '') : '', cfg.type === 'check' ? (cell.t ? '✓' : '') : cell.t].filter(Boolean).join(' · ');
       try{ navigator.clipboard && navigator.clipboard.writeText(txt).catch(() => {}); }catch(e){}
       toast(`Copied ${cfg.h}${txt ? ': ' + txt : ' (empty)'}`); return; }
     case 'paste': {
       if(!scClip){ toast('Nothing copied yet — use ' + (IS_MAC ? '⌘' : 'Ctrl') + '+C on a box first'); return; }
       const cfg = colOf(kind, col), src = scClip.cell, st = scClip.type, statusy = isStatusType(cfg.type), srcStatusy = isStatusType(st);
       let patch;
-      if(cfg.type === 'proc' || st === 'proc'){ patch = st === 'proc' ? {t:src.t || '', d:src.d || ''} : {t:src.t || ''}; if(cfg.type !== 'proc'){ patch = {t:[src.t, isISO(src.d) ? fmtShort(src.d) : ''].filter(Boolean).join(' ')}; } }
+      if(cfg.type === 'proc' || st === 'proc'){ patch = st === 'proc' ? {items:clone(procItems(src)), t:'', d:''} : {items:String(src.t || '').trim() ? [{t:String(src.t).trim(), d:''}] : [], t:'', d:''}; if(cfg.type !== 'proc'){ patch = {t:procSummary(src)}; } }
       else if(cfg.type === 'gtt' || st === 'gtt'){ if(cfg.type !== st){ toast('Drips can only be pasted into another GTT box'); return; } patch = {items:clone(gttItems(src)), s:'', t:''}; }
       else if(cfg.type === 'ldt' || st === 'ldt'){ if(cfg.type !== st){ toast('Lines / drains / tubes can only be pasted into another Avatar box'); return; } patch = {items:clone(ldtItems(src)), s:'', t:''}; }
       else if(statusy) patch = srcStatusy ? {s:src.s || '', t:src.t || ''} : {t:src.t || ''};
@@ -6413,7 +6443,7 @@ function cmdCur(side, r, k){
   if(cfg.type === 'check') return c.t ? '✓' : '☐';
   if(cfg.type === 'checkNote') return (c.c ? '✓' : '☐') + (c.t ? ' ' + c.t : '');
   if(cfg.type === 'date') return c.t ? (isISO(c.t) ? fmtShort(c.t) : c.t) : '—';
-  if(cfg.type === 'proc') return [c.t, isISO(c.d) ? fmtShort(c.d) : ''].filter(Boolean).join(' · ') || '—';
+  if(cfg.type === 'proc') return procSummary(c) || '—';
   return c.t || '—';
 }
 const cmdOpt = (opts, s) => { const w = nw(s); if(!w) return null; return opts.find(o => nw(o) === w) || opts.find(o => nw(o).startsWith(w)) || null; };
@@ -7708,6 +7738,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:260, d:'2026-11-22', items:['Cells marked <b>N/A</b> are lightly greyed out.', '<b>Proc</b> holds several procedures, each with its own date — <b>+ Add procedure</b> in the pop-up, ✕ to remove one. The census shows the soonest one with “+2” for the rest; Validation lists them all.']},
   {v:259, d:'2026-11-22', items:['<b>SW, PT and OT</b> now count toward a patient being done (box counts, Open boxes, and the green bed cell). <b>Services</b> and <b>Dispo notes</b> are optional and never count as open.']},
   {v:258, d:'2026-11-22', items:['<b>SW</b> is now a choice of <b>Complete</b> or <b>N/A</b> instead of a checkbox. Anything already ticked shows as Complete.']},
   {v:257, d:'2026-11-22', items:['The <b>bed cell turns light green</b> on the Census once every AM and PM box for that patient is done (N/A and Lab holiday count), so you can see who you’re finished with for the day.']},
