@@ -1622,7 +1622,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '251';
+const APP_VERSION = '252';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2742,14 +2742,14 @@ function commitLdt(p, r, el){
 /* ---------- GTT (drips) — ICU / CCU boards only ---------- */
 const GTT_GROUPS = [['Vasopressors', ['Epinephrine', 'Norepinephrine', 'Vasopressin', 'Phenylephrine', 'Angiotensin II', 'Dopamine'], 'press'],
   ['Inotropes', ['Dobutamine', 'Milrinone'], 'ino'],
-  ['Anti-HTN', ['Nicardipine', 'Nitroprusside', 'Esmolol'], 'htn'],
+  ['Anti-HTN', ['Nicardipine', 'Nitroglycerin', 'Nitroprusside', 'Esmolol'], 'htn'],
   ['Diuretics', ['Lasix', 'Bumex'], 'diur'],
   ['Endocrine', ['Insulin'], 'endo'],
   ['Sedation', ['Versed', 'Propofol', 'Precedex', 'Ativan'], 'sed'],
   ['Analgesia', ['Morphine', 'Dilaudid', 'Fentanyl'], 'anal'],
   ['Anti-arrhythmics', ['Amiodarone', 'Lidocaine', 'Diltiazem'], 'arr']];
 const GTT_SHORT = {Epinephrine:'Epi', Norepinephrine:'Norepi', Vasopressin:'Vaso', Phenylephrine:'Phenyl', 'Angiotensin II':'Ang II', Dopamine:'Dopa', Dobutamine:'Dobut', Milrinone:'Milri',
-  Nicardipine:'Nicard', Nitroprusside:'Nipride', Fentanyl:'Fent', Propofol:'Prop', Precedex:'Dex', Amiodarone:'Amio', Adenosine:'Adeno', Lidocaine:'Lido', Diltiazem:'Dilt'};
+  Nicardipine:'Nicard', Nitroglycerin:'Nitro', Nitroprusside:'Nipride', Fentanyl:'Fent', Propofol:'Prop', Precedex:'Dex', Amiodarone:'Amio', Adenosine:'Adeno', Lidocaine:'Lido', Diltiazem:'Dilt'};
 const gttItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
 const gttCat = n => { const l = String(n).toLowerCase(), g = GTT_GROUPS.find(g => g[1].some(x => x.toLowerCase() === l)); return g ? g[2] : 'oth'; };
 const gttLabel = it => it.k;
@@ -7660,6 +7660,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:252, d:'2026-11-22', items:['<b>GTT</b>: Nitroglycerin added under Anti-HTN.']},
   {v:251, d:'2026-11-22', items:['Rounds · Split: <b>GTT</b> now sits between Diet and DVT PPx in At a glance.']},
   {v:250, d:'2026-11-22', items:['<b>GTT</b>: new <b>Diuretics</b> group (Lasix, Bumex).']},
   {v:249, d:'2026-11-22', items:['<b>GTT</b> (drips) column on <b>ICU / CCU boards only</b>: tick what’s running, grouped by Vasopressors, Inotropes, Anti-HTN, Endocrine, Sedation, Analgesia and Anti-arrhythmics, or add another. No doses (nursing titrates them). Shows first in Rounds · Split <b>At a glance</b>; red edge on the census when a pressor is on. Carries over day to day.', 'Rounds · Split: <b>Mark pre-charted</b> button next to Mark discussed; the pre-charted dot is now green; 💬 marks discussed patients in the left list, and each row shows the intern under the hospital day.']},
