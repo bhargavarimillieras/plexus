@@ -162,6 +162,7 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .tc.t-newadm{background:#f1f3f5;justify-content:center;cursor:default}
 .nadpill{font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#5b6470;background:#e2e6eb;border-radius:999px;padding:3px 8px;white-space:nowrap}
 @media (prefers-color-scheme: dark){ .tc.t-newadm{background:#2a2d33} .nadpill{background:#3a3f47;color:#aab1bb} }
+.pcchk.off,.rdchk.off,.rseenbtn:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(1)}
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
@@ -1700,7 +1701,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '269';
+const APP_VERSION = '270';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3208,11 +3209,12 @@ function gridHTML(patients, {ro=false} = {}){
 const isPc = p => !!p && p.pc === state.boardDate;
 const pcPool = () => state.patients.filter(p => p.status !== 'New');
 const pcCount = () => { const L = pcPool(); return {n:L.filter(isPc).length, of:L.length}; };
-const pcBtn = (p, ro) => ro ? '' : `<button type="button" class="pcchk ${isPc(p) ? 'on' : ''}" data-pc="${p.id}" title="${isPc(p) ? 'Pre-charted' : 'Mark pre-charted'} for ${esc(fmtNoYear(state.boardDate))} — clears when the next day starts" aria-label="${isPc(p) ? 'Pre-charted' : 'Not pre-charted'}: ${esc(p.bed || 'patient')}" aria-pressed="${isPc(p)}">✓</button>`;
+const NA_NEW = 'New admit — not needed on the day they come in';
+const pcBtn = (p, ro) => ro ? '' : p.status === 'New' ? `<button type="button" class="pcchk off" disabled title="${NA_NEW}" aria-label="Pre-charted: not needed for a new admit">✓</button>` : `<button type="button" class="pcchk ${isPc(p) ? 'on' : ''}" data-pc="${p.id}" title="${isPc(p) ? 'Pre-charted' : 'Mark pre-charted'} for ${esc(fmtNoYear(state.boardDate))} — clears when the next day starts" aria-label="${isPc(p) ? 'Pre-charted' : 'Not pre-charted'}: ${esc(p.bed || 'patient')}" aria-pressed="${isPc(p)}">✓</button>`;
 function togglePc(id){ const p = rowOf('p', id); if(!p) return; const on = !isPc(p);
   mutate(() => { const q = rowOf('p', id); delete q.pcAuto; if(on){ q.pc = state.boardDate; delete q.pcOff; } else { delete q.pc; q.pcOff = state.boardDate; } }, {label:`${p.bed || 'Patient'}: ${on ? 'pre-charted ✓' : 'pre-charted tick removed'} (${fmtNoYear(state.boardDate)})`, cat:'census'}); }
 // 💬 discussed on rounds — the same mark as Rounds mode's “Mark discussed”, resets each day
-const rdBtn = (p, ro) => ro ? '' : `<button type="button" class="rdchk ${rdSeen(p) ? 'on' : ''}" data-rdc="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds'}" aria-label="${rdSeen(p) ? 'Discussed' : 'Not discussed'}: ${esc(p.bed || 'patient')}" aria-pressed="${rdSeen(p)}">💬</button>`;
+const rdBtn = (p, ro) => ro ? '' : p.status === 'New' ? `<button type="button" class="rdchk off" disabled title="${NA_NEW}" aria-label="Discussed: not needed for a new admit">💬</button>` : `<button type="button" class="rdchk ${rdSeen(p) ? 'on' : ''}" data-rdc="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds'}" aria-label="${rdSeen(p) ? 'Discussed' : 'Not discussed'}: ${esc(p.bed || 'patient')}" aria-pressed="${rdSeen(p)}">💬</button>`;
 document.addEventListener('click', e => { const b = e.target.closest('[data-rdc]'); if(!b) return; e.preventDefault(); e.stopPropagation();
   const p = rowOf('p', b.dataset.rdc); if(!p) return; rdMark(p, !rdSeen(p)); renderCensus(); try{ if(rounds && rounds.open) renderRounds(); }catch(err){} });
 document.addEventListener('click', e => { const b = e.target.closest('[data-pc]'); if(!b) return; e.preventDefault(); e.stopPropagation(); togglePc(b.dataset.pc); });
@@ -4180,6 +4182,8 @@ const rounds = {open:false, id:null};
    order (tap a bed in the strip) you pick up where you left off. ← → keys still step one by one. */
 const roundsOrder = () => ui.roundsOrder || (ui.groupBy === 'intern' ? 'intern' : 'bed');
 const rdSeen = p => !!p && p.rd === state.boardDate;
+// Next → the next patient not yet discussed; new admits (can't be marked discussed) are visited on the way, not again on wrap-around
+const rdNext = (list, i) => list.slice(i + 1).find(q => !rdSeen(q)) || list.slice(0, Math.max(0, i)).find(q => !rdSeen(q) && q.status !== 'New');
 function rdMark(p, on){ if(!p || rdSeen(p) === on) return; if(on) p.rd = state.boardDate; else delete p.rd; save(); }
 function roundsList(){
   let list = filteredPatients();
@@ -4196,7 +4200,7 @@ function closeRounds(){ closePop(); rounds.open = false; $('#rounds').hidden = t
   const tr = rounds.id && document.querySelector(`#censusGrid tr[data-id="${rounds.id}"]`); if(tr){ tr.scrollIntoView({block:'center'}); tr.classList.add('rowpulse'); setTimeout(() => tr.classList.remove('rowpulse'), 1600); } }
 function roundsGo(step, plain){ const list = roundsList(); if(!list.length) return; let i = list.findIndex(p => p.id === rounds.id); const cur = list[i];
   if(step > 0 && !plain && cur){   // → the next patient not yet discussed (you tick Discussed yourself), else just the next
-    const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(p => !rdSeen(p));
+    const nx = rdNext(list, i);
     if(nx){ roundsTo(nx.id); return; } }
   i = Math.min(list.length - 1, Math.max(0, (i < 0 ? 0 : i) + step)); roundsTo(list[i].id); }
 function roundsTo(id){ closePop(); rounds.id = id; lastFocus = null; renderRounds(); focusRounds(); $('#roundsBody').scrollTop = 0;
@@ -4229,7 +4233,7 @@ function renderRounds(){
       return `<div class="rtile"><div class="rlab" title="${esc(cfg.h)}">${esc(cfg.h)}</div>${cellHTML(p.cells[c.k], cfg, 'p', p.id, 0, ci, false)}${cm[c.k] ? `<div class="rcmt">${esc(cm[c.k])}</div>` : ''}</div>`; }).join('')}</div></div>`).join('');
   body.innerHTML = bar + `<div class="rbody">
     <div class="rhead">
-      <div class="rbed">${esc(p.bed || '(no bed)')}<button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds. Next skips patients already discussed. Separate from the Visit box.'}">${rdSeen(p) ? '✓ Discussed' : 'Mark discussed'}</button><small>${n === null ? 'No admission date' : `Hospital day ${n}`}${adm ? ` · admission ${admitSigned(adm)}/${ADMIT_ITEMS.length} signed` : ''}</small></div>
+      <div class="rbed">${esc(p.bed || '(no bed)')}<button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds. Next skips patients already discussed. Separate from the Visit box.'}">${rdSeen(p) ? '✓ Discussed' : 'Mark discussed'}</button><small>${n === null ? 'No admission date' : `Hospital day ${n}`}${adm ? ` · admission ${admitSigned(adm)}/${ADMIT_ITEMS.length} signed` : ''}</small></div>
       <div class="rfields">
         <div class="wide2"><label>Problem / one-liner</label><input data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" placeholder="One-liner / problem"></div>
         <div><label>Intern</label>${selHTML('intern', p.intern, state.settings.interns, {kind:'p', id:p.id})}</div>
@@ -4244,7 +4248,7 @@ function renderRounds(){
     ${sections}
     <div class="rnav"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
       <span class="muted small rkeys" style="align-self:center">${scLabel('rNext')} next · ${scLabel('rPrev')} back · ${scLabel('rUnfinished')} next unfinished · ${scLabel('rVisit')} visit · ${scLabel('rowDone')} all Daily done · <kbd>←</kbd><kbd>→</kbd> always move · <kbd>Esc</kbd> closes · <a href="#" data-sc-open>all shortcuts</a></span>
-      ${(() => { const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(q => !rdSeen(q)) || (i < list.length - 1 ? list[i + 1] : null);
+      ${(() => { const nx = rdNext(list, i) || (i < list.length - 1 ? list[i + 1] : null);
         return `<button class="btn primary" data-r="next" ${nx ? '' : 'disabled'}>${nx ? esc(nx.bed || 'Next') : 'All seen'} →</button>`; })()}</div>
   </div>`;
 }
@@ -4274,13 +4278,13 @@ function renderRoundsSplit(){
     const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(k => isDone(colCfg(k), p.cells[k] || {})).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
     const cnt = `<span class="rs-cnt" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length} done</span>`;
     return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh">${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''} ${cnt}</div><div class="rs-chk">${show.map(k => `<div class="rs-ck2 ${!OPTIONAL_KEYS.has(k) && isDone(colCfg(k), p.cells[k] || {}) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
-  const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(q => !rdSeen(q)) || (i < list.length - 1 ? list[i + 1] : null);
+  const nx = rdNext(list, i) || (i < list.length - 1 ? list[i + 1] : null);
   const todos = patientTodos(p.id);
   body.innerHTML = `<div class="rs">${rail}<section class="rs-main">
     <div class="rs-hd2"><div class="rs-id"><div class="rs-bigbed">${esc(p.bed || '(no bed)')}</div><div class="muted">${esc(p.intern || 'Unassigned')}${n !== null ? ' · HD ' + n : ''}${isISO(p.cells.edd.t) ? ' · EDD ' + esc(fmtShort(p.cells.edd.t)) : ''}</div></div>
       <div class="rs-oneliner"><label class="rs-gl">One-liner</label><input data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" placeholder="One-liner / problem">
         ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
-      <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
+      <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
       <div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>
       ${CHUNKS.map(ckCard).join('')}
@@ -4893,7 +4897,7 @@ function jumpToAdmit(id, col){
 /* Outstanding: what's still open for each patient (AM / PM / Dispo — Services and Dispo notes are optional) */
 function outstanding(ck, onlyId){
   const cks = ck ? [ck] : CHUNKS.map(c => c.k);
-  return censusOrder().filter(p => !onlyId || p.id === onlyId).map(p => ({p, by:cks.map(c => ({c, keys:chunkReq(c).filter(k => !isDone(colCfg(k), p.cells[k] || {}))})).filter(x => x.keys.length)})).filter(x => x.by.length);
+  return censusOrder().filter(p => !onlyId || p.id === onlyId).map(p => ({p, by:cks.map(c => ({c, keys:chunkReq(c).filter(k => !newCovers(p, k) && !isDone(colCfg(k), p.cells[k] || {}))})).filter(x => x.keys.length)})).filter(x => x.by.length);
 }
 const censusOrder = () => state.patients.slice();   // the census is kept in the order you've arranged it
 function showOutstanding(ck, onlyId){
@@ -7960,6 +7964,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:270, d:'2026-11-22', items:['New admits: boxes showing the <b>New admit</b> pill no longer appear under <b>outstanding</b>.', 'New admits: the <b>pre-charted ✓</b> and <b>💬 discussed</b> buttons are greyed out (on the Census and in Rounds) on the day they come in. Rounds’ Next still stops at them on the way through.']},
   {v:269, d:'2026-11-22', items:['New admits: <b>Visit</b> and <b>Handoff</b> on the census now follow the Admissions tab too (Visit ticked → Visit done; Handoff Signed → Handoff done), like Note. Visit is no longer greyed out.', '<b>GTT</b> has an <b>N/A</b> option (no drips): the N/A button in its pop-up, or long-press the box.']},
   {v:268, d:'2026-11-22', items:['<b>New admits</b>: on the day they come in, Vitals, I/O, FSG, Lab Rev, Imaging, Visit and Attest are greyed out with a <b>New admit</b> pill — the admission covered them — and don’t count as open. Fill in Lab Ord, Handoff, Ord Rev and the columns to the right as usual. From the next day they’re ordinary boxes again.', 'A new admit’s <b>Note</b> turns Complete by itself once Note is <b>Signed</b> on the Admissions tab.']},
   {v:267, d:'2026-11-22', items:['The <b>Avatar body map</b> is now on the real Plexus (see v266 below): tap the little figure in an Avatar box.']},
