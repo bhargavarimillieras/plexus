@@ -1659,7 +1659,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '264';
+const APP_VERSION = '265';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1891,7 +1891,8 @@ const GROUPS = [
     {k:'dvt',h:'DVT PPx',type:'choice',size:'mid',opts:[O('SQH'),O('HEP GTT'),O('LMWH'),O('DOAC'),O('HELD','red')]},
     {k:'gtt',h:'GTT',type:'gtt',fixedType:true,size:'mid',icu:true},
     {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'choice',fixedType:true,opts:[O('Complete','green'),O('N/A')]},
-    {k:'pt',h:'PT',type:'date'},{k:'ot',h:'OT',type:'date'}]},
+    {k:'pt',h:'PT',type:'choice',fixedType:true,size:'mid',opts:[O('Pending','orange'),O('Home','green'),O('Home w/ services','green'),O('Acute Rehab','blue'),O('SAR','blue'),O('LTACH','blue'),O('Signed off','green'),O('N/A')]},
+    {k:'ot',h:'OT',type:'choice',fixedType:true,size:'mid',opts:[O('Pending','orange'),O('Home','green'),O('Home w/ services','green'),O('Acute Rehab','blue'),O('SAR','blue'),O('LTACH','blue'),O('Signed off','green'),O('N/A')]}]},
   {k:'edd', label:'EDD', tab:'fixed', cols:[{k:'edd',h:'EDD',type:'date',fixedType:true}]},
   {k:'dc', label:'Discharge — on the Discharges tab', tab:'dc', cols:[
     {k:'dcint',h:'DC Instructions',type:'choice',size:'mid',opts:DC_OPTS()},
@@ -2048,7 +2049,12 @@ function ioText(c){ if(!c) return ''; const n = ioNet(c), g = ioNum(c.goal) ? ' 
   if(n !== null) return `In ${ioVol(c.in)} · Out ${ioVol(c.out)} · Net ${ioSigned(n)}${g}`;
   if(!ioNum(c.in) && !ioNum(c.out)) return g.replace(/^ · /, '');
   return [ioNum(c.in) && `In ${ioVol(c.in)}`, ioNum(c.out) && `Out ${ioVol(c.out)}`].filter(Boolean).join(' · ') + g; }
+const tsExpired = t => isISO(t) && daysBetween(t, state.boardDate) * 24 >= (state.settings.tsHours || 72);
+const bmCurrent = c => !isISO(c.t) || daysBetween(c.t, state.boardDate) <= 1 || c.ck === state.boardDate;   // BM today / yesterday, or re-checked today
 function isDone(cfg, cell){ if(cfg.type === 'ldt' || cfg.type === 'proc' || cfg.type === 'gtt') return true;
+  if(cfg.type === 'date' && cfg.k === 'ts' && tsExpired(cell.t)) return false;    // an expired T&S needs a new one (or N/A)
+  if(cfg.type === 'date' && cfg.k === 'bm' && !bmCurrent(cell)) return false;     // an old Last BM needs re-checking each day
+  if(cfg.type === 'choice' && /^pending/i.test(cell.t || '')) return false;
   if(cfg.type === 'io') return ioNet(cell) !== null || cell.t === 'N/A' || DONE.has(cell.s); return isStatusType(cfg.type) ? DONE.has(cell.s) : cfg.type === 'checkNote' ? !!cell.c : !!cell.t; }
 function optOf(cfg, label){ return cfg.opts.find(o => o.label === label); }
 
@@ -2230,6 +2236,9 @@ function normalize(s){
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
   // v247: new Imaging column sits right after Lab Rev in any saved column order (once)
   if(!s.settings.imgCol){ const co = s.settings.colOrder; if(co && typeof co === 'object') Object.keys(co).forEach(g => { const o = co[g]; if(Array.isArray(o) && !o.includes('img')){ const i = o.indexOf('labrev'); if(i >= 0) o.splice(i + 1, 0, 'img'); } }); s.settings.imgCol = 1; }
+  // v265: PT / OT hold the recommendation, not a date (an old date becomes “Seen 11/20”)
+  if(!s.settings.ptotRec){ [...(s.patients || []), ...(s.archive || [])].forEach(p => ['pt', 'ot'].forEach(k => { const c = p.cells && p.cells[k]; if(c && isISO(c.t)){ const [, m, d] = c.t.split('-'); c.t = `Seen ${+m}/${+d}`; } }));
+    ['pt', 'ot'].forEach(k => { if(s.settings.columns && s.settings.columns[k]){ delete s.settings.columns[k].opts; delete s.settings.columns[k].type; } }); s.settings.ptotRec = 1; }
   // v258: SW is Complete / N/A instead of a checkbox (a tick becomes Complete)
   if(!s.settings.swChoice){ (s.patients || []).forEach(p => { const c = p.cells && p.cells.sw; if(c && c.t === 'Yes') c.t = 'Complete'; }); if(s.settings.columns && s.settings.columns.sw) delete s.settings.columns.sw.opts; s.settings.swChoice = 1; }
   // v249: drips are names only (no doses)
@@ -3748,6 +3757,7 @@ function colOf(kind,k){ return kind==='p' ? colCfg(k) : admitCfg(k); }
 function setCell(kind,id,k,patch){
   mutate(() => {
     const r = rowOf(kind,id); if(!r) return; Object.assign(r.cells[k], patch);
+    if(kind === 'p' && k === 'bm' && 't' in patch) r.cells.bm.ck = patch.t ? state.boardDate : '';   // entering a BM date today counts as checking it
     if(kind === 'p' && (k === 'diet' || k === 'dvt') && 't' in patch){ const a = admitOf(r); if(a) a.cells[k].t = patch.t; }
   });
 }
@@ -3838,6 +3848,8 @@ function openPop(cellEl, focusEditor=false){
       <div class="muted" style="font-size:11px;margin-top:5px">Separate rounds with commas. Typing a time ticks the box.</div>${col.k === 'labord' ? `<button class="btn sm ${cell.c && cell.t === 'Lab holiday' ? 'primary' : ''}" data-labhol style="margin-top:8px;width:100%">🏖 Lab holiday${cell.c && cell.t === 'Lab holiday' ? ' ✓' : ''}</button>` : ''}`;
   } else if(col.type === 'date'){
     body += `<div class="ed"><input type="date" data-ed value="${esc(isISO(cell.t)?cell.t:'')}" ${cell.t==='N/A'?'disabled':''}><button class="btn sm" data-today>Today</button><button class="btn sm ${cell.t==='N/A'?'primary':''}" data-na>N/A</button></div>`;
+    if(col.k === 'bm' && isISO(cell.t) && daysBetween(cell.t, state.boardDate) > 1) body += `<button class="btn sm ${cell.ck === state.boardDate ? 'primary' : ''}" data-bmck style="margin-top:8px;width:100%">${cell.ck === state.boardDate ? '✓ Checked today — still no BM since ' : 'Still no BM since '}${esc(fmtShort(cell.t))} — mark checked</button>`;
+    if(col.k === 'ts' && tsExpired(cell.t)) body += `<div class="muted" style="font-size:11.5px;margin-top:6px">This T&amp;S has expired — enter the new one, or N/A if none is needed.</div>`;
   } else {
     body += `<div class="ed"><input type="text" data-ed value="${esc(cell.t)}" placeholder="${statusy?'Comment (optional)':'Type here'}"></div>`;
   }
@@ -3888,6 +3900,7 @@ function openPop(cellEl, focusEditor=false){
       edEl.focus(); return;
     }
     if(b.hasAttribute('data-na')){ finish({t: cell.t==='N/A' ? '' : 'N/A'}); return; }
+    if(b.hasAttribute('data-bmck')){ finish(cell.ck === state.boardDate ? {ck:''} : {ck:state.boardDate}); return; }
     if(b.hasAttribute('data-procna')){ finish(cell.t === 'N/A' ? {t:'', items:[], d:''} : {t:'N/A', items:[], d:''}); return; }
     if(b.hasAttribute('data-labhol')){ finish(cell.c && cell.t === 'Lab holiday' ? {c:false, t:''} : {c:true, t:'Lab holiday'}); return; }
     if(b.dataset.editopts){ closePop(false); columnsEditor(b.dataset.editopts); return; }
@@ -7812,6 +7825,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:265, d:'2026-11-22', items:['<b>Stale dates no longer count as done.</b> An <b>expired T&amp;S</b> is an open box until you enter the new one (or N/A). A <b>Last BM</b> older than yesterday is open each morning until you update it — or tap <b>“Still no BM — mark checked”</b> in its pop-up.', '<b>PT / OT</b> now hold the recommendation: Pending, Home, Home w/ services, Acute Rehab, SAR, LTACH, Signed off or N/A. <b>Pending</b> counts as open. Dates already entered show as “Seen 11/20”.']},
   {v:264, d:'2026-11-22', items:['<b>GTT</b> pop-up has a <b>search bar</b>: type part of a name, brand or nickname (levo, neo, prop, dex, midaz, cardene…) to filter the list. Enter ticks the top match; if nothing matches, Enter (or Add) adds it as a new drip.']},
   {v:263, d:'2026-11-22', items:['<b>Outstanding</b>: type <b>outstanding</b> (or <b>left</b>, or <b>view outstanding</b>) in the command bar to see what’s left to check off, patient by patient, grouped AM / PM / Dispo. Add <b>am</b>, <b>pm</b>, <b>dispo</b> or a bed to narrow it. Tap any box to jump straight to it.', 'On the iPad: <b>More → Outstanding boxes</b>, and <b>More → Command bar</b>.']},
   {v:262, d:'2026-11-22', items:['<b>Proc</b> can be marked <b>N/A</b> (no procedures planned): the N/A button in its pop-up, or long-press the box like the other checkboxes. It greys out like other N/A cells.']},
