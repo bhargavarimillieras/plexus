@@ -167,6 +167,9 @@ body.touch .pcchk{width:24px;height:24px;font-size:13px}
 .rdchk:hover{opacity:.8}
 .rdchk.on{filter:none;opacity:1;background:#e6f4ea;border-color:#34A853}
 body.touch .rdchk{width:24px;height:24px;font-size:12px}
+.eddunk{font:700 12.5px/1 inherit;font-family:inherit;padding:6px 10px;border-radius:999px;border:1px dashed var(--line2);background:var(--panel);color:var(--muted);cursor:pointer}
+body.touch .eddunk{font-size:14px;padding:8px 12px}
+.eddq{font-weight:800}
 .dclr{border:0;background:none;color:var(--muted);font:700 12px/1 inherit;font-family:inherit;cursor:pointer;padding:3px 4px;margin-left:1px;border-radius:5px;vertical-align:middle}
 .dclr:hover{color:var(--bad-ink,#c5221f);background:var(--bad-bg,#fde7e7)}
 .dclr[hidden]{display:none}
@@ -1645,7 +1648,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '260';
+const APP_VERSION = '261';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3019,7 +3022,7 @@ function gridHTML(patients, {ro=false} = {}){
     h += `<td class="stk hdtd" style="${stkStyle(3)}">${hdCell(p, ro)}</td>`;
     h += `<td class="stk last" style="${stkStyle(4)}"><div class="probwrap"><input class="cell" data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" ${ro?'disabled':''} placeholder="One-liner / problem">${(fl.length || !ro) ? `<div class="flags">${flagsHTML(p, fl, ro)}${ro ? '' : leftBtn(p, dcSigned(p) === DC_KEYS.length)}</div>` : ''}</div></td>`;
     h += `<td style="min-width:100px">${selHTML('status', p.status, STATUS_OPTS, {blank:false, ro, kind:'p', id:p.id})}</td>`;
-    h += `<td style="min-width:138px"><span class="dwrap"><input class="cell" type="date" data-field="cell:edd" data-kind="p" data-id="${p.id}" value="${esc(isISO(p.cells.edd.t)?p.cells.edd.t:'')}" ${ro?'disabled':''} title="Estimated discharge date">${ro ? '' : dClr(isISO(p.cells.edd.t))}</span></td>`;
+    h += `<td style="min-width:138px">${eddHTML(p, ro)}</td>`;
     let ci = 0;
     visGroups.forEach(g => g.cols.forEach(c => {
       const cfg = colCfg(c.k);
@@ -3167,10 +3170,20 @@ const asOfTip = () => `You’re pre-charting ${fmtNoYear(state.boardDate)}. EDD,
 /* Clearing a date: a ✕ beside it (desktop date boxes have no clear button), and on iPad the picker's “Reset” now empties the box —
    iOS resets to the box's starting value, so that starting value is made blank as soon as the box is tapped. */
 const dClr = has => `<button type="button" class="dclr" data-dclr tabindex="-1" title="Clear this date" aria-label="Clear this date" ${has ? '' : 'hidden'}>✕</button>`;
+/* EDD: a date, or “Unknown” */
+const eddUnknown = p => p.cells.edd.t === 'Unknown';
+function eddHTML(p, ro, cls = 'cell'){
+  if(eddUnknown(p)) return `<span class="dwrap"><button type="button" class="eddunk" ${ro ? 'disabled' : `data-eddset="${p.id}"`} title="EDD unknown${ro ? '' : ' — tap to set a date'}">Unknown</button></span>`;
+  const t = isISO(p.cells.edd.t) ? p.cells.edd.t : '';
+  return `<span class="dwrap"><input ${cls ? `class="${cls}"` : ''} type="date" data-field="cell:edd" data-kind="p" data-id="${p.id}" value="${esc(t)}" ${ro ? 'disabled' : ''} title="Estimated discharge date">${ro ? '' : dClr(!!t) + `<button type="button" class="dclr eddq" data-eddunk="${p.id}" tabindex="-1" title="EDD unknown" aria-label="Mark EDD unknown" ${t ? 'hidden' : ''}>?</button>`}</span>`;
+}
+document.addEventListener('click', e => { const u = e.target.closest('[data-eddunk]'), d = e.target.closest('[data-eddset]'); if(!u && !d) return; e.preventDefault(); e.stopPropagation();
+  if(u) setCell('p', u.dataset.eddunk, 'edd', {t:'Unknown'});
+  else { const id = d.dataset.eddset; setCell('p', id, 'edd', {t:''}); setTimeout(() => { const i = document.querySelector(`input[data-field="cell:edd"][data-id="${id}"]`); if(i){ i.focus(); try{ i.showPicker && i.showPicker(); }catch(err){} } }, 60); } });
 document.addEventListener('click', e => { const b = e.target.closest('[data-dclr]'); if(!b) return; e.preventDefault(); e.stopPropagation();
   const i = b.previousElementSibling; if(!i || i.type !== 'date' || i.disabled) return; i.value = ''; b.hidden = true; i.dispatchEvent(new Event('change', {bubbles:true})); });
 document.addEventListener('focusin', e => { const i = e.target; if(i && i.tagName === 'INPUT' && i.type === 'date' && i.defaultValue){ const v = i.value; i.defaultValue = ''; i.value = v; } });
-document.addEventListener('input', e => { const i = e.target; if(i && i.tagName === 'INPUT' && i.type === 'date'){ const b = i.nextElementSibling; if(b && b.matches('[data-dclr]')) b.hidden = !i.value; } });
+document.addEventListener('input', e => { const i = e.target; if(i && i.tagName === 'INPUT' && i.type === 'date'){ const b = i.nextElementSibling; if(b && b.matches('[data-dclr]')){ b.hidden = !i.value; const q = b.nextElementSibling; if(q && q.matches('[data-eddunk]')) q.hidden = !!i.value; } } });
 function renderCensus(){
   { const n = $('#asOfNote'); if(n){ const t = asOfTxt(); n.hidden = !t; n.textContent = t ? '🗓 ' + t : ''; n.title = t ? asOfTip() : ''; } }
   $('#censusGrid').innerHTML = gridHTML(filteredPatients());
@@ -3220,7 +3233,7 @@ function renderDischarges(){
       const n = dcSigned(p);
       h += `<tr data-id="${p.id}"><td style="padding:0 8px;font-weight:700;white-space:nowrap">${esc(p.bed||'—')}</td><td style="padding:0 8px;white-space:nowrap">${esc(p.intern)}</td><td style="padding:0 8px;min-width:180px">${esc(p.problem)}</td>`;
       h += `<td style="min-width:104px">${selHTML('status', p.status, STATUS_OPTS, {blank:false, kind:'p', id:p.id})}</td>`;
-      h += `<td style="min-width:138px"><span class="dwrap"><input class="cell" type="date" data-field="cell:edd" data-kind="p" data-id="${p.id}" value="${esc(isISO(p.cells.edd.t)?p.cells.edd.t:'')}">${dClr(isISO(p.cells.edd.t))}</span></td>`;
+      h += `<td style="min-width:138px">${eddHTML(p, false)}</td>`;
       cols.forEach(k => h += ctlHTML(p, k));
       h += `<td style="padding:0 8px;white-space:nowrap">${n === DC_KEYS.length ? '<span class="flag ready">Ready for DC</span>' : `<b>${n}/${DC_KEYS.length}</b>`}</td>`;
       h += `<td style="padding:0 8px;white-space:nowrap">${leftBtn(p, true)}</td></tr>`;
@@ -4045,7 +4058,7 @@ function renderRounds(){
         <div class="wide2"><label>Problem / one-liner</label><input data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" placeholder="One-liner / problem"></div>
         <div><label>Intern</label>${selHTML('intern', p.intern, state.settings.interns, {kind:'p', id:p.id})}</div>
         <div><label>Status</label>${selHTML('status', p.status, STATUS_OPTS, {blank:false, kind:'p', id:p.id})}</div>
-        <div><label>${esc(colCfg('edd').h)}</label><span class="dwrap"><input type="date" data-field="cell:edd" data-kind="p" data-id="${p.id}" value="${esc(isISO(p.cells.edd.t) ? p.cells.edd.t : '')}">${dClr(isISO(p.cells.edd.t))}</span></div>
+        <div><label>${esc(colCfg('edd').h)}</label>${eddHTML(p, false, '')}</div>
         <div><label>Admitted (HD 1)</label><input type="date" data-field="admitDate" data-kind="p" data-id="${p.id}" value="${esc(isISO(p.admitDate) ? p.admitDate : '')}" max="${state.boardDate}"></div>
       </div>
     </div>
@@ -5387,7 +5400,7 @@ function runDiagnostics(){
   const noBed = state.patients.filter(p => !(p.bed || '').trim()).length; if(noBed) add('warn', `${noBed} patient(s) without a bed`, '');
   const orphanA = state.admits.filter(a => a.patientId && !state.patients.some(p => p.id === a.patientId) && !state.archive.some(p => p.id === a.patientId)).length;
   if(orphanA) add('warn', `${orphanA} admission(s) linked to a patient that no longer exists`, 'Usually from a deleted census row; harmless.');
-  const badDates = state.patients.filter(p => (p.admitDate && !isISO(p.admitDate)) || (p.cells.edd.t && !isISO(p.cells.edd.t) && p.cells.edd.t !== 'N/A')).length;
+  const badDates = state.patients.filter(p => (p.admitDate && !isISO(p.admitDate)) || (p.cells.edd.t && !isISO(p.cells.edd.t) && p.cells.edd.t !== 'N/A' && p.cells.edd.t !== 'Unknown')).length;
   if(badDates) add('warn', `${badDates} patient(s) with an unreadable date`, 'Check their admission date / EDD.');
   const orphanT = (state.todos||[]).filter(t => t.pid && !todoPatient(t)).length;
   if(orphanT) add('warn', `${orphanT} to-do(s) for patients no longer on the census`, 'They are hidden and will be cleared at the next New Shift.');
@@ -6506,7 +6519,7 @@ function cmdSetPlan(ent, f, vals){
     const fl = f.field, lab = {bed:'Bed', status:'Status', intern:'Intern', problem:'Problem', edd:'EDD'}[fl]; let val;
     if(fl === 'status'){ val = cmdOpt(STATUS_OPTS, raw); if(!val) return {err:`Status: ${STATUS_OPTS.join(', ')}`}; }
     else if(fl === 'intern'){ val = cmdOpt(state.settings.interns, raw); if(!val) return {err:`Intern: ${state.settings.interns.map(esc).join(', ') || 'none set'}`}; }
-    else if(fl === 'edd'){ val = CMD_NO.has(w0) ? '' : cmdDate(raw); if(val === null) return {err:'EDD: today, tomorrow, +2, 10/30…'}; if((p.cells.edd.t || '') === val) return cmdAlready(esc(p.bed), 'EDD', val ? fmtShort(val) : 'empty'); return {html:`${who('p')} · <b>EDD</b> → ${val ? fmtShort(val) : 'cleared'}`, run:() => { setCell('p', p.id, 'edd', {t:val}); return `${p.bed}: EDD → ${val ? fmtShort(val) : 'cleared'}`; }, row:['p', p.id]}; }
+    else if(fl === 'edd'){ val = CMD_NO.has(w0) ? '' : /^(unknown|unk|\?|tbd)$/i.test(w0) ? 'Unknown' : cmdDate(raw); if(val === null) return {err:'EDD: today, tomorrow, +2, 10/30…'}; if((p.cells.edd.t || '') === val) return cmdAlready(esc(p.bed), 'EDD', val === 'Unknown' ? 'Unknown' : val ? fmtShort(val) : 'empty'); return {html:`${who('p')} · <b>EDD</b> → ${val === 'Unknown' ? 'Unknown' : val ? fmtShort(val) : 'cleared'}`, run:() => { setCell('p', p.id, 'edd', {t:val}); return `${p.bed}: EDD → ${val === 'Unknown' ? 'Unknown' : val ? fmtShort(val) : 'cleared'}`; }, row:['p', p.id]}; }
     else { if(!raw) return {err:fl === 'bed' ? 'Type the new bed — e.g. 7W05 bed 7W-12A' : 'Type the new problem'}; val = raw; }
     if((p[fl] || '') === val) return cmdAlready(esc(p.bed), lab, esc(val));
     return {html:`${who('p')} · <b>${lab}</b> → ${esc(val)}`, run:() => { mutate(() => { const r = rowOf('p', p.id); r[fl] = val; const a = admitOf(r); if(a && SYNC_FIELDS.includes(fl)) a[fl] = val; }); if(fl === 'status' && val === 'Transfer') transferModal(p.id); return `${p.bed}: ${lab} → ${val}`; }, row:['p', p.id]};
@@ -7738,6 +7751,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:261, d:'2026-11-22', items:['<b>EDD can be Unknown</b>: tap the <b>?</b> next to an empty EDD (Census, Discharges, Rounds). It shows an “Unknown” pill; tap the pill to pick a date instead.']},
   {v:260, d:'2026-11-22', items:['Cells marked <b>N/A</b> are lightly greyed out.', '<b>Proc</b> holds several procedures, each with its own date — <b>+ Add procedure</b> in the pop-up, ✕ to remove one. The census shows the soonest one with “+2” for the rest; Validation lists them all.']},
   {v:259, d:'2026-11-22', items:['<b>SW, PT and OT</b> now count toward a patient being done (box counts, Open boxes, and the green bed cell). <b>Services</b> and <b>Dispo notes</b> are optional and never count as open.']},
   {v:258, d:'2026-11-22', items:['<b>SW</b> is now a choice of <b>Complete</b> or <b>N/A</b> instead of a checkbox. Anything already ticked shows as Complete.']},
