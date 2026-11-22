@@ -163,6 +163,7 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .nadpill{font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#5b6470;background:#e2e6eb;border-radius:999px;padding:3px 8px;white-space:nowrap}
 @media (prefers-color-scheme: dark){ .tc.t-newadm{background:#2a2d33} .nadpill{background:#3a3f47;color:#aab1bb} }
 .pcchk.off,.rdchk.off,.rseenbtn:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(1)}
+.ptseen{margin-top:8px;align-items:center}.ptseen label{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
@@ -1701,7 +1702,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '270';
+const APP_VERSION = '271';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2091,12 +2092,14 @@ function ioText(c){ if(!c) return ''; const n = ioNet(c), g = ioNum(c.goal) ? ' 
   if(n !== null) return `In ${ioVol(c.in)} · Out ${ioVol(c.out)} · Net ${ioSigned(n)}${g}`;
   if(!ioNum(c.in) && !ioNum(c.out)) return g.replace(/^ · /, '');
   return [ioNum(c.in) && `In ${ioVol(c.in)}`, ioNum(c.out) && `Out ${ioVol(c.out)}`].filter(Boolean).join(' · ') + g; }
+const PTOT = new Set(['pt', 'ot']);   // PT / OT: a recommendation plus a “last seen” date (cell.d)
 const tsExpired = t => isISO(t) && daysBetween(t, state.boardDate) * 24 >= (state.settings.tsHours || 72);
 const bmCurrent = c => !isISO(c.t) || daysBetween(c.t, state.boardDate) <= 1 || c.ck === state.boardDate;   // BM today / yesterday, or re-checked today
 function isDone(cfg, cell){ if(cfg.type === 'ldt' || cfg.type === 'proc' || cfg.type === 'gtt') return true;
   if(cfg.type === 'date' && cfg.k === 'ts' && tsExpired(cell.t)) return false;    // an expired T&S needs a new one (or N/A)
   if(cfg.type === 'date' && cfg.k === 'bm' && !bmCurrent(cell)) return false;     // an old Last BM needs re-checking each day
   if(cfg.type === 'choice' && /^pending/i.test(cell.t || '')) return false;
+  if(PTOT.has(cfg.k) && !cell.t) return isISO(cell.d);   // seen, no recommendation yet → still counts as done
   if(cfg.type === 'io') return ioNet(cell) !== null || cell.t === 'N/A' || DONE.has(cell.s); return isStatusType(cfg.type) ? DONE.has(cell.s) : cfg.type === 'checkNote' ? !!cell.c : !!cell.t; }
 function optOf(cfg, label){ return cfg.opts.find(o => o.label === label); }
 
@@ -2278,6 +2281,11 @@ function normalize(s){
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
   // v247: new Imaging column sits right after Lab Rev in any saved column order (once)
   if(!s.settings.imgCol){ const co = s.settings.colOrder; if(co && typeof co === 'object') Object.keys(co).forEach(g => { const o = co[g]; if(Array.isArray(o) && !o.includes('img')){ const i = o.indexOf('labrev'); if(i >= 0) o.splice(i + 1, 0, 'img'); } }); s.settings.imgCol = 1; }
+  // v271: “Seen 11/20” (from v265) becomes the Last seen date
+  if(!s.settings.ptotSeen){ const yr = +String(s.boardDate || '').slice(0, 4) || new Date().getFullYear();
+    [...(s.patients || []), ...(s.archive || [])].forEach(p => ['pt', 'ot'].forEach(k => { const c = p.cells && p.cells[k], m = c && String(c.t || '').match(/^Seen (\d{1,2})\/(\d{1,2})$/); if(!m) return;
+      let d = `${yr}-${String(m[1]).padStart(2, '0')}-${String(m[2]).padStart(2, '0')}`; if(s.boardDate && d > s.boardDate) d = `${yr - 1}${d.slice(4)}`; c.d = d; c.t = ''; }));
+    s.settings.ptotSeen = 1; }
   // v265: PT / OT hold the recommendation, not a date (an old date becomes “Seen 11/20”)
   if(!s.settings.ptotRec){ [...(s.patients || []), ...(s.archive || [])].forEach(p => ['pt', 'ot'].forEach(k => { const c = p.cells && p.cells[k]; if(c && isISO(c.t)){ const [, m, d] = c.t.split('-'); c.t = `Seen ${+m}/${+d}`; } }));
     ['pt', 'ot'].forEach(k => { if(s.settings.columns && s.settings.columns[k]){ delete s.settings.columns[k].opts; delete s.settings.columns[k].type; } }); s.settings.ptotRec = 1; }
@@ -3053,6 +3061,7 @@ function cellHTML0(cell, col, kind, id, ri, ci, ro){
   const style = st ? `background:${st.bg};color:${st.fg}` : '';
   let txt = cell.t, ocls = '';
   if(col.type === 'date' && isISO(txt)) txt = fmtShort(txt);
+  if(PTOT.has(col.k) && isISO(cell.d)) txt = (txt ? txt + ' · ' : 'Seen ') + fmtShort(cell.d);
   if(col.type === 'choice' && txt){ const o = optOf(col, col.k === 'diet' ? dietParse(txt).base : txt); if(o && o.color) ocls = `oc oc-${o.color}`; }
   const title = statusy ? [col.h, st ? st.label : 'Not started', cell.t ? `— ${cell.t}` : ''].join(' ') : `${col.h}${cell.t ? ': '+cell.t : ''}`;
   if(col.type === 'check' || col.type === 'checkNote') txt = '';
@@ -3235,7 +3244,7 @@ function ringSVG(n, cap, what = 'Census'){
   const col = full ? '#EA4335' : 'var(--accent)';
   return `<svg class="ring" viewBox="0 0 100 100" width="104" height="104" role="img" aria-label="${what} ${n}${cap ? ' of '+cap : ''}">
     <circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--line)" stroke-width="10"/>
-    ${cap ? `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(frac*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 50 50)"/>` : ''}
+    ${cap ? `<circle cx="50" cy="50" r="${r}" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="${(frac*C).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 50 50)"/>` : what === 'Census' ? `<circle cx="50" cy="50" r="${r}" fill="none" stroke="#34A853" stroke-width="10"/>` : ''}
     <text x="50" y="${cap ? 54 : 58}" text-anchor="middle" class="ringnum" fill="${full ? '#EA4335' : 'var(--ink)'}">${n}${cap ? `<tspan class="ringcap" fill="${full ? '#EA4335' : 'var(--muted)'}">/${cap}</tspan>` : ''}</text>
   </svg>`;
 }
@@ -3907,6 +3916,7 @@ function closePop(commit=true){
     const r = rowOf(p.kind,p.id);
     const cb = p.el.querySelector('[data-cn]'), gl = p.el.querySelector('.gttlist'), lw = p.el.querySelector('.ldtlist:not(.gttlist)'), dm = p.el.querySelector('.dmods');
     if(dm && r && dm.dataset.val !== (r.cells[p.k].t || '')) setCell(p.kind, p.id, p.k, {t:dm.dataset.val});
+    const ptd = p.el.querySelector('[data-ptd]'); if(ptd && r){ const v = isISO(ptd.value) ? ptd.value : ''; if(v !== (r.cells[p.k].d || '')) setCell(p.kind, p.id, p.k, {d:v}); }
     const pd = p.el.querySelector('[data-procd]');
     const ioIn = p.el.querySelector('[data-ioin]');
     if(ioIn && r){ const a = ioParse(ioIn.value), b = ioParse(p.el.querySelector('[data-ioout]').value), g = ioParseGoal(p.el.querySelector('[data-iogoal]').value), t = p.el.querySelector('[data-ionote]').value.trim(), c = r.cells[p.k];
@@ -3957,6 +3967,7 @@ function openPop(cellEl, focusEditor=false){
   } else if(col.type === 'choice'){
     body += `<div class="opts">${col.opts.map((o,i) => `<button class="optbtn ${cell.t===o.label?'on':''}" data-o="${esc(o.label)}"><i class="oc oc-${o.color||'none'}">${i<9?i+1:''}</i>${esc(o.label)}</button>`).join('')}
       ${cell.t && !optOf(col, cell.t) ? `<div class="muted" style="font-size:11px;margin-top:4px">Current value “${esc(cell.t)}” isn't in the list.</div>` : ''}</div>`;
+    if(PTOT.has(col.k)) body += `<div class="ed ptseen"><label>Last seen</label><input type="date" data-ptd value="${esc(isISO(cell.d) ? cell.d : '')}" max="${state.boardDate}"><button class="btn sm" data-ptdtoday>Today</button></div>`;
   } else if(col.type === 'io'){
     body += `<div class="iogrid"><label>Intake<input type="text" inputmode="decimal" data-ioin value="${ioNum(cell.in) ? cell.in : ''}" placeholder="mL" autocomplete="off"></label>
       <label>Output<input type="text" inputmode="decimal" data-ioout value="${ioNum(cell.out) ? cell.out : ''}" placeholder="mL" autocomplete="off"></label>
@@ -4023,7 +4034,9 @@ function openPop(cellEl, focusEditor=false){
     if(b.dataset.dmod !== undefined){ const dm = el.querySelector('.dmods'), cur = dietParse(dm.dataset.val), m = b.dataset.dmod, on = !cur.mods.includes(m);
       const mods = on ? [...cur.mods, m] : cur.mods.filter(x => x !== m); dm.dataset.val = dietJoin(cur.base, mods);
       b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.textContent = (on ? '✓ ' : '') + m; return; }
-    if(b.dataset.o !== undefined){ const dm = el.querySelector('.dmods'); finish({t:dm ? dietJoin(b.dataset.o, dietParse(dm.dataset.val).mods) : b.dataset.o}); return; }
+    if(b.hasAttribute('data-ptdtoday')){ el.querySelector('[data-ptd]').value = state.boardDate; return; }
+    if(b.dataset.o !== undefined){ const dm = el.querySelector('.dmods'), pd = el.querySelector('[data-ptd]'); const patch = {t:dm ? dietJoin(b.dataset.o, dietParse(dm.dataset.val).mods) : b.dataset.o};
+      if(pd) patch.d = isISO(pd.value) ? pd.value : ''; finish(patch); return; }
     if(b.hasAttribute('data-clear')){ finish(edEl ? {s:'', t:edEl.value} : {s:''}); return; }
     if(b.dataset.pday !== undefined) return;
     if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:'', items:[]} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
@@ -7964,6 +7977,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:271, d:'2026-11-22', items:['<b>PT / OT</b> have a <b>Last seen</b> date again, alongside the recommendation — the census shows e.g. “SAR · 11/20”. A date with no recommendation yet counts as done; Pending still counts as open.', 'With no census cap, the Census ring is a full <b>green</b> circle.']},
   {v:270, d:'2026-11-22', items:['New admits: boxes showing the <b>New admit</b> pill no longer appear under <b>outstanding</b>.', 'New admits: the <b>pre-charted ✓</b> and <b>💬 discussed</b> buttons are greyed out (on the Census and in Rounds) on the day they come in. Rounds’ Next still stops at them on the way through.']},
   {v:269, d:'2026-11-22', items:['New admits: <b>Visit</b> and <b>Handoff</b> on the census now follow the Admissions tab too (Visit ticked → Visit done; Handoff Signed → Handoff done), like Note. Visit is no longer greyed out.', '<b>GTT</b> has an <b>N/A</b> option (no drips): the N/A button in its pop-up, or long-press the box.']},
   {v:268, d:'2026-11-22', items:['<b>New admits</b>: on the day they come in, Vitals, I/O, FSG, Lab Rev, Imaging, Visit and Attest are greyed out with a <b>New admit</b> pill — the admission covered them — and don’t count as open. Fill in Lab Ord, Handoff, Ord Rev and the columns to the right as usual. From the next day they’re ordinary boxes again.', 'A new admit’s <b>Note</b> turns Complete by itself once Note is <b>Signed</b> on the Admissions tab.']},
