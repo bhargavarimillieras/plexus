@@ -686,6 +686,9 @@ body.touch #tkBedSel{font-size:15px;padding:8px}#tkTeam{width:130px}#tkText{flex
 .gttsearch input{flex:1;min-width:0;padding:6px 9px;border:1px solid var(--line2);border-radius:7px;background:var(--panel);font:inherit;font-size:13px}
 body.touch .gttsearch input{font-size:16px;padding:9px 11px}
 .gttnone{padding:10px;font-size:12px}
+.gttlock{display:flex;align-items:center;gap:8px;padding:7px 10px;margin-bottom:6px;border:1px dashed var(--line2);border-radius:8px;background:var(--head);font-size:12.5px}
+.gttlock .muted{flex:1;font-size:11.5px}
+.gttpill small{font-weight:600;opacity:.7}
 .gttrow[hidden],.ldtgrp[hidden]{display:none}
 .gttrow{display:grid;grid-template-columns:20px 1fr;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
 .ldtgrp+.gttrow{border-top:0}
@@ -1702,7 +1705,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '271';
+const APP_VERSION = '272';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2963,6 +2966,10 @@ const GTT_SHORT = {Epinephrine:'Epi', Norepinephrine:'Norepi', Vasopressin:'Vaso
 const gttItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
 const gttCat = n => { const l = String(n).toLowerCase(), g = GTT_GROUPS.find(g => g[1].some(x => x.toLowerCase() === l)); return g ? g[2] : 'oth'; };
 const gttLabel = it => it.k;
+// HEP GTT in DVT PPx shows Heparin in GTT (read-only there — add / remove it from DVT PPx)
+const hepOn = p => !!p && p.cells && p.cells.dvt && String(p.cells.dvt.t || '').trim().toUpperCase() === 'HEP GTT';
+const gttShown = (cell, p) => { const hep = hepOn(p), own = (cell && cell.t === 'N/A' && !hep) ? [] : gttItems(cell).filter(i => !(hep && i.k.toLowerCase() === 'heparin'));
+  return hep ? [{k:'Heparin', dvt:true}, ...own] : own; };
 const gttSummary = cell => cell && cell.t === 'N/A' ? 'N/A' : gttItems(cell).map(gttLabel).join('; ');
 // census cell: "Norepi · Vaso · Prop" (no doses — nursing titrates them)
 const gttCellTxt = cell => gttItems(cell).map(it => GTT_SHORT[it.k] || it.k).join(' · ');
@@ -2972,12 +2979,13 @@ const GTT_ALIAS = {Epinephrine:'epi adrenaline', Norepinephrine:'norepi levophed
   Insulin:'insulin gtt', Versed:'midazolam', Propofol:'diprivan prop', Precedex:'dexmedetomidine dex', Ativan:'lorazepam', Morphine:'mso4', Dilaudid:'hydromorphone', Fentanyl:'fent',
   Amiodarone:'amio', Lidocaine:'lido', Diltiazem:'dilt cardizem'};
 const gttRowHTML = (n, on) => `<label class="gttrow ${on ? 'on' : ''}" data-q="${esc((n + ' ' + (GTT_SHORT[n] || '') + ' ' + (GTT_ALIAS[n] || '')).toLowerCase())}"><input type="checkbox" data-gtt="${esc(n)}" ${on ? 'checked' : ''}><span class="gttn"><i class="gttdot g-${gttCat(n)}"></i>${esc(n)}</span></label>`;
-function gttPopHTML(cell){
+function gttPopHTML(cell, p){
   const items = gttItems(cell), find = n => items.find(i => i.k.toLowerCase() === n.toLowerCase());
   const known = new Set(GTT_GROUPS.flatMap(g => g[1].map(x => x.toLowerCase()))), extra = items.filter(i => !known.has(i.k.toLowerCase()));
   const html = GTT_GROUPS.map(([h, list]) => `<div class="ldtgrp">${esc(h)}</div>${list.map(n => gttRowHTML(n, find(n))).join('')}`).join('')
     + `<div class="ldtgrp gttoth" ${extra.length ? '' : 'hidden'}>Other</div>${extra.map(it => gttRowHTML(it.k, true)).join('')}`;
-  return `<div class="gttsearch"><input type="search" data-gttq placeholder="Search or add a drip (levo, prop…)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button class="btn sm" data-gttadd hidden>Add</button><button class="btn sm ${cell.t === 'N/A' ? 'primary' : ''}" data-gttna title="No drips running">N/A</button></div>
+  const lock = hepOn(p) ? `<div class="gttlock"><span class="gttn"><i class="gttdot g-oth"></i><b>Heparin</b></span><span class="muted">HEP GTT in DVT PPx — change it there</span><span class="gttlk">🔒</span></div>` : '';
+  return `${lock}<div class="gttsearch"><input type="search" data-gttq placeholder="Search or add a drip (levo, prop…)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button class="btn sm" data-gttadd hidden>Add</button><button class="btn sm ${cell.t === 'N/A' ? 'primary' : ''}" data-gttna title="No drips running">N/A</button></div>
     <div class="ldtlist gttlist">${html}<div class="muted gttnone" hidden></div></div>
     <div class="muted" style="font-size:11px;margin-top:5px">Tick what's running. Enter ticks the top match, or adds a new drip if nothing matches. Only shows on ICU / CCU boards.</div>`;
 }
@@ -3010,7 +3018,7 @@ function commitGtt(p, r, el){
   if(JSON.stringify(items) !== JSON.stringify(gttItems(r.cells[p.k])) || (items.length && r.cells[p.k].t === 'N/A')) setCell(p.kind, p.id, p.k, {items, s:'', t:''});
 }
 // Rounds · At a glance: one pill per drip, full name
-const gttPills = cell => gttItems(cell).map(it => `<span class="gttpill g-${gttCat(it.k)}"><b>${esc(it.k)}</b></span>`).join('');
+const gttPills = (cell, p) => gttShown(cell, p).map(it => `<span class="gttpill g-${gttCat(it.k)}" ${it.dvt ? 'title="HEP GTT — from DVT PPx"' : ''}><b>${esc(it.k)}</b>${it.dvt ? ' <small>(DVT PPx)</small>' : ''}</span>`).join('');
 
 /* ---------- rendering: shared cell ---------- */
 function procWhen(d){ if(!isISO(d)) return ''; const n = daysBetween(state.boardDate, d); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 0 ? 'past' : 'later'; }
@@ -3046,9 +3054,10 @@ function cellHTML0(cell, col, kind, id, ri, ci, ro){
     return `<div class="tc t-io io-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}</span>${g !== null ? `<i class="iogoal">◎${esc(g === 0 ? 'even' : ioSigned(g).replace(' ', ''))}</i>` : ''}</div>`;
   }
   if(col.type === 'gtt'){
-    if(cell.t === 'N/A') return `<div class="tc t-gtt gtt-none ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h)}: N/A — no drips"><span class="txt">N/A</span></div>`;
-    const its = gttItems(cell), txt = gttCellTxt(cell), st = !its.length ? 'none' : its.some(i => gttCat(i.k) === 'press') ? 'press' : 'on';
-    return `<div class="tc t-gtt gtt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h + ': ' + (its.length ? gttSummary(cell) : 'no drips'))}"><span class="txt">${esc(txt)}</span></div>`;
+    const pr = kind === 'p' ? rowOf('p', id) : null, hep = hepOn(pr);
+    if(cell.t === 'N/A' && !hep) return `<div class="tc t-gtt gtt-none ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h)}: N/A — no drips"><span class="txt">N/A</span></div>`;
+    const its = gttShown(cell, pr), txt = its.map(it => GTT_SHORT[it.k] || it.k).join(' · '), st = !its.length ? 'none' : its.some(i => gttCat(i.k) === 'press') ? 'press' : 'on';
+    return `<div class="tc t-gtt gtt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h + ': ' + (its.length ? its.map(i => i.k + (i.dvt ? ' (HEP GTT, from DVT PPx)' : '')).join('; ') : 'no drips'))}"><span class="txt">${esc(txt)}</span></div>`;
   }
   if(col.type === 'ldt'){
     const items = ldtActive(cell), gone = ldtRecentGone(cell), old = items.some(ldtOld), st = !items.length && !gone.length ? 'none' : old ? 'old' : 'ok';
@@ -3977,7 +3986,7 @@ function openPop(cellEl, focusEditor=false){
       <div class="ed"><input type="text" data-ionote value="${esc(cell.t === 'N/A' ? '' : cell.t || '')}" placeholder="Note (optional)"></div>
       <div class="muted" style="font-size:11px;margin-top:5px">mL, or litres with “L” (1.2L). Add amounts with + (800+450).</div>`;
   } else if(col.type === 'gtt'){
-    body += gttPopHTML(cell);
+    body += gttPopHTML(cell, kind === 'p' ? rowOf('p', id) : null);
   } else if(col.type === 'ldt'){
     body += ldtPopHTML(col, cell);
   } else if(col.type === 'proc'){
@@ -4286,7 +4295,7 @@ function renderRoundsSplit(){
   const tile = k => { const cfg = colCfg(k); return cellHTML(p.cells[k], cfg, 'p', p.id, 0, 0, false) + (cm[k] ? `<div class="rcmt">${esc(cm[k])}</div>` : ''); };
   const ioDet = c => { if(!c) return ''; const parts = [ioNum(c.in) && `<i class="iosym" title="Intake" aria-label="Intake">+</i><b>${esc(ioVol(c.in))}</b>`, ioNum(c.out) && `<i class="iosym" title="Output" aria-label="Output">−</i><b>${esc(ioVol(c.out))}</b>`].filter(Boolean);
     const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
-  const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' ? 'rs-gtt' : ''}">${k === 'gtt' && gttItems(p.cells.gtt).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
+  const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' ? 'rs-gtt' : ''}">${k === 'gtt' && gttShown(p.cells.gtt, p).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt, p)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
   const ckCard = c => { const all = chunkKeys(c.k), show = all.filter(k => !RS_GLANCE.includes(k)); if(!show.length) return '';
     const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(k => isDone(colCfg(k), p.cells[k] || {})).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
     const cnt = `<span class="rs-cnt" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length} done</span>`;
@@ -7977,6 +7986,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:272, d:'2026-11-22', items:['<b>HEP GTT</b> in DVT PPx now shows <b>Heparin</b> in the GTT column (census and Rounds). It’s read-only there — add or remove it from DVT PPx.']},
   {v:271, d:'2026-11-22', items:['<b>PT / OT</b> have a <b>Last seen</b> date again, alongside the recommendation — the census shows e.g. “SAR · 11/20”. A date with no recommendation yet counts as done; Pending still counts as open.', 'With no census cap, the Census ring is a full <b>green</b> circle.']},
   {v:270, d:'2026-11-22', items:['New admits: boxes showing the <b>New admit</b> pill no longer appear under <b>outstanding</b>.', 'New admits: the <b>pre-charted ✓</b> and <b>💬 discussed</b> buttons are greyed out (on the Census and in Rounds) on the day they come in. Rounds’ Next still stops at them on the way through.']},
   {v:269, d:'2026-11-22', items:['New admits: <b>Visit</b> and <b>Handoff</b> on the census now follow the Admissions tab too (Visit ticked → Visit done; Handoff Signed → Handoff done), like Note. Visit is no longer greyed out.', '<b>GTT</b> has an <b>N/A</b> option (no drips): the N/A button in its pop-up, or long-press the box.']},
