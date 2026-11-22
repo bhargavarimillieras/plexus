@@ -1596,7 +1596,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '245';
+const APP_VERSION = '246';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7104,9 +7104,26 @@ function filesRestorePick(){
   inp.onchange = () => { const f = inp.files[0]; if(f) f.text().then(tx => restoreFile(tx, f.name)).catch(() => toast('Couldn’t read that file')); }; inp.click();
 }
 // a full Plexus backup (every board) — from Files, Take with me, or a data file. Returns false if it isn't one.
+// a one-board backup (⬇ Download a backup on a computer): put it back on the board it came from
+async function restoreOneBoard(s2, fname){
+  const k = s2.settings && knownBoard(s2.settings.shiftType) ? s2.settings.shiftType : activeType, T = typeOf(k);
+  const when = s2.backupSavedAt, other = s2.edition && s2.edition !== EDITION;
+  const go = await askChoice(`<h3>Restore this board?</h3><p><b>${esc(fname)}</b>${when ? ` — saved ${esc(new Date(when).toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}))}` : ''}</p>
+    <p class="muted">One board: <b>${esc(T.label)}</b> · ${(s2.patients || []).length} patient${(s2.patients || []).length === 1 ? '' : 's'} · ${(s2.todos || []).filter(t => !t.done).length} open tasks${s2.boardDate ? ' · on ' + esc(fmtNoYear(s2.boardDate)) : ''}</p>
+    ${other ? `<p class="red"><b>⚠ This came from the ${s2.edition === 'sandbox' ? 'Sandbox (test)' : 'Portable (real)'} edition.</b></p>` : ''}
+    <p>It <b>replaces ${esc(T.label)}</b> here. Your other boards aren’t touched, and a snapshot is kept first (⚙ → View &amp; restore backups).</p>`, [['Cancel', '', false], ['Replace this board', 'danger', true]]);
+  if(!go) return true;
+  try{ await autoBackup('before restoring ' + fname, true); }catch(e){}
+  if(k !== activeType) switchBoard(k);
+  const lg = Array.isArray(s2.log) ? s2.log : null;
+  mutate(() => { delete s2.backupSavedAt; delete s2.appVersion; delete s2.edition; delete s2.log; state = normalize(s2); }, {label:`Restored ${T.label} from ${fname}`, cat:'system'});
+  if(lg){ try{ const seen = new Set(), all = [...lg, ...actLog].filter(x => { const id = x.t + '|' + x.msg; if(seen.has(id)) return false; seen.add(id); return true; }); all.sort((a, b) => String(a.t).localeCompare(String(b.t))); actLog = all.slice(-LOG_MAX); saveLog(); }catch(e){} }
+  launching = false; document.body.classList.remove('launching'); const L = $('#launch'); if(L) L.hidden = true;
+  renderAll(); toast(`${T.label} restored`); return true;
+}
 async function restoreFile(txt, fname){
   let pkg; try{ pkg = JSON.parse(txt); }catch(e){ toast('That file is not a Plexus backup'); return true; }
-  if(!pkg || pkg.kind !== 'wardsMatrixData' || !pkg.boards){ if(pkg && Array.isArray(pkg.patients)){ toast('That’s a single-board backup — restore it from ⚙ Settings → Restore backup'); return true; } toast('That file is not a Plexus backup'); return true; }
+  if(!pkg || pkg.kind !== 'wardsMatrixData' || !pkg.boards){ if(pkg && Array.isArray(pkg.patients)) return restoreOneBoard(pkg, fname); toast('That file is not a Plexus backup'); return true; }
   if(pkg.olderShifts){ toast('That’s an older-shifts file — open it from History & Archive → Past shift files'); return true; }
   const when = pkg.savedAt || pkg.takenAt; const sum = sumTxt(pkgSummary(pkg));
   const other = pkg.edition && pkg.edition !== EDITION;
@@ -7553,6 +7570,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:246, d:'2026-11-21', items:['<b>Restore from Files</b> (and Open my data file) now accepts a one-board backup — e.g. ⬇ Download a backup on a computer — and puts it back on the board it came from, leaving your other boards alone.']},
   {v:245, d:'2026-11-21', items:['<b>Appearance</b> setting: ⚙ Settings → Appearance → <b>Automatic</b> (follows the iPad or computer), <b>Light</b> or <b>Dark</b>. Saved on this device.']},
   {v:244, d:'2026-11-21', items:['Rounds · Split: <b>Standing &amp; dispo</b> now opens expanded (tap its heading to fold it away).']},
   {v:243, d:'2026-11-21', items:['ICU / CCU boards no longer show an intern as <b>NEXT UP</b> for the next admission (that’s for ward boards).']},
