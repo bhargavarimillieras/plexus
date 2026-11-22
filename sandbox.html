@@ -145,6 +145,10 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .grid select.cell{cursor:pointer}
 .bedpc{display:flex;align-items:center;height:100%;padding-right:4px}
 .bedpc .bedbox,.bedpc>input{flex:1;min-width:0!important}
+.chunkseg button{font-weight:700;min-width:46px}
+.chunkseg .chn{font-style:normal;font-size:10.5px;font-weight:800;margin-left:5px;padding:0 5px;border-radius:999px;background:rgba(0,0,0,.08);vertical-align:1px}
+.chunkseg button.on .chn{background:rgba(255,255,255,.28)}
+#groupToggles.chunked{display:none}
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
@@ -783,6 +787,7 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 .iosym{display:inline-grid;place-items:center;width:17px;height:17px;border:1.5px solid currentColor;border-radius:50%;font:800 12px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-style:normal;margin:0 4px 0 0;vertical-align:-2px;color:var(--muted)}
 .rs-iodet .met{color:#1e7e34;font-weight:700}.rs-iodet .miss{color:#b3261e;font-weight:700}
 .rs-chk{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.rs-pcok{font-size:11px;font-weight:800;color:#1e7e34;letter-spacing:0;text-transform:none;margin-left:6px}
 .rs-ck2{display:flex;flex-direction:column;gap:3px;min-width:0}
 .rs-ck2>span{font-size:11.5px;font-weight:700;color:var(--muted)}
 .rs-ck2 .tc{min-height:34px}
@@ -1500,6 +1505,12 @@ body.touch .lrow{padding:14px 16px}
       <div class="ovmain">
       <div class="toolbar">
         <button class="btn sm" id="sideToggle" title="Show / hide the summary panel">◧</button>
+        <div class="seg chunkseg" id="chunkSeg" role="group" aria-label="Columns to show">
+          <button data-ch="am" title="AM rounds — pre-charting: Vitals, I/O, FSG, GTT, Lab Rev, Imaging, Last BM, T&amp;S">AM</button>
+          <button data-ch="pm" title="PM rounds — after rounds: Avatar, Diet, DVT PPx, Disposition, Visit, Note, Attest, Lab Ord, Handoff, Ord Rev, Proc">PM</button>
+          <button data-ch="dispo" title="Dispo — SW, PT, OT, Services, Dispo notes">Dispo</button>
+          <button data-ch="all" title="Every column">All</button>
+        </div>
         <div class="seg" id="filterSeg">
           <button data-f="all" class="on">All</button>
           <button data-f="open" title="Patients with daily checklist boxes not yet done">Open boxes</button>
@@ -1622,7 +1633,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '252';
+const APP_VERSION = '253';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2281,7 +2292,7 @@ function save(){
   }
 }
 const ui = (() => { try{ return Object.assign({filter:'all', intern:'', hidden:[], admitView:'today', tab:'census'}, JSON.parse(localStorage.getItem(UI_KEY)||'{}')); }catch(e){ return {filter:'all', intern:'', hidden:[], admitView:'today', tab:'census'}; } })();
-ui.search = ''; if(!['all','open','flagged'].includes(ui.filter)) ui.filter = 'all';
+ui.search = ''; if(!['all','open','flagged'].includes(ui.filter)) ui.filter = 'all'; if(!['am','pm','dispo','all'].includes(ui.chunk)) ui.chunk = 'all';
 ui.tab = 'overview';   // Plexus always opens to the Overview
 function saveUI(){ try{ const {search, ...rest} = ui; localStorage.setItem(UI_KEY, JSON.stringify(rest)); }catch(e){} }
 
@@ -2309,6 +2320,7 @@ function mutate(fn, {render=true, label=null, cat='system'} = {}){
   pushUndo(); redoStack.length = 0; const before = undoStack[undoStack.length-1];
   if(SANDBOX){ try{ localStorage.removeItem(PRACTICE_PRISTINE); }catch(e){} }
   fn();
+  try{ const got = autoPc(); if(got.length) setTimeout(() => toast(`${got.join(', ')}: pre-charted ✓ (AM boxes done)`), 0); }catch(e){}
   let prev = null; try{ prev = JSON.parse(before); }catch(e){}
   if(prev) syncLinked(prev);
   try{ if(prev) carryTaskBeds(prev); }catch(e){}
@@ -2601,7 +2613,26 @@ function flagsFor(p){
   else if(dcDay && dcSigned(p) < DC_KEYS.length) f.push(['info',`DC ${dcSigned(p)}/${DC_KEYS.length} signed`]);
   return f;
 }
-const openCount = p => DAILY_KEYS.filter(k => !colHidden(k) && !isDone(colCfg(k), p.cells[k])).length;
+/* AM / PM / Dispo chunks: AM = what you review while pre-charting, PM = acting on the plan after rounds, Dispo = discharge planning.
+   Only changes how columns are shown and counted — what carries over overnight is unchanged. */
+const CHUNKS = [
+  {k:'am', label:'AM', g:'daily', name:'AM rounds', keys:['vitals', 'io', 'fsg', 'gtt', 'labrev', 'img', 'bm', 'ts']},
+  {k:'pm', label:'PM', g:'standing', name:'PM rounds', keys:['avatar', 'diet', 'dvt', 'dest', 'vst', 'note', 'hc', 'attest', 'labord', 'handoff', 'ordrev', 'proc']},
+  {k:'dispo', label:'Dispo', g:'dispo', name:'Dispo', keys:['sw', 'pt', 'ot', 'services', 'dispo']}];
+const CHUNK = Object.fromEntries(CHUNKS.map(c => [c.k, c]));
+const chunkKeys = ck => CHUNK[ck].keys.filter(k => COLMAP[k] && !colHidden(k));
+const chunkOpen = (p, ck) => chunkKeys(ck).filter(k => !isDone(colCfg(k), p.cells[k] || {})).length;
+const openCount = p => chunkOpen(p, 'am') + chunkOpen(p, 'pm');   // “boxes open” = AM + PM (Dispo isn't a daily checklist)
+const amComplete = p => chunkOpen(p, 'am') === 0;
+/* Pre-charted ticks itself when every AM box is done (and unticks if one is cleared again, unless you ticked it yourself).
+   Untick it by hand and it stays unticked for that day. */
+function autoPc(){
+  const d = state.boardDate, got = [];
+  state.patients.forEach(p => { if(p.status === 'New') return;
+    if(isPc(p)){ if(p.pcAuto === d && !amComplete(p)){ delete p.pc; delete p.pcAuto; } }
+    else if(amComplete(p) && p.pcOff !== d){ p.pc = d; p.pcAuto = d; got.push(p.bed || 'Patient'); } });
+  return got;
+}
 /* Hospital day: admission date = HD 1. */
 const hospDay = p => isISO(p.admitDate) ? daysBetween(p.admitDate, state.boardDate) + 1 : null;
 function hdCell(p, ro){
@@ -2921,7 +2952,9 @@ const STK = [ {k:'seq',w:46},{k:'bed',w:130},{k:'intern',w:96},{k:'hd',w:44},{k:
 function stkStyle(i){ let left = 0; for(let j=0;j<i;j++) left += STK[j].w; return `left:${left}px;min-width:${STK[i].w}px;max-width:${STK[i].w}px`; }
 
 function gridHTML(patients, {ro=false} = {}){
-  const visGroups = CENSUS_GROUPS().filter(g => !ui.hidden.includes(g.k) || ro).map(g => ({...g, cols:visibleCols(g)})).filter(g => g.cols.length);
+  const ck = !ro && CHUNK[ui.chunk] ? CHUNK[ui.chunk] : null;
+  const visGroups = ck ? [{k:ck.g, label:ck.name, cols:chunkKeys(ck.k).map(k => COLMAP[k])}].filter(g => g.cols.length)
+    : CENSUS_GROUPS().filter(g => !ui.hidden.includes(g.k) || ro).map(g => ({...g, cols:visibleCols(g)})).filter(g => g.cols.length);
   const totalCols = STK.length + 2 + visGroups.reduce((n,g) => n + g.cols.length, 0);
   const grouped = !ro && ui.groupBy === 'intern';
   if(grouped){
@@ -2946,7 +2979,7 @@ function gridHTML(patients, {ro=false} = {}){
     if(grouped && p.intern !== lastIntern){
       lastIntern = p.intern;
       const mine = patients.filter(x => x.intern === p.intern);
-      h += `<tr class="grprow"><td colspan="${totalCols}"><div class="grplabel">${esc(p.intern || 'Unassigned')} <span>${mine.length} patient${mine.length===1?'':'s'} · ${mine.reduce((n,x) => n + openCount(x), 0)} daily boxes open</span></div></td></tr>`;
+      h += `<tr class="grprow"><td colspan="${totalCols}"><div class="grplabel">${esc(p.intern || 'Unassigned')} <span>${mine.length} patient${mine.length===1?'':'s'} · ${(() => { const c = CHUNK[ui.chunk]; return c && c.k !== 'dispo' ? `${mine.reduce((n,x) => n + chunkOpen(x, c.k), 0)} ${c.label} boxes open` : `${mine.reduce((n,x) => n + openCount(x), 0)} boxes open`; })()}</span></div></td></tr>`;
     }
     h += `<tr class="${p.status==='Discharge'?'dc':''}" data-id="${p.id}" data-intern="${esc(p.intern||'')}">`;
     h += `<td class="stk" style="${stkStyle(0)}"><div class="seqc">${ro ? '' : `<span class="drag" draggable="true" data-drag="${p.id}" title="Drag to move this patient">⠿</span>`}<span>${ri+1}</span>${ro?'':`<span class="rowbtns"><button data-act="up" data-id="${p.id}" title="Move up">▲</button><button data-act="down" data-id="${p.id}" title="Move down">▼</button><button data-act="del" data-id="${p.id}" title="Remove patient">✕</button></span>`}</div></td>`;
@@ -2973,7 +3006,7 @@ const pcPool = () => state.patients.filter(p => p.status !== 'New');
 const pcCount = () => { const L = pcPool(); return {n:L.filter(isPc).length, of:L.length}; };
 const pcBtn = (p, ro) => ro ? '' : `<button type="button" class="pcchk ${isPc(p) ? 'on' : ''}" data-pc="${p.id}" title="${isPc(p) ? 'Pre-charted' : 'Mark pre-charted'} for ${esc(fmtNoYear(state.boardDate))} — clears when the next day starts" aria-label="${isPc(p) ? 'Pre-charted' : 'Not pre-charted'}: ${esc(p.bed || 'patient')}" aria-pressed="${isPc(p)}">✓</button>`;
 function togglePc(id){ const p = rowOf('p', id); if(!p) return; const on = !isPc(p);
-  mutate(() => { const q = rowOf('p', id); if(on) q.pc = state.boardDate; else delete q.pc; }, {label:`${p.bed || 'Patient'}: ${on ? 'pre-charted ✓' : 'pre-charted tick removed'} (${fmtNoYear(state.boardDate)})`, cat:'census'}); }
+  mutate(() => { const q = rowOf('p', id); delete q.pcAuto; if(on){ q.pc = state.boardDate; delete q.pcOff; } else { delete q.pc; q.pcOff = state.boardDate; } }, {label:`${p.bed || 'Patient'}: ${on ? 'pre-charted ✓' : 'pre-charted tick removed'} (${fmtNoYear(state.boardDate)})`, cat:'census'}); }
 // 💬 discussed on rounds — the same mark as Rounds mode's “Mark discussed”, resets each day
 const rdBtn = (p, ro) => ro ? '' : `<button type="button" class="rdchk ${rdSeen(p) ? 'on' : ''}" data-rdc="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds'}" aria-label="${rdSeen(p) ? 'Discussed' : 'Not discussed'}: ${esc(p.bed || 'patient')}" aria-pressed="${rdSeen(p)}">💬</button>`;
 document.addEventListener('click', e => { const b = e.target.closest('[data-rdc]'); if(!b) return; e.preventDefault(); e.stopPropagation();
@@ -2984,7 +3017,7 @@ function filteredPatients(){
   return state.patients.filter(p => {
     if(ui.intern && p.intern !== ui.intern) return false;
     if(q && !(`${p.bed} ${p.problem} ${p.intern}`.toLowerCase().includes(q))) return false;
-    if(ui.filter === 'open') return openCount(p) > 0;
+    if(ui.filter === 'open') return CHUNK[ui.chunk] && ui.chunk !== 'dispo' ? chunkOpen(p, ui.chunk) > 0 : openCount(p) > 0;
     if(ui.filter === 'flagged') return flagsFor(p).some(f => f[0] === 'warn' || f[0] === 'bad');
     if(ui.filter === 'notpc') return p.status !== 'New' && !isPc(p);
     return true;
@@ -3012,9 +3045,9 @@ function workloadRows(){
   const names = [...state.settings.interns, ...new Set(ps.map(p => p.intern).filter(i => i && !state.settings.interns.includes(i)))];
   const rows = names.map((name, i) => { const mine = ps.filter(p => p.intern === name);
     return {name, i, n:mine.length, nw:mine.filter(p => p.status === 'New').length, dc:mine.filter(p => dcBucket(p) === 'today').length,
-            open:mine.reduce((x,p) => x + openCount(p), 0), todo:todoOpenFor(mine), cap:capOf(name), full: capOf(name) > 0 && mine.length >= capOf(name), listed: state.settings.interns.includes(name)}; });
+            open:mine.reduce((x,p) => x + openCount(p), 0), am:mine.reduce((x,p) => x + chunkOpen(p, 'am'), 0), pm:mine.reduce((x,p) => x + chunkOpen(p, 'pm'), 0), todo:todoOpenFor(mine), cap:capOf(name), full: capOf(name) > 0 && mine.length >= capOf(name), listed: state.settings.interns.includes(name)}; });
   const un = ps.filter(p => !p.intern);
-  if(un.length) rows.push({name:'', i:1e6, n:un.length, nw:un.filter(p => p.status === 'New').length, dc:un.filter(p => dcBucket(p) === 'today').length, open:un.reduce((x,p) => x + openCount(p), 0), todo:todoOpenFor(un), full:false, listed:false});
+  if(un.length) rows.push({name:'', i:1e6, n:un.length, nw:un.filter(p => p.status === 'New').length, dc:un.filter(p => dcBucket(p) === 'today').length, open:un.reduce((x,p) => x + openCount(p), 0), am:un.reduce((x,p) => x + chunkOpen(p, 'am'), 0), pm:un.reduce((x,p) => x + chunkOpen(p, 'pm'), 0), todo:todoOpenFor(un), full:false, listed:false});
   // next up for an admission: a listed intern under cap with the fewest new admits, then the smallest census
   const cand = rows.filter(r => r.listed && !r.full).sort((a,b) => a.nw - b.nw || a.n - b.n || a.i - b.i);
   // (not on ICU / CCU boards — admissions there aren't handed out in turn)
@@ -3030,7 +3063,7 @@ function workloadCard(){
       <div class="wlname"><span>${esc(r.name || 'Unassigned')}</span>${r.next ? '<i class="wlnext" title="Fewest new admits and under cap">NEXT UP</i>' : ''}</div>
       <div class="wlnum ${r.full ? 'full' : ''}">${r.n}${r.cap ? `<span class="muted" style="font-weight:600">/${r.cap}</span>` : ''}</div>
       <div class="wlbar"><i class="${r.full ? 'full' : ''}" style="width:${Math.min(100, r.n / (r.cap || max) * 100)}%"></i></div>
-      <div class="wlstats"><span><b>${r.nw}</b> new</span><span><b>${r.dc}</b> DC today</span><span title="Daily checklist boxes on the Census (Vitals, I/O, Note…) not yet marked done"><b>${r.open}</b> box${r.open===1?'':'es'} open</span>${r.todo ? `<span title="Unfinished items on the Tasks tab for this intern’s patients"><b>${r.todo}</b> task${r.todo===1?'':'s'}</span>` : ''}</div>
+      <div class="wlstats"><span><b>${r.nw}</b> new</span><span><b>${r.dc}</b> DC today</span><span title="Census boxes not yet done — AM (pre-charting: Vitals, I/O, FSG, Lab Rev…) and PM (after rounds: Note, Attest, Handoff…)"><b>${r.am}</b> AM · <b>${r.pm}</b> PM open</span>${r.todo ? `<span title="Unfinished items on the Tasks tab for this intern’s patients"><b>${r.todo}</b> task${r.todo===1?'':'s'}</span>` : ''}</div>
     </div>`).join('')}
   </div>`;
 }
@@ -3069,7 +3102,7 @@ function renderSummary(){
       <div class="censusbox">${ringSVG(n, cap)}
         <div class="censusinfo"><div class="${full ? 'red' : ''}" style="font-weight:600">${capLine}</div>
           <a href="#" data-f="flagged" class="lnk">${flagged} flagged patient${flagged===1?'':'s'} →</a>
-          <a href="#" data-f="open" class="lnk">${ps.filter(p => openCount(p) > 0).length} with open daily boxes →</a>
+          <a href="#" data-f="open" class="lnk">${ps.filter(p => openCount(p) > 0).length} with open AM / PM boxes →</a>
           ${(() => { const c = pcCount(); return c.of ? `<a href="#" data-f="notpc" class="lnk">${c.n === c.of ? '✓ All pre-charted' : `${c.of - c.n} not pre-charted →`}</a>` : ''; })()}</div>
       </div>
     </div>
@@ -3112,6 +3145,9 @@ function renderCensus(){
   $('#censusGrid').innerHTML = gridHTML(filteredPatients());
   addCensusCommentIcons();
   document.querySelectorAll('#filterSeg button').forEach(b => b.classList.toggle('on', b.dataset.f === ui.filter));
+  document.querySelectorAll('#chunkSeg button').forEach(b => { const c = b.dataset.ch; b.classList.toggle('on', c === (CHUNK[ui.chunk] ? ui.chunk : 'all'));
+    const n = c === 'am' || c === 'pm' ? state.patients.reduce((x, p) => x + chunkOpen(p, c), 0) : 0; b.innerHTML = esc(c === 'all' ? 'All' : CHUNK[c].label) + (n ? `<i class="chn">${n}</i>` : ''); });
+  if($('#groupToggles')) $('#groupToggles').classList.toggle('chunked', !!CHUNK[ui.chunk]);
   const iSel = $('#internFilter');
   const interns = [...new Set([...state.settings.interns, ...state.patients.map(p => p.intern).filter(Boolean)])];
   iSel.innerHTML = `<option value="">All</option>` + interns.map(i => `<option${i===ui.intern?' selected':''}>${esc(i)}</option>`).join('');
@@ -3942,7 +3978,7 @@ function renderRounds(){
   const list = roundsList(), body = $('#roundsBody');
   let i = list.findIndex(p => p.id === rounds.id);
   if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
-  const filt = [ui.intern && `Intern: ${ui.intern}`, ui.filter === 'open' && 'Open daily boxes', ui.filter === 'flagged' && 'Flagged', ui.search && `Search: “${ui.search}”`].filter(Boolean);
+  const filt = [ui.intern && `Intern: ${ui.intern}`, ui.filter === 'open' && 'Open boxes', ui.filter === 'flagged' && 'Flagged', ui.search && `Search: “${ui.search}”`].filter(Boolean);
   const seenN = list.filter(rdSeen).length, ord = roundsOrder();
   const strip = list.length ? `<div class="rstrip" role="tablist" aria-label="Patients">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<span class="rsi">${esc(q.intern || 'Unassigned')}</span>` : ''}<button type="button" class="rchip ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'seen' : ''}" data-rgo="${q.id}" title="${esc((q.problem || '') + (rdSeen(q) ? ' — discussed' : ''))}">${rdSeen(q) ? '✓ ' : ''}${esc(q.bed || '—')}</button>`).join('')}</div>` : '';
   const bar = `<div class="rbar"><h3>Rounds</h3><span class="rcount">${list.length ? `${i+1} / ${list.length}` : '0 patients'}</span>
@@ -4003,10 +4039,10 @@ function renderRoundsSplit(){
   const ioDet = c => { if(!c) return ''; const parts = [ioNum(c.in) && `<i class="iosym" title="Intake" aria-label="Intake">+</i><b>${esc(ioVol(c.in))}</b>`, ioNum(c.out) && `<i class="iosym" title="Output" aria-label="Output">−</i><b>${esc(ioVol(c.out))}</b>`].filter(Boolean);
     const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
   const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' ? 'rs-gtt' : ''}">${k === 'gtt' && gttItems(p.cells.gtt).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
-  const daily = DAILY_KEYS.filter(k => !RS_GLANCE.includes(k) && !colHidden(k)), doneN = daily.filter(k => isDone(colCfg(k), p.cells[k])).length;
-  const chk = daily.map(k => `<div class="rs-ck2 ${isDone(colCfg(k), p.cells[k]) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('');
-  const more = CENSUS_GROUPS().filter(g => g.k !== 'daily').map(g => visibleCols(g).filter(c => !RS_GLANCE.includes(c.k)).map(c => c.k)).flat();
-  const moreH = more.map(k => `<div class="rs-ck2"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('');
+  const ckCard = c => { const all = chunkKeys(c.k), show = all.filter(k => !RS_GLANCE.includes(k)); if(!show.length) return '';
+    const done = all.filter(k => isDone(colCfg(k), p.cells[k] || {})).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
+    const cnt = c.k === 'dispo' ? '' : `<span class="rs-cnt" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : '')}">${done} / ${all.length} done</span>`;
+    return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh">${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''} ${cnt}</div><div class="rs-chk">${show.map(k => `<div class="rs-ck2 ${c.k !== 'dispo' && isDone(colCfg(k), p.cells[k] || {}) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
   const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(q => !rdSeen(q)) || (i < list.length - 1 ? list[i + 1] : null);
   const todos = patientTodos(p.id);
   body.innerHTML = `<div class="rs">${rail}<section class="rs-main">
@@ -4016,8 +4052,7 @@ function renderRoundsSplit(){
       <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
       <div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>
-      <div class="rs-card"><div class="rs-cardh">Today’s checklist <span class="rs-cnt">${doneN} / ${daily.length} done</span></div><div class="rs-chk">${chk}</div></div>
-      ${moreH ? `<details class="rs-card rs-more" open><summary class="rs-cardh">Standing &amp; dispo</summary><div class="rs-chk">${moreH}</div></details>` : ''}
+      ${CHUNKS.map(ckCard).join('')}
     </div>
     <div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
       <div class="rs-todos" id="rTodos">${todos.map(t => todoRowHTML(t, false)).join('') || '<div class="muted small" style="padding:6px 2px">Nothing yet.</div>'}</div>
@@ -4059,6 +4094,7 @@ document.addEventListener('keydown', e => {
 
 /* ---------- toolbar & header wiring ---------- */
 $('#tabs').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; ui.tab = b.dataset.tab; saveUI(); closePop(); renderChrome(); });
+$('#chunkSeg').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; ui.chunk = b.dataset.ch; saveUI(); renderCensus(); });
 $('#filterSeg').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; ui.filter = b.dataset.f; saveUI(); renderCensus(); });
 $('#summary').addEventListener('click', e => {
   const xo = e.target.closest('[data-xferopen]'); if(xo){ transferModal(xo.dataset.xferopen); return; }
@@ -6013,7 +6049,7 @@ function applyAll(pkg){
   if(pkg.shortcuts && typeof pkg.shortcuts === 'object'){ scOverrides = pkg.shortcuts; try{ localStorage.setItem(SC_KEY, JSON.stringify(scOverrides)); }catch(e){} }
   if(pkg.colWidths && typeof pkg.colWidths === 'object'){ ui.colW = pkg.colWidths; saveUI(); widthCSS(); }
   if(pkg.activeType && knownBoard(pkg.activeType)){ activeType = pkg.activeType; try{ localStorage.setItem(TYPE_KEY, activeType); }catch(e){} }
-  state = load(); loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(activeType).tab; saveUI(); try{ localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){}   // the tidied-up board, so the browser copy matches the screen
+  state = load(); try{ if(autoPc().length) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(activeType).tab; saveUI(); try{ localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){}   // the tidied-up board, so the browser copy matches the screen
   try{ localStorage.setItem(LOCAL_SAVED_KEY, pkg.savedAt || new Date().toISOString()); }catch(e){}
   renderAll();
 }
@@ -6269,7 +6305,7 @@ async function dfStartNew(k, d, name, start, bk){
     try{ localStorage.setItem(storeKeyFor(bid), JSON.stringify(board)); localStorage.setItem(logKeyFor(bid), '[]'); }catch(e){}
   });
   activeType = k; try{ localStorage.setItem(TYPE_KEY, k); }catch(e){}
-  state = load(); loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(k).tab; if(typeOf(k).admitOnly) ui.admitView = 'today'; saveUI();
+  state = load(); try{ if(autoPc().length) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} loadLog(); undoStack.length = 0; redoStack.length = 0; ui.tab = typeOf(k).tab; if(typeOf(k).admitOnly) ui.admitView = 'today'; saveUI();
   logAdd([{cat:'shift', msg:`Started a new data file ${h.name} — ${typeOf(k).label}, from ${fmtNoYear(d)}`}]);
   DF.handle = h; DF.name = h.name; DF.status = 'ok'; DF.lastMod = 0; await idbSet(h);
   renderAll(); await dfWrite();
@@ -6783,7 +6819,7 @@ function tabLock(){
 async function tabTakeOver(){
   tabLocked = false; $('#tabLock').hidden = true;
   try{ const k = localStorage.getItem(TYPE_KEY); if(knownBoard(k)) activeType = k; }catch(e){}
-  state = load(); loadLog(); undoStack.length = 0; redoStack.length = 0; tabClaim(); renderAll();
+  state = load(); try{ if(autoPc().length) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} loadLog(); undoStack.length = 0; redoStack.length = 0; tabClaim(); renderAll();
   if(DF.handle && DF.status === 'ok'){ try{ const f = await DF.handle.getFile(); DF.lastMod = f.lastModified; }catch(e){} }
   toast('This tab is now the active one');
 }
@@ -7660,6 +7696,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:253, d:'2026-11-22', items:['<b>AM / PM / Dispo</b> chunks. A switcher above the Census shows just one chunk’s columns: <b>AM</b> (pre-charting: Vitals, I/O, FSG, GTT, Lab Rev, Imaging, Last BM, T&amp;S), <b>PM</b> (after rounds: Avatar, Diet, DVT PPx, Disposition, Visit, Note, Attest, Lab Ord, Handoff, Ord Rev, Proc) or <b>Dispo</b> (SW, PT, OT, Services, Dispo notes) — or <b>All</b>. The little numbers are open boxes.', 'Box counts are split into AM and PM (Interns card), and Open boxes follows the chunk you’re on.', '<b>Pre-charted ticks itself</b> once a patient’s AM boxes are all done (untick it and it stays off for that day). Mark discussed stays manual.', 'Rounds · Split: the checklist is now <b>AM rounds</b>, <b>PM rounds</b> and <b>Dispo</b> cards.']},
   {v:252, d:'2026-11-22', items:['<b>GTT</b>: Nitroglycerin added under Anti-HTN.']},
   {v:251, d:'2026-11-22', items:['Rounds · Split: <b>GTT</b> now sits between Diet and DVT PPx in At a glance.']},
   {v:250, d:'2026-11-22', items:['<b>GTT</b>: new <b>Diuretics</b> group (Lasix, Bumex).']},
