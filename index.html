@@ -1637,7 +1637,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '258';
+const APP_VERSION = '259';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2628,8 +2628,10 @@ const CHUNKS = [
   {k:'dispo', label:'Dispo', g:'dispo', name:'Dispo', keys:['sw', 'pt', 'ot', 'services', 'dispo']}];
 const CHUNK = Object.fromEntries(CHUNKS.map(c => [c.k, c]));
 const chunkKeys = ck => CHUNK[ck].keys.filter(k => COLMAP[k] && !colHidden(k));
-const chunkOpen = (p, ck) => chunkKeys(ck).filter(k => !isDone(colCfg(k), p.cells[k] || {})).length;
-const openCount = p => chunkOpen(p, 'am') + chunkOpen(p, 'pm');   // “boxes open” = AM + PM (Dispo isn't a daily checklist)
+const OPTIONAL_KEYS = new Set(['services', 'dispo']);   // nice-to-have notes: never count as open
+const chunkReq = ck => chunkKeys(ck).filter(k => !OPTIONAL_KEYS.has(k));
+const chunkOpen = (p, ck) => chunkReq(ck).filter(k => !isDone(colCfg(k), p.cells[k] || {})).length;
+const openCount = p => chunkOpen(p, 'am') + chunkOpen(p, 'pm') + chunkOpen(p, 'dispo');   // “boxes open” = AM + PM + Dispo (SW / PT / OT)
 const amComplete = p => chunkOpen(p, 'am') === 0;
 /* Pre-charted ticks itself when every AM box is done (and unticks if one is cleared again, unless you ticked it yourself).
    Untick it by hand and it stays unticked for that day. */
@@ -2986,11 +2988,11 @@ function gridHTML(patients, {ro=false} = {}){
     if(grouped && p.intern !== lastIntern){
       lastIntern = p.intern;
       const mine = patients.filter(x => x.intern === p.intern);
-      h += `<tr class="grprow"><td colspan="${totalCols}"><div class="grplabel">${esc(p.intern || 'Unassigned')} <span>${mine.length} patient${mine.length===1?'':'s'} · ${(() => { const c = CHUNK[ui.chunk]; return c && c.k !== 'dispo' ? `${mine.reduce((n,x) => n + chunkOpen(x, c.k), 0)} ${c.label} boxes open` : `${mine.reduce((n,x) => n + openCount(x), 0)} boxes open`; })()}</span></div></td></tr>`;
+      h += `<tr class="grprow"><td colspan="${totalCols}"><div class="grplabel">${esc(p.intern || 'Unassigned')} <span>${mine.length} patient${mine.length===1?'':'s'} · ${(() => { const c = CHUNK[ui.chunk]; return c ? `${mine.reduce((n,x) => n + chunkOpen(x, c.k), 0)} ${c.label} boxes open` : `${mine.reduce((n,x) => n + openCount(x), 0)} boxes open`; })()}</span></div></td></tr>`;
     }
     h += `<tr class="${p.status==='Discharge'?'dc':''}" data-id="${p.id}" data-intern="${esc(p.intern||'')}">`;
     h += `<td class="stk" style="${stkStyle(0)}"><div class="seqc">${ro ? '' : `<span class="drag" draggable="true" data-drag="${p.id}" title="Drag to move this patient">⠿</span>`}<span>${ri+1}</span>${ro?'':`<span class="rowbtns"><button data-act="up" data-id="${p.id}" title="Move up">▲</button><button data-act="down" data-id="${p.id}" title="Move down">▼</button><button data-act="del" data-id="${p.id}" title="Remove patient">✕</button></span>`}</div></td>`;
-    const allDone = openCount(p) === 0;   // every AM + PM box done (N/A and Lab holiday count)
+    const allDone = openCount(p) === 0;   // every AM, PM and SW / PT / OT box done (N/A and Lab holiday count; Services and Dispo notes are optional)
     h += `<td class="stk ${allDone ? 'alldone' : ''}" style="${stkStyle(1)}" ${allDone ? 'title="All boxes done for today"' : ''}><div class="bedpc">${bedBoxHTML('p', p, ro, ro ? 60 : 56)}${pcBtn(p, ro)}${rdBtn(p, ro)}</div></td>`;
     h += `<td class="stk" style="${stkStyle(2)}">${selHTML('intern', p.intern, state.settings.interns, {ro, kind:'p', id:p.id})}</td>`;
     h += `<td class="stk hdtd" style="${stkStyle(3)}">${hdCell(p, ro)}</td>`;
@@ -3025,7 +3027,7 @@ function filteredPatients(){
   return state.patients.filter(p => {
     if(ui.intern && p.intern !== ui.intern) return false;
     if(q && !(`${p.bed} ${p.problem} ${p.intern}`.toLowerCase().includes(q))) return false;
-    if(ui.filter === 'open') return CHUNK[ui.chunk] && ui.chunk !== 'dispo' ? chunkOpen(p, ui.chunk) > 0 : openCount(p) > 0;
+    if(ui.filter === 'open') return CHUNK[ui.chunk] ? chunkOpen(p, ui.chunk) > 0 : openCount(p) > 0;
     if(ui.filter === 'flagged') return flagsFor(p).some(f => f[0] === 'warn' || f[0] === 'bad');
     if(ui.filter === 'notpc') return p.status !== 'New' && !isPc(p);
     return true;
@@ -3053,9 +3055,9 @@ function workloadRows(){
   const names = [...state.settings.interns, ...new Set(ps.map(p => p.intern).filter(i => i && !state.settings.interns.includes(i)))];
   const rows = names.map((name, i) => { const mine = ps.filter(p => p.intern === name);
     return {name, i, n:mine.length, nw:mine.filter(p => p.status === 'New').length, dc:mine.filter(p => dcBucket(p) === 'today').length,
-            open:mine.reduce((x,p) => x + openCount(p), 0), am:mine.reduce((x,p) => x + chunkOpen(p, 'am'), 0), pm:mine.reduce((x,p) => x + chunkOpen(p, 'pm'), 0), todo:todoOpenFor(mine), cap:capOf(name), full: capOf(name) > 0 && mine.length >= capOf(name), listed: state.settings.interns.includes(name)}; });
+            open:mine.reduce((x,p) => x + openCount(p), 0), am:mine.reduce((x,p) => x + chunkOpen(p, 'am'), 0), pm:mine.reduce((x,p) => x + chunkOpen(p, 'pm'), 0), dx:mine.reduce((x,p) => x + chunkOpen(p, 'dispo'), 0), todo:todoOpenFor(mine), cap:capOf(name), full: capOf(name) > 0 && mine.length >= capOf(name), listed: state.settings.interns.includes(name)}; });
   const un = ps.filter(p => !p.intern);
-  if(un.length) rows.push({name:'', i:1e6, n:un.length, nw:un.filter(p => p.status === 'New').length, dc:un.filter(p => dcBucket(p) === 'today').length, open:un.reduce((x,p) => x + openCount(p), 0), am:un.reduce((x,p) => x + chunkOpen(p, 'am'), 0), pm:un.reduce((x,p) => x + chunkOpen(p, 'pm'), 0), todo:todoOpenFor(un), full:false, listed:false});
+  if(un.length) rows.push({name:'', i:1e6, n:un.length, nw:un.filter(p => p.status === 'New').length, dc:un.filter(p => dcBucket(p) === 'today').length, open:un.reduce((x,p) => x + openCount(p), 0), am:un.reduce((x,p) => x + chunkOpen(p, 'am'), 0), pm:un.reduce((x,p) => x + chunkOpen(p, 'pm'), 0), dx:un.reduce((x,p) => x + chunkOpen(p, 'dispo'), 0), todo:todoOpenFor(un), full:false, listed:false});
   // next up for an admission: a listed intern under cap with the fewest new admits, then the smallest census
   const cand = rows.filter(r => r.listed && !r.full).sort((a,b) => a.nw - b.nw || a.n - b.n || a.i - b.i);
   // (not on ICU / CCU boards — admissions there aren't handed out in turn)
@@ -3071,7 +3073,7 @@ function workloadCard(){
       <div class="wlname"><span>${esc(r.name || 'Unassigned')}</span>${r.next ? '<i class="wlnext" title="Fewest new admits and under cap">NEXT UP</i>' : ''}</div>
       <div class="wlnum ${r.full ? 'full' : ''}">${r.n}${r.cap ? `<span class="muted" style="font-weight:600">/${r.cap}</span>` : ''}</div>
       <div class="wlbar"><i class="${r.full ? 'full' : ''}" style="width:${Math.min(100, r.n / (r.cap || max) * 100)}%"></i></div>
-      <div class="wlstats"><span><b>${r.nw}</b> new</span><span><b>${r.dc}</b> DC today</span><span title="Census boxes not yet done — AM (pre-charting: Vitals, I/O, FSG, Lab Rev…) and PM (after rounds: Note, Attest, Handoff…)"><b>${r.am}</b> AM · <b>${r.pm}</b> PM open</span>${r.todo ? `<span title="Unfinished items on the Tasks tab for this intern’s patients"><b>${r.todo}</b> task${r.todo===1?'':'s'}</span>` : ''}</div>
+      <div class="wlstats"><span><b>${r.nw}</b> new</span><span><b>${r.dc}</b> DC today</span><span title="Census boxes not yet done — AM (pre-charting: Vitals, I/O, FSG, Lab Rev…), PM (after rounds: Note, Attest, Handoff…) and Dispo (SW, PT, OT)"><b>${r.am}</b> AM · <b>${r.pm}</b> PM${r.dx ? ` · <b>${r.dx}</b> Dispo` : ''} open</span>${r.todo ? `<span title="Unfinished items on the Tasks tab for this intern’s patients"><b>${r.todo}</b> task${r.todo===1?'':'s'}</span>` : ''}</div>
     </div>`).join('')}
   </div>`;
 }
@@ -3110,7 +3112,7 @@ function renderSummary(){
       <div class="censusbox">${ringSVG(n, cap)}
         <div class="censusinfo"><div class="${full ? 'red' : ''}" style="font-weight:600">${capLine}</div>
           <a href="#" data-f="flagged" class="lnk">${flagged} flagged patient${flagged===1?'':'s'} →</a>
-          <a href="#" data-f="open" class="lnk">${ps.filter(p => openCount(p) > 0).length} with open AM / PM boxes →</a>
+          <a href="#" data-f="open" class="lnk">${ps.filter(p => openCount(p) > 0).length} with open boxes →</a>
           ${(() => { const c = pcCount(); return c.of ? `<a href="#" data-f="notpc" class="lnk">${c.n === c.of ? '✓ All pre-charted' : `${c.of - c.n} not pre-charted →`}</a>` : ''; })()}</div>
       </div>
     </div>
@@ -3154,7 +3156,7 @@ function renderCensus(){
   addCensusCommentIcons();
   document.querySelectorAll('#filterSeg button').forEach(b => b.classList.toggle('on', b.dataset.f === ui.filter));
   document.querySelectorAll('#chunkSeg button').forEach(b => { const c = b.dataset.ch; b.classList.toggle('on', c === (CHUNK[ui.chunk] ? ui.chunk : 'all'));
-    const n = c === 'am' || c === 'pm' ? state.patients.reduce((x, p) => x + chunkOpen(p, c), 0) : 0; b.innerHTML = esc(c === 'all' ? 'All' : CHUNK[c].label) + (n ? `<i class="chn">${n}</i>` : ''); });
+    const n = CHUNK[c] ? state.patients.reduce((x, p) => x + chunkOpen(p, c), 0) : 0; b.innerHTML = esc(c === 'all' ? 'All' : CHUNK[c].label) + (n ? `<i class="chn">${n}</i>` : ''); });
   if($('#groupToggles')) $('#groupToggles').classList.toggle('chunked', !!CHUNK[ui.chunk]);
   const iSel = $('#internFilter');
   const interns = [...new Set([...state.settings.interns, ...state.patients.map(p => p.intern).filter(Boolean)])];
@@ -4050,9 +4052,9 @@ function renderRoundsSplit(){
     const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
   const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' ? 'rs-gtt' : ''}">${k === 'gtt' && gttItems(p.cells.gtt).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
   const ckCard = c => { const all = chunkKeys(c.k), show = all.filter(k => !RS_GLANCE.includes(k)); if(!show.length) return '';
-    const done = all.filter(k => isDone(colCfg(k), p.cells[k] || {})).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
-    const cnt = c.k === 'dispo' ? '' : `<span class="rs-cnt" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : '')}">${done} / ${all.length} done</span>`;
-    return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh">${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''} ${cnt}</div><div class="rs-chk">${show.map(k => `<div class="rs-ck2 ${c.k !== 'dispo' && isDone(colCfg(k), p.cells[k] || {}) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
+    const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(k => isDone(colCfg(k), p.cells[k] || {})).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
+    const cnt = `<span class="rs-cnt" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length} done</span>`;
+    return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh">${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''} ${cnt}</div><div class="rs-chk">${show.map(k => `<div class="rs-ck2 ${!OPTIONAL_KEYS.has(k) && isDone(colCfg(k), p.cells[k] || {}) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
   const order = [...list.slice(i + 1), ...list.slice(0, i)], nx = order.find(q => !rdSeen(q)) || (i < list.length - 1 ? list[i + 1] : null);
   const todos = patientTodos(p.id);
   body.innerHTML = `<div class="rs">${rail}<section class="rs-main">
@@ -7706,6 +7708,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:259, d:'2026-11-22', items:['<b>SW, PT and OT</b> now count toward a patient being done (box counts, Open boxes, and the green bed cell). <b>Services</b> and <b>Dispo notes</b> are optional and never count as open.']},
   {v:258, d:'2026-11-22', items:['<b>SW</b> is now a choice of <b>Complete</b> or <b>N/A</b> instead of a checkbox. Anything already ticked shows as Complete.']},
   {v:257, d:'2026-11-22', items:['The <b>bed cell turns light green</b> on the Census once every AM and PM box for that patient is done (N/A and Lab holiday count), so you can see who you’re finished with for the day.']},
   {v:256, d:'2026-11-22', items:['<b>N/A counts as done everywhere</b>: Discharge paperwork (Intern / MDR / Summary / Orders) marked N/A now counts toward “x/4 signed” and Ready for DC, and no longer shows as outstanding. Census and Admission boxes already did.']},
