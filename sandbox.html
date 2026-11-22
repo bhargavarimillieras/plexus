@@ -1637,7 +1637,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '257';
+const APP_VERSION = '258';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1868,7 +1868,7 @@ const GROUPS = [
     {k:'diet',h:'Diet',type:'choice',size:'mid',opts:[O('General'),O('Diabetic'),O('Heart Healthy'),O('Renal'),O('Full Liquid'),O('Clear Liquid'),O('TF'),O('NPO','red')]},
     {k:'dvt',h:'DVT PPx',type:'choice',size:'mid',opts:[O('SQH'),O('HEP GTT'),O('LMWH'),O('DOAC'),O('HELD','red')]},
     {k:'gtt',h:'GTT',type:'gtt',fixedType:true,size:'mid',icu:true},
-    {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'check',fixedType:true},
+    {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'choice',fixedType:true,opts:[O('Complete','green'),O('N/A')]},
     {k:'pt',h:'PT',type:'date'},{k:'ot',h:'OT',type:'date'}]},
   {k:'edd', label:'EDD', tab:'fixed', cols:[{k:'edd',h:'EDD',type:'date',fixedType:true}]},
   {k:'dc', label:'Discharge — on the Discharges tab', tab:'dc', cols:[
@@ -2208,6 +2208,8 @@ function normalize(s){
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
   // v247: new Imaging column sits right after Lab Rev in any saved column order (once)
   if(!s.settings.imgCol){ const co = s.settings.colOrder; if(co && typeof co === 'object') Object.keys(co).forEach(g => { const o = co[g]; if(Array.isArray(o) && !o.includes('img')){ const i = o.indexOf('labrev'); if(i >= 0) o.splice(i + 1, 0, 'img'); } }); s.settings.imgCol = 1; }
+  // v258: SW is Complete / N/A instead of a checkbox (a tick becomes Complete)
+  if(!s.settings.swChoice){ (s.patients || []).forEach(p => { const c = p.cells && p.cells.sw; if(c && c.t === 'Yes') c.t = 'Complete'; }); if(s.settings.columns && s.settings.columns.sw) delete s.settings.columns.sw.opts; s.settings.swChoice = 1; }
   // v249: drips are names only (no doses)
   if(!s.settings.gttNoDose){ (s.patients || []).forEach(p => { const c = p.cells && p.cells.gtt; if(c && Array.isArray(c.items)) c.items = c.items.map(i => ({k:i.k})); }); s.settings.gttNoDose = 1; }
   // v239: Uptriage dropped from Disposition (it's just SDU / cSDU / MICU / CCU) — once
@@ -5807,7 +5809,7 @@ function tischDemo(){
     mk('14E03/01','Intern B','Sepsis, UTI source','Existing',2,{lines:[['CVC',2],['Foley catheter',2]], ts:1, edd:4}),
     mk('14E03/02','Intern B','AKI on CKD 3b','Existing',3,{diet:'Heart Healthy', proc:['Renal US', 1], bm:2, edd:3}),
     mk('14E04/01','Intern B','Upper GI bleed','Existing',2,{diet:'NPO', dvt:'HELD', lines:[['PIV',1],['NG tube',1]], proc:['EGD', 1], ts:1, edd:3}),
-    mk('14E05/01','Intern B','Alcohol withdrawal','Existing',2,{edd:3, sw:'Rehab resources'}),
+    mk('14E05/01','Intern B','Alcohol withdrawal','Existing',2,{edd:3, sw:'Complete'}),
     mk('14E06/01','Intern C','Hip fracture s/p ORIF','Existing',8,{dvt:'LMWH', lines:[['PIV',9],['JP drain',6]], pt:2, bm:5, dest:'SAR/SNF', edd:2, sw:'SAR referrals out'}),
     mk('14E06/02','Intern C','Sickle cell pain crisis','Existing',3,{lines:[['PIV',2]], edd:2}),
     mk('14E07/01','Intern C','Submassive PE, heparin gtt','Existing',3,{dvt:'SQH', lines:[['PIV',3],['Arterial line',2]], edd:4, cmt:{dvt:'Therapeutic gtt — PTT q6h'}}),
@@ -7704,6 +7706,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:258, d:'2026-11-22', items:['<b>SW</b> is now a choice of <b>Complete</b> or <b>N/A</b> instead of a checkbox. Anything already ticked shows as Complete.']},
   {v:257, d:'2026-11-22', items:['The <b>bed cell turns light green</b> on the Census once every AM and PM box for that patient is done (N/A and Lab holiday count), so you can see who you’re finished with for the day.']},
   {v:256, d:'2026-11-22', items:['<b>N/A counts as done everywhere</b>: Discharge paperwork (Intern / MDR / Summary / Orders) marked N/A now counts toward “x/4 signed” and Ready for DC, and no longer shows as outstanding. Census and Admission boxes already did.']},
   {v:255, d:'2026-11-22', items:['<b>AM / PM / Dispo</b> switcher is now on the real Plexus (see v253 below): one chunk’s columns at a time, AM / PM box counts, and pre-charted ticks itself once a patient’s AM boxes are done.']},
