@@ -669,6 +669,7 @@ body.touch #tkBedSel{font-size:15px;padding:8px}#tkTeam{width:130px}#tkText{flex
 .gttdot.g-press,.gttpill.g-press{background-color:rgba(234,67,53,.14)} .gttdot.g-press{background:#EA4335}
 .gttdot.g-ino,.gttpill.g-ino{background-color:rgba(255,109,1,.14)} .gttdot.g-ino{background:#FF6D01}
 .gttdot.g-htn,.gttpill.g-htn{background-color:rgba(66,133,244,.14)} .gttdot.g-htn{background:#4285F4}
+.gttdot.g-diur,.gttpill.g-diur{background-color:rgba(249,171,0,.16)} .gttdot.g-diur{background:#F9AB00}
 .gttdot.g-endo,.gttpill.g-endo{background-color:rgba(52,168,83,.14)} .gttdot.g-endo{background:#34A853}
 .gttdot.g-sed,.gttpill.g-sed{background-color:rgba(142,68,173,.14)} .gttdot.g-sed{background:#8E44AD}
 .gttdot.g-anal,.gttpill.g-anal{background-color:rgba(0,150,136,.14)} .gttdot.g-anal{background:#009688}
@@ -1621,7 +1622,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '249';
+const APP_VERSION = '250';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2120,7 +2121,7 @@ function practiceDemo(r){
     Object.entries(set).forEach(([k, v]) => { p.cells[k] = Array.isArray(v) ? {s:v[0], t:v[1]} : (typeof v === 'object' ? Object.assign({s:'', t:''}, v) : {s:v, t:''}); }); return p; };
   return normalize({version:1, boardDate:bd, patients:[
       mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:{in:1800, out:2100}, avatar:'C', labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
-      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {gtt:{items:[{k:'Furosemide'}]}, vitals:'C', io:{in:1500, out:2700, t:'goal net −2 L'}, avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
+      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {gtt:{items:[{k:'Lasix'}]}, vitals:'C', io:{in:1500, out:2700, t:'goal net −2 L'}, avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
       mk('CCU-3', 'Intern A', 'Complete heart block → PPM today', 'Existing', 1, {vitals:'C', io:{in:1200, out:1000}, avatar:['A', 'Temp wire in R IJ'], labrev:'C', note:['', 'Progress'], diet:['', 'NPO after midnight'], dvt:['', 'HELD'], proc:['', 'PPM placement'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
       mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {gtt:{items:[{k:'Norepinephrine'}, {k:'Milrinone'}]}, vitals:['R', 'MAP 62–65'], io:{in:2400, out:1650}, avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
       mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {gtt:{items:[{k:'Amiodarone'}, {k:'Lidocaine'}]}, vitals:'C', io:{in:1600, out:1900}, avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
@@ -2742,6 +2743,7 @@ function commitLdt(p, r, el){
 const GTT_GROUPS = [['Vasopressors', ['Epinephrine', 'Norepinephrine', 'Vasopressin', 'Phenylephrine', 'Angiotensin II', 'Dopamine'], 'press'],
   ['Inotropes', ['Dobutamine', 'Milrinone'], 'ino'],
   ['Anti-HTN', ['Nicardipine', 'Nitroprusside', 'Esmolol'], 'htn'],
+  ['Diuretics', ['Lasix', 'Bumex'], 'diur'],
   ['Endocrine', ['Insulin'], 'endo'],
   ['Sedation', ['Versed', 'Propofol', 'Precedex', 'Ativan'], 'sed'],
   ['Analgesia', ['Morphine', 'Dilaudid', 'Fentanyl'], 'anal'],
@@ -7658,6 +7660,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:250, d:'2026-11-22', items:['<b>GTT</b>: new <b>Diuretics</b> group (Lasix, Bumex).']},
   {v:249, d:'2026-11-22', items:['<b>GTT</b> (drips) column on <b>ICU / CCU boards only</b>: tick what’s running, grouped by Vasopressors, Inotropes, Anti-HTN, Endocrine, Sedation, Analgesia and Anti-arrhythmics, or add another. No doses (nursing titrates them). Shows first in Rounds · Split <b>At a glance</b>; red edge on the census when a pressor is on. Carries over day to day.', 'Rounds · Split: <b>Mark pre-charted</b> button next to Mark discussed; the pre-charted dot is now green; 💬 marks discussed patients in the left list, and each row shows the intern under the hospital day.']},
   {v:248, d:'2026-11-22', items:['<b>GTT</b> (drips) column on <b>ICU / CCU boards only</b> — hidden on ward boards. Tick what’s running by category (Vasopressors, Inotropes, Anti-HTN, Endocrine, Sedation, Analgesia, Anti-arrhythmics), type each dose, or add another drip. The census shows “Norepi 0.08 · Vaso 0.04” (red edge when a pressor is on); Rounds · Split shows each drip and dose first in <b>At a glance</b>. Drips carry over day to day.']},
   {v:247, d:'2026-11-22', items:['New <b>Imaging</b> column between Lab Rev and Visit, with the same 1–8 status choices as Lab Rev (Complete, Revisit, Pending, Ordered and the rest). It counts toward boxes open and shows in Rounds.']},
