@@ -1622,7 +1622,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '250';
+const APP_VERSION = '251';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3982,7 +3982,7 @@ function renderRounds(){
   </div>`;
 }
 /* ---------- Rounds · Split view: everyone on the left, one patient on the right ---------- */
-const RS_GLANCE = ['gtt', 'avatar', 'io', 'diet', 'dvt', 'dest'];
+const RS_GLANCE = ['avatar', 'io', 'diet', 'gtt', 'dvt', 'dest'];
 const RS_QUICK = ['Labs: ', 'Imaging: ', 'Consult: ', 'Call family: ', 'Med change: '];
 function rsFlagged(p){ return flagsFor(p).some(f => f[0] === 'warn' || f[0] === 'bad'); }
 function renderRoundsSplit(){
@@ -7660,6 +7660,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:251, d:'2026-11-22', items:['Rounds · Split: <b>GTT</b> now sits between Diet and DVT PPx in At a glance.']},
   {v:250, d:'2026-11-22', items:['<b>GTT</b>: new <b>Diuretics</b> group (Lasix, Bumex).']},
   {v:249, d:'2026-11-22', items:['<b>GTT</b> (drips) column on <b>ICU / CCU boards only</b>: tick what’s running, grouped by Vasopressors, Inotropes, Anti-HTN, Endocrine, Sedation, Analgesia and Anti-arrhythmics, or add another. No doses (nursing titrates them). Shows first in Rounds · Split <b>At a glance</b>; red edge on the census when a pressor is on. Carries over day to day.', 'Rounds · Split: <b>Mark pre-charted</b> button next to Mark discussed; the pre-charted dot is now green; 💬 marks discussed patients in the left list, and each row shows the intern under the hospital day.']},
   {v:248, d:'2026-11-22', items:['<b>GTT</b> (drips) column on <b>ICU / CCU boards only</b> — hidden on ward boards. Tick what’s running by category (Vasopressors, Inotropes, Anti-HTN, Endocrine, Sedation, Analgesia, Anti-arrhythmics), type each dose, or add another drip. The census shows “Norepi 0.08 · Vaso 0.04” (red edge when a pressor is on); Rounds · Split shows each drip and dose first in <b>At a glance</b>. Drips carry over day to day.']},
