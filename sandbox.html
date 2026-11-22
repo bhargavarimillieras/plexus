@@ -1635,7 +1635,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '254';
+const APP_VERSION = '255';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7700,6 +7700,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:255, d:'2026-11-22', items:['<b>AM / PM / Dispo</b> switcher is now on the real Plexus (see v253 below): one chunk’s columns at a time, AM / PM box counts, and pre-charted ticks itself once a patient’s AM boxes are done.']},
   {v:254, d:'2026-11-22', items:['<b>Lab Ord</b>: new <b>🏖 Lab holiday</b> button in its pop-up for patients you’re not ordering labs on. It counts as done; tap the box again to clear it.']},
   {v:253, d:'2026-11-22', items:['<b>AM / PM / Dispo</b> chunks. A switcher above the Census shows just one chunk’s columns: <b>AM</b> (pre-charting: Vitals, I/O, FSG, GTT, Lab Rev, Imaging, Last BM, T&amp;S), <b>PM</b> (after rounds: Avatar, Diet, DVT PPx, Disposition, Visit, Note, Attest, Lab Ord, Handoff, Ord Rev, Proc) or <b>Dispo</b> (SW, PT, OT, Services, Dispo notes) — or <b>All</b>. The little numbers are open boxes.', 'Box counts are split into AM and PM (Interns card), and Open boxes follows the chunk you’re on.', '<b>Pre-charted ticks itself</b> once a patient’s AM boxes are all done (untick it and it stays off for that day). Mark discussed stays manual.', 'Rounds · Split: the checklist is now <b>AM rounds</b>, <b>PM rounds</b> and <b>Dispo</b> cards.']},
   {v:252, d:'2026-11-22', items:['<b>GTT</b>: Nitroglycerin added under Anti-HTN.']},
