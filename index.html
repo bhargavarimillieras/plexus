@@ -1596,7 +1596,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '246';
+const APP_VERSION = '247';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1818,7 +1818,7 @@ const DC_OPTS = () => [O('Signed','green'),O('Pended','orange'),O('Incomplete','
 const GROUPS = [
   {k:'daily', label:'Daily', cols:[
     {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'io',fixedType:true},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','HD catheter','Port','IABP','S-G catheter','Foley catheter','NG tube','OG tube','G-tube / PEG','Rectal tube','ETT','Trach','Chest tube','JP drain'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
-    {k:'labrev',h:'Lab Rev',type:'status'},{k:'vst',h:'Visit',type:'check'},
+    {k:'labrev',h:'Lab Rev',type:'status'},{k:'img',h:'Imaging',type:'status'},{k:'vst',h:'Visit',type:'check'},
     {k:'note',h:'Note',type:'statusChoice',size:'mid',opts:[O('Progress'),O('H&P'),O('Discharge'),O('Pending'),O('ALOC'),O('Transfer')]},
     {k:'hc',h:'Hosp Course',type:'check'},
     {k:'attest',h:'Attest',type:'check'},{k:'labord',h:'Lab Ord',type:'checkNote'},{k:'handoff',h:'Handoff',type:'check'},{k:'ordrev',h:'Ord Rev',type:'check'}]},
@@ -2163,6 +2163,8 @@ function normalize(s){
   if(s.settings.shift !== 'night') s.settings.shift = 'day';
   if(typeof s.settings.autoBackup !== 'boolean') s.settings.autoBackup = true;
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
+  // v247: new Imaging column sits right after Lab Rev in any saved column order (once)
+  if(!s.settings.imgCol){ const co = s.settings.colOrder; if(co && typeof co === 'object') Object.keys(co).forEach(g => { const o = co[g]; if(Array.isArray(o) && !o.includes('img')){ const i = o.indexOf('labrev'); if(i >= 0) o.splice(i + 1, 0, 'img'); } }); s.settings.imgCol = 1; }
   // v239: Uptriage dropped from Disposition (it's just SDU / cSDU / MICU / CCU) — once
   if(!s.settings.noUptriage){ const dc = s.settings.columns.dest; if(dc && Array.isArray(dc.opts)) dc.opts = dc.opts.filter(o => (o.label || '').toLowerCase() !== 'uptriage'); s.settings.noUptriage = 1; }
   // v237: Destination → Disposition, with in-hospital choices (once)
@@ -7570,6 +7572,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:247, d:'2026-11-22', items:['New <b>Imaging</b> column between Lab Rev and Visit, with the same 1–8 status choices as Lab Rev (Complete, Revisit, Pending, Ordered and the rest). It counts toward boxes open and shows in Rounds.']},
   {v:246, d:'2026-11-21', items:['<b>Restore from Files</b> (and Open my data file) now accepts a one-board backup — e.g. ⬇ Download a backup on a computer — and puts it back on the board it came from, leaving your other boards alone.']},
   {v:245, d:'2026-11-21', items:['<b>Appearance</b> setting: ⚙ Settings → Appearance → <b>Automatic</b> (follows the iPad or computer), <b>Light</b> or <b>Dark</b>. Saved on this device.']},
   {v:244, d:'2026-11-21', items:['Rounds · Split: <b>Standing &amp; dispo</b> now opens expanded (tap its heading to fold it away).']},
