@@ -652,6 +652,28 @@ body.touch #tkBedSel{font-size:15px;padding:8px}#tkTeam{width:130px}#tkText{flex
 .tc.proc-today .pdate{background:#4285F4;color:#fff}
 .tc.proc-tomorrow .pdate{background:var(--info-bg);color:var(--info-ink)}
 .tc.proc-past .pdate{background:var(--warn-bg);color:var(--warn-ink)}
+.tc.t-gtt{justify-content:flex-start;font-weight:600}
+.tc.gtt-on{background:var(--panel);color:var(--ink);box-shadow:inset 3px 0 0 #8E44AD}
+.tc.gtt-press{background:var(--panel);color:var(--ink);box-shadow:inset 3px 0 0 #EA4335}
+.tc.gtt-on:focus,.tc.gtt-press:focus{box-shadow:inset 3px 0 0 currentColor, inset 0 0 0 2px var(--focus)}
+.pop:has(.gttlist){width:260px}
+.gttlist{max-height:340px}
+.gttrow{display:grid;grid-template-columns:20px 1fr;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
+.ldtgrp+.gttrow{border-top:0}
+.gttrow.on{background:var(--info-bg)}
+.gttn{display:flex;align-items:center;gap:6px}
+.gttdot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;background:#999}
+.rs-gv .tc.rs-gttdet{display:flex;flex-wrap:wrap;gap:5px;padding:5px 6px;height:auto;min-height:36px;background:var(--panel);box-shadow:none;border:1px solid var(--line);cursor:pointer}
+.gttpill{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;font-size:12.5px;border:1px solid transparent;background:rgba(142,68,173,.10);color:var(--ink);cursor:pointer}
+.gttpill b{font-weight:700}
+.gttdot.g-press,.gttpill.g-press{background-color:rgba(234,67,53,.14)} .gttdot.g-press{background:#EA4335}
+.gttdot.g-ino,.gttpill.g-ino{background-color:rgba(255,109,1,.14)} .gttdot.g-ino{background:#FF6D01}
+.gttdot.g-htn,.gttpill.g-htn{background-color:rgba(66,133,244,.14)} .gttdot.g-htn{background:#4285F4}
+.gttdot.g-endo,.gttpill.g-endo{background-color:rgba(52,168,83,.14)} .gttdot.g-endo{background:#34A853}
+.gttdot.g-sed,.gttpill.g-sed{background-color:rgba(142,68,173,.14)} .gttdot.g-sed{background:#8E44AD}
+.gttdot.g-anal,.gttpill.g-anal{background-color:rgba(0,150,136,.14)} .gttdot.g-anal{background:#009688}
+.gttdot.g-arr,.gttpill.g-arr{background-color:rgba(219,68,155,.14)} .gttdot.g-arr{background:#DB449B}
+.gttpill.g-press{border-color:rgba(234,67,53,.45)}
 .tc.t-ldt{justify-content:flex-start;font-weight:600}
 .tc.ldt-none{background:var(--ldt-none);color:var(--muted)}
 .tc.ldt-ok{background:var(--panel);color:var(--ink);box-shadow:inset 3px 0 0 #4285F4}
@@ -727,11 +749,14 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 .rs-pi{display:grid;grid-template-columns:auto 1fr auto;gap:2px 8px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:10px;margin:1px 0;cursor:pointer;color:var(--ink);font-family:inherit}
 .rs-pi.on{background:#eaf1ff;box-shadow:inset 3px 0 0 var(--accent)}
 .rs-bed{font:800 14px ui-monospace,"SF Mono",Menlo,monospace}.rs-ck{font-style:normal;color:#1e7e34}
-.rs-hd{font:600 11px ui-monospace,Menlo,monospace;color:var(--muted)}
-.rs-one{grid-column:1/-1;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs-hd{font:600 11px ui-monospace,Menlo,monospace;color:var(--muted);text-align:right}
+.rs-one{grid-column:1/3}
+.rs-int{grid-column:3;justify-self:end;font-size:11px;color:var(--muted);white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis}
+.rseenbtn.rpcbtn.on{background:#34A853;border-color:#34A853;color:#fff}
+.rs-one{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rs-pi.dsc .rs-one{opacity:.7}
 .rs-dots{display:flex;gap:3px}.rs-d{width:9px;height:9px;border-radius:50%;display:inline-block}
-.rs-d.pc{background:#8ab4f8}.rs-d.fl{background:#ea4335}
+.rs-d.pc{background:#34A853}.rs-d.fl{background:#ea4335}
 .rs-key{height:var(--rs-fh);box-sizing:border-box;display:flex;align-items:center;padding:0 12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);flex:none;gap:2px}
 .rs-main{display:flex;flex-direction:column;min-width:0;height:100%;min-height:0}
 .rs-hd2{height:var(--rs-hh);box-sizing:border-box;display:flex;gap:16px;align-items:center;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--line);flex:none;overflow:hidden}
@@ -1596,7 +1621,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '247';
+const APP_VERSION = '249';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -1826,6 +1851,7 @@ const GROUPS = [
     {k:'bm',h:'Last BM',type:'date'},{k:'ts',h:'T&S',type:'date'},
     {k:'diet',h:'Diet',type:'choice',size:'mid',opts:[O('General'),O('Diabetic'),O('Heart Healthy'),O('Renal'),O('Full Liquid'),O('Clear Liquid'),O('TF'),O('NPO','red')]},
     {k:'dvt',h:'DVT PPx',type:'choice',size:'mid',opts:[O('SQH'),O('HEP GTT'),O('LMWH'),O('DOAC'),O('HELD','red')]},
+    {k:'gtt',h:'GTT',type:'gtt',fixedType:true,size:'mid',icu:true},
     {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'check',fixedType:true},
     {k:'pt',h:'PT',type:'date'},{k:'ot',h:'OT',type:'date'}]},
   {k:'edd', label:'EDD', tab:'fixed', cols:[{k:'edd',h:'EDD',type:'date',fixedType:true}]},
@@ -1865,7 +1891,7 @@ function themeApply(){ const t = themeGet(), DARK = '(prefers-color-scheme: dark
 themeApply();
 const SHOWHC_KEY = `${KEY_PREFIX}.showHospCourse`;
 const showHC = () => { try{ return localStorage.getItem(SHOWHC_KEY) === '1'; }catch(e){ return false; } };
-const colHidden = k => (k === 'hc' && !showHC()) || (state.settings.hiddenCols || []).includes(k);
+const colHidden = k => (k === 'hc' && !showHC()) || (COLMAP[k] && COLMAP[k].icu && !isCritCare()) || (state.settings.hiddenCols || []).includes(k);
 const visibleCols = g => orderedKeys(g).filter(k => !colHidden(k)).map(k => COLMAP[k]);
 const dcSigned = p => DC_KEYS.filter(k => p.cells[k].t === 'Signed').length;
 function dcBucket(p, d = state.boardDate){
@@ -1983,7 +2009,7 @@ function ioText(c){ if(!c) return ''; const n = ioNet(c), g = ioNum(c.goal) ? ' 
   if(n !== null) return `In ${ioVol(c.in)} · Out ${ioVol(c.out)} · Net ${ioSigned(n)}${g}`;
   if(!ioNum(c.in) && !ioNum(c.out)) return g.replace(/^ · /, '');
   return [ioNum(c.in) && `In ${ioVol(c.in)}`, ioNum(c.out) && `Out ${ioVol(c.out)}`].filter(Boolean).join(' · ') + g; }
-function isDone(cfg, cell){ if(cfg.type === 'ldt' || cfg.type === 'proc') return true;
+function isDone(cfg, cell){ if(cfg.type === 'ldt' || cfg.type === 'proc' || cfg.type === 'gtt') return true;
   if(cfg.type === 'io') return ioNet(cell) !== null || cell.t === 'N/A' || DONE.has(cell.s); return isStatusType(cfg.type) ? DONE.has(cell.s) : cfg.type === 'checkNote' ? !!cell.c : !!cell.t; }
 function optOf(cfg, label){ return cfg.opts.find(o => o.label === label); }
 
@@ -2094,10 +2120,10 @@ function practiceDemo(r){
     Object.entries(set).forEach(([k, v]) => { p.cells[k] = Array.isArray(v) ? {s:v[0], t:v[1]} : (typeof v === 'object' ? Object.assign({s:'', t:''}, v) : {s:v, t:''}); }); return p; };
   return normalize({version:1, boardDate:bd, patients:[
       mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:{in:1800, out:2100}, avatar:'C', labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
-      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {vitals:'C', io:{in:1500, out:2700, t:'goal net −2 L'}, avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
+      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {gtt:{items:[{k:'Furosemide'}]}, vitals:'C', io:{in:1500, out:2700, t:'goal net −2 L'}, avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
       mk('CCU-3', 'Intern A', 'Complete heart block → PPM today', 'Existing', 1, {vitals:'C', io:{in:1200, out:1000}, avatar:['A', 'Temp wire in R IJ'], labrev:'C', note:['', 'Progress'], diet:['', 'NPO after midnight'], dvt:['', 'HELD'], proc:['', 'PPM placement'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
-      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {vitals:['R', 'MAP 62–65'], io:{in:2400, out:1650}, avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
-      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {vitals:'C', io:{in:1600, out:1900}, avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
+      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {gtt:{items:[{k:'Norepinephrine'}, {k:'Milrinone'}]}, vitals:['R', 'MAP 62–65'], io:{in:2400, out:1650}, avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
+      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {gtt:{items:[{k:'Amiodarone'}, {k:'Lidocaine'}]}, vitals:'C', io:{in:1600, out:1900}, avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
       mk('CCU-6', 'Intern B', 'Severe AS, pre-TAVR workup', 'Existing', 5, {hc:Y, vitals:'C', io:{in:1400, out:1300}, avatar:'C', labrev:'C', vst:Y, note:['', 'Progress'], attest:Y, bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'LMWH'], pt:['', addDays(bd, -2)], ot:['', addDays(bd, -2)], proc:['', 'CTA TAVR protocol'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
     ], admits:[], archive:[], history:[],
     settings:{team:'', interns:['Intern A', 'Intern B'], internCaps:{'Intern A':5, 'Intern B':5}, tsHours:72, bmDays:3, ptotDays:2, shiftType:r.id}});
@@ -2165,6 +2191,8 @@ function normalize(s){
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
   // v247: new Imaging column sits right after Lab Rev in any saved column order (once)
   if(!s.settings.imgCol){ const co = s.settings.colOrder; if(co && typeof co === 'object') Object.keys(co).forEach(g => { const o = co[g]; if(Array.isArray(o) && !o.includes('img')){ const i = o.indexOf('labrev'); if(i >= 0) o.splice(i + 1, 0, 'img'); } }); s.settings.imgCol = 1; }
+  // v249: drips are names only (no doses)
+  if(!s.settings.gttNoDose){ (s.patients || []).forEach(p => { const c = p.cells && p.cells.gtt; if(c && Array.isArray(c.items)) c.items = c.items.map(i => ({k:i.k})); }); s.settings.gttNoDose = 1; }
   // v239: Uptriage dropped from Disposition (it's just SDU / cSDU / MICU / CCU) — once
   if(!s.settings.noUptriage){ const dc = s.settings.columns.dest; if(dc && Array.isArray(dc.opts)) dc.opts = dc.opts.filter(o => (o.label || '').toLowerCase() !== 'uptriage'); s.settings.noUptriage = 1; }
   // v237: Destination → Disposition, with in-hospital choices (once)
@@ -2459,6 +2487,7 @@ function cellDesc(cfg, c){
     case 'check': return c.t ? 'checked' : 'unchecked';
     case 'proc': return c.t || c.d ? `${c.t || 'procedure'}${isISO(c.d) ? ' on ' + fmtShort(c.d) : ''}` : 'cleared';
     case 'ldt': return ldtItems(c).length ? ldtItems(c).map(i => ldtLabel(i) + (i.rm ? ' removed ' + fmtShort(i.rm) : isISO(i.d) ? ' ' + fmtShort(i.d) : '')).join(', ') : 'none';
+    case 'gtt': return gttItems(c).length ? gttSummary(c) : 'none';
     case 'io': return ioText(c) || (c.t ? q(c.t) : 'cleared');
     case 'checkNote': return (c.c ? 'checked' : 'unchecked') + (c.t ? ' · ' + c.t : '');
     case 'date': return c.t ? (isISO(c.t) ? fmtShort(c.t) : c.t) : 'cleared';
@@ -2709,6 +2738,52 @@ function commitLdt(p, r, el){
   });
 }
 
+/* ---------- GTT (drips) — ICU / CCU boards only ---------- */
+const GTT_GROUPS = [['Vasopressors', ['Epinephrine', 'Norepinephrine', 'Vasopressin', 'Phenylephrine', 'Angiotensin II', 'Dopamine'], 'press'],
+  ['Inotropes', ['Dobutamine', 'Milrinone'], 'ino'],
+  ['Anti-HTN', ['Nicardipine', 'Nitroprusside', 'Esmolol'], 'htn'],
+  ['Endocrine', ['Insulin'], 'endo'],
+  ['Sedation', ['Versed', 'Propofol', 'Precedex', 'Ativan'], 'sed'],
+  ['Analgesia', ['Morphine', 'Dilaudid', 'Fentanyl'], 'anal'],
+  ['Anti-arrhythmics', ['Amiodarone', 'Lidocaine', 'Diltiazem'], 'arr']];
+const GTT_SHORT = {Epinephrine:'Epi', Norepinephrine:'Norepi', Vasopressin:'Vaso', Phenylephrine:'Phenyl', 'Angiotensin II':'Ang II', Dopamine:'Dopa', Dobutamine:'Dobut', Milrinone:'Milri',
+  Nicardipine:'Nicard', Nitroprusside:'Nipride', Fentanyl:'Fent', Propofol:'Prop', Precedex:'Dex', Amiodarone:'Amio', Adenosine:'Adeno', Lidocaine:'Lido', Diltiazem:'Dilt'};
+const gttItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
+const gttCat = n => { const l = String(n).toLowerCase(), g = GTT_GROUPS.find(g => g[1].some(x => x.toLowerCase() === l)); return g ? g[2] : 'oth'; };
+const gttLabel = it => it.k;
+const gttSummary = cell => gttItems(cell).map(gttLabel).join('; ');
+// census cell: "Norepi · Vaso · Prop" (no doses — nursing titrates them)
+const gttCellTxt = cell => gttItems(cell).map(it => GTT_SHORT[it.k] || it.k).join(' · ');
+const gttRowHTML = (n, on) => `<label class="gttrow ${on ? 'on' : ''}"><input type="checkbox" data-gtt="${esc(n)}" ${on ? 'checked' : ''}><span class="gttn"><i class="gttdot g-${gttCat(n)}"></i>${esc(n)}</span></label>`;
+function gttPopHTML(cell){
+  const items = gttItems(cell), find = n => items.find(i => i.k.toLowerCase() === n.toLowerCase());
+  const known = new Set(GTT_GROUPS.flatMap(g => g[1].map(x => x.toLowerCase()))), extra = items.filter(i => !known.has(i.k.toLowerCase()));
+  const html = GTT_GROUPS.map(([h, list]) => `<div class="ldtgrp">${esc(h)}</div>${list.map(n => gttRowHTML(n, find(n))).join('')}`).join('')
+    + `<div class="ldtgrp gttoth" ${extra.length ? '' : 'hidden'}>Other</div>${extra.map(it => gttRowHTML(it.k, true)).join('')}`;
+  return `<div class="ldtlist gttlist">${html}</div>
+    <div class="ed"><input type="text" data-gttnew placeholder="Add another drip (e.g. Heparin, Ketamine)"><button class="btn sm" data-gttadd>Add</button></div>
+    <div class="muted" style="font-size:11px;margin-top:5px">Tick what's running. Only shows on ICU / CCU boards.</div>`;
+}
+function wireGttPop(el){
+  const list = el.querySelector('.gttlist');
+  list.addEventListener('change', e => { const lab = e.target.closest('.gttrow'); if(lab) lab.classList.toggle('on', lab.querySelector('[data-gtt]').checked); });
+  const nw = el.querySelector('[data-gttnew]');
+  const add = () => { const n = nw.value.trim(); if(!n) return; nw.value = '';
+    let lab = [...list.querySelectorAll('.gttrow')].find(l => l.querySelector('[data-gtt]').dataset.gtt.toLowerCase() === n.toLowerCase());
+    if(!lab){ const tmp = document.createElement('div'); tmp.innerHTML = gttRowHTML(n); lab = tmp.firstElementChild; list.appendChild(lab); list.querySelector('.gttoth').hidden = false; }
+    lab.querySelector('[data-gtt]').checked = true; lab.classList.add('on'); lab.scrollIntoView({block:'nearest'}); nw.focus(); };
+  el.querySelector('[data-gttadd]').addEventListener('click', e => { e.stopPropagation(); add(); });
+  nw.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); add(); } });
+}
+function commitGtt(p, r, el){
+  const seen = new Set(), items = [];
+  el.querySelectorAll('.gttrow').forEach(l => { const cb = l.querySelector('[data-gtt]'), k = cb.dataset.gtt; if(!cb.checked || seen.has(k.toLowerCase())) return; seen.add(k.toLowerCase());
+    items.push({k}); });
+  if(JSON.stringify(items) !== JSON.stringify(gttItems(r.cells[p.k]))) setCell(p.kind, p.id, p.k, {items, s:'', t:''});
+}
+// Rounds · At a glance: one pill per drip, full name
+const gttPills = cell => gttItems(cell).map(it => `<span class="gttpill g-${gttCat(it.k)}"><b>${esc(it.k)}</b></span>`).join('');
+
 /* ---------- rendering: shared cell ---------- */
 function procWhen(d){ if(!isISO(d)) return ''; const n = daysBetween(state.boardDate, d); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 0 ? 'past' : 'later'; }
 function cellHTML(cell, col, kind, id, ri, ci, ro){
@@ -2725,6 +2800,10 @@ function cellHTML(cell, col, kind, id, ri, ci, ro){
     const st = n === null ? (txt ? 'part' : 'none') : g !== null ? (ioGoalMet(n, g) ? 'met' : 'miss') : n < 0 ? 'neg' : n > 0 ? 'pos' : 'even';
     const title = `${col.h}: ${ioText(cell) || (legacy ? legacy.label + ' (old status)' : 'not entered')}${cell.t && cell.t !== 'N/A' ? ' — ' + cell.t : ''}`;
     return `<div class="tc t-io io-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}</span>${g !== null ? `<i class="iogoal">◎${esc(g === 0 ? 'even' : ioSigned(g).replace(' ', ''))}</i>` : ''}</div>`;
+  }
+  if(col.type === 'gtt'){
+    const its = gttItems(cell), txt = gttCellTxt(cell), st = !its.length ? 'none' : its.some(i => gttCat(i.k) === 'press') ? 'press' : 'on';
+    return `<div class="tc t-gtt gtt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h + ': ' + (its.length ? gttSummary(cell) : 'no drips'))}"><span class="txt">${esc(txt)}</span></div>`;
   }
   if(col.type === 'ldt'){
     const items = ldtActive(cell), gone = ldtRecentGone(cell), old = items.some(ldtOld), st = !items.length && !gone.length ? 'none' : old ? 'old' : 'ok';
@@ -3571,7 +3650,7 @@ function closePop(commit=true){
   if(commit){
     const ed = p.el.querySelector('[data-ed]');
     const r = rowOf(p.kind,p.id);
-    const cb = p.el.querySelector('[data-cn]'), lw = p.el.querySelector('.ldtlist'), dm = p.el.querySelector('.dmods');
+    const cb = p.el.querySelector('[data-cn]'), gl = p.el.querySelector('.gttlist'), lw = p.el.querySelector('.ldtlist:not(.gttlist)'), dm = p.el.querySelector('.dmods');
     if(dm && r && dm.dataset.val !== (r.cells[p.k].t || '')) setCell(p.kind, p.id, p.k, {t:dm.dataset.val});
     const pd = p.el.querySelector('[data-procd]');
     const ioIn = p.el.querySelector('[data-ioin]');
@@ -3579,6 +3658,7 @@ function closePop(commit=true){
       if(Number.isNaN(a) || Number.isNaN(b) || Number.isNaN(g)) toast('I/O not saved — use numbers like 1200, 1.2L, 800+450 (goal: −1L, +500, even)');
       else if(a !== (ioNum(c.in) ? c.in : null) || b !== (ioNum(c.out) ? c.out : null) || g !== (ioNum(c.goal) ? c.goal : null) || t !== (c.t === 'N/A' ? '' : c.t || '')){
         const patch = {t, s:''}; patch.in = a === null ? undefined : a; patch.out = b === null ? undefined : b; patch.goal = g === null ? undefined : g; setCell(p.kind, p.id, p.k, patch); } }
+    else if(gl && r) commitGtt(p, r, p.el);
     else if(lw && r) commitLdt(p, r, p.el);
     else if(pd && r){ const t = p.el.querySelector('[data-proct]').value.trim(), d = isISO(pd.value) ? pd.value : '', c = r.cells[p.k];
       if(t !== (c.t || '') || d !== (c.d || '')) setCell(p.kind, p.id, p.k, {t, d}); }
@@ -3630,6 +3710,8 @@ function openPop(cellEl, focusEditor=false){
       <div class="iogs" data-iogs></div></div>
       <div class="ed"><input type="text" data-ionote value="${esc(cell.t === 'N/A' ? '' : cell.t || '')}" placeholder="Note (optional)"></div>
       <div class="muted" style="font-size:11px;margin-top:5px">mL, or litres with “L” (1.2L). Add amounts with + (800+450).</div>`;
+  } else if(col.type === 'gtt'){
+    body += gttPopHTML(cell);
   } else if(col.type === 'ldt'){
     body += ldtPopHTML(col, cell);
   } else if(col.type === 'proc'){
@@ -3653,6 +3735,7 @@ function openPop(cellEl, focusEditor=false){
     <div class="row2">${left}<span style="display:flex;gap:8px;align-items:center">${editLink}<button class="btn sm primary" data-done>Done</button></span></div>`;
   document.body.appendChild(el);
   if(col.type === 'ldt') wireLdtPop(el);
+  if(col.type === 'gtt') wireGttPop(el);
   if(col.type === 'io'){ const upd = () => { const a = ioParse(el.querySelector('[data-ioin]').value), b = ioParse(el.querySelector('[data-ioout]').value), o = el.querySelector('[data-ionet]');
       const bad = Number.isNaN(a) || Number.isNaN(b); o.textContent = bad ? 'check numbers' : a !== null && b !== null ? ioSigned(a - b) : '—';
       o.className = bad ? 'bad' : a !== null && b !== null ? (a - b < 0 ? 'neg' : a - b > 0 ? 'pos' : '') : '';
@@ -3677,7 +3760,7 @@ function openPop(cellEl, focusEditor=false){
     if(b.dataset.o !== undefined){ const dm = el.querySelector('.dmods'); finish({t:dm ? dietJoin(b.dataset.o, dietParse(dm.dataset.val).mods) : b.dataset.o}); return; }
     if(b.hasAttribute('data-clear')){ finish(edEl ? {s:'', t:edEl.value} : {s:''}); return; }
     if(b.dataset.pday !== undefined) return;
-    if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:''} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
+    if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:''} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
     if(b.hasAttribute('data-today')){ finish({t:state.boardDate}); return; }
     if(b.hasAttribute('data-now')){
       const d = new Date(), h = d.getHours(), now = `${h % 12 || 12}:${pad(d.getMinutes())} ${h < 12 ? 'am' : 'pm'}`;
@@ -3742,7 +3825,7 @@ function onCellKey(e){
     else if(cfg.type === 'choice'){ if(cfg.opts[n]){ e.preventDefault(); setCell(kind,id,col,{t:col === 'diet' ? dietJoin(cfg.opts[n].label, dietParse(rowOf(kind,id).cells.diet.t).mods) : cfg.opts[n].label}); } }
   }
   else if(e.key === '0' || e.key === 'Delete' || e.key === 'Backspace'){
-    e.preventDefault(); const ty = colOf(kind,col).type; setCell(kind,id,col, isStatusType(ty) ? {s:''} : ty === 'checkNote' ? {t:'', c:false} : ty === 'ldt' ? {t:'', items:[]} : ty === 'proc' ? {t:'', d:''} : ty === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:''});
+    e.preventDefault(); const ty = colOf(kind,col).type; setCell(kind,id,col, isStatusType(ty) ? {s:''} : ty === 'checkNote' ? {t:'', c:false} : ty === 'ldt' || ty === 'gtt' ? {t:'', items:[]} : ty === 'proc' ? {t:'', d:''} : ty === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:''});
   }
   else if(e.key === 'Enter' || e.key === ' '){
     e.preventDefault();
@@ -3897,7 +3980,7 @@ function renderRounds(){
   </div>`;
 }
 /* ---------- Rounds · Split view: everyone on the left, one patient on the right ---------- */
-const RS_GLANCE = ['avatar', 'io', 'diet', 'dvt', 'dest'];
+const RS_GLANCE = ['gtt', 'avatar', 'io', 'diet', 'dvt', 'dest'];
 const RS_QUICK = ['Labs: ', 'Imaging: ', 'Consult: ', 'Call family: ', 'Med change: '];
 function rsFlagged(p){ return flagsFor(p).some(f => f[0] === 'warn' || f[0] === 'bad'); }
 function renderRoundsSplit(){
@@ -3908,16 +3991,16 @@ function renderRoundsSplit(){
       <span class="seg rord" role="group" aria-label="Order">${[['intern', 'Intern'], ['bed', 'Bed'], ['list', 'List']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
       <span class="seg rview" role="group" aria-label="Layout"><button type="button" data-rview="classic">Classic</button><button type="button" data-rview="split" class="on">Split</button></span></div>
     <div class="rs-list">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<div class="rs-grp">${esc(q.intern || 'Unassigned')} · ${list.filter(x => x.intern === q.intern).length}</div>` : ''}
-      <button type="button" class="rs-pi ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'dsc' : ''}" data-rgo="${q.id}"><span class="rs-bed">${esc(q.bed || '—')}${rdSeen(q) ? ' <i class="rs-ck">✓</i>' : ''}</span>
+      <button type="button" class="rs-pi ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'dsc' : ''}" data-rgo="${q.id}"><span class="rs-bed">${esc(q.bed || '—')}${rdSeen(q) ? ' <i class="rs-ck" title="Discussed">💬</i>' : ''}</span>
         <span class="rs-dots">${isPc(q) ? '<i class="rs-d pc" title="Pre-charted"></i>' : ''}${rsFlagged(q) ? '<i class="rs-d fl" title="Flagged"></i>' : ''}</span><span class="rs-hd">${hospDay(q) !== null ? 'HD' + hospDay(q) : ''}</span>
-        <span class="rs-one">${esc(q.problem || '')}</span></button>`).join('')}</div>
-    <div class="rs-key"><i class="rs-d pc"></i> pre-charted &nbsp;<i class="rs-d fl"></i> flag &nbsp;✓ discussed</div></aside>`;
+        <span class="rs-one">${esc(q.problem || '')}</span><span class="rs-int">${esc(q.intern || '')}</span></button>`).join('')}</div>
+    <div class="rs-key"><i class="rs-d pc"></i> pre-charted &nbsp;<i class="rs-d fl"></i> flag &nbsp;💬 discussed</div></aside>`;
   if(!list.length){ body.innerHTML = `<div class="rs">${rail}<section class="rs-main"><div class="rempty">No patients in this view.</div><div class="rs-foot"><span style="flex:1"></span><button class="btn" data-r="close">✕ Close</button></div></section></div>`; return; }
   const p = list[i], fl = flagsFor(p), n = hospDay(p), cm = p.comments || {};
   const tile = k => { const cfg = colCfg(k); return cellHTML(p.cells[k], cfg, 'p', p.id, 0, 0, false) + (cm[k] ? `<div class="rcmt">${esc(cm[k])}</div>` : ''); };
   const ioDet = c => { if(!c) return ''; const parts = [ioNum(c.in) && `<i class="iosym" title="Intake" aria-label="Intake">+</i><b>${esc(ioVol(c.in))}</b>`, ioNum(c.out) && `<i class="iosym" title="Output" aria-label="Output">−</i><b>${esc(ioVol(c.out))}</b>`].filter(Boolean);
     const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
-  const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''}">${tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
+  const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' ? 'rs-gtt' : ''}">${k === 'gtt' && gttItems(p.cells.gtt).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
   const daily = DAILY_KEYS.filter(k => !RS_GLANCE.includes(k) && !colHidden(k)), doneN = daily.filter(k => isDone(colCfg(k), p.cells[k])).length;
   const chk = daily.map(k => `<div class="rs-ck2 ${isDone(colCfg(k), p.cells[k]) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('');
   const more = CENSUS_GROUPS().filter(g => g.k !== 'daily').map(g => visibleCols(g).filter(c => !RS_GLANCE.includes(c.k)).map(c => c.k)).flat();
@@ -3928,7 +4011,7 @@ function renderRoundsSplit(){
     <div class="rs-hd2"><div class="rs-id"><div class="rs-bigbed">${esc(p.bed || '(no bed)')}</div><div class="muted">${esc(p.intern || 'Unassigned')}${n !== null ? ' · HD ' + n : ''}${isISO(p.cells.edd.t) ? ' · EDD ' + esc(fmtShort(p.cells.edd.t)) : ''}</div></div>
       <div class="rs-oneliner"><label class="rs-gl">One-liner</label><input data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" placeholder="One-liner / problem">
         ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
-      <div class="rs-act"><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
+      <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
       <div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>
       <div class="rs-card"><div class="rs-cardh">Today’s checklist <span class="rs-cnt">${doneN} / ${daily.length} done</span></div><div class="rs-chk">${chk}</div></div>
@@ -3956,6 +4039,7 @@ $('#roundsBody').addEventListener('click', e => {
   const v = e.target.closest('[data-rview]'); if(v){ ui.roundsView = v.dataset.rview; saveUI(); closePop(); renderRounds(); return; }
   const q = e.target.closest('[data-rsq]'); if(q){ const t = $('#rsAdd'); if(t){ t.value = q.dataset.rsq; t.focus(); t.setSelectionRange(t.value.length, t.value.length); } return; }
   const o = e.target.closest('[data-rord]'); if(o){ ui.roundsOrder = o.dataset.rord; saveUI(); renderRounds(); const c = document.querySelector('#roundsBody .rchip.on'); if(c) c.scrollIntoView({block:'nearest', inline:'center'}); return; }
+  const pb = e.target.closest('[data-rpc]'); if(pb){ togglePc(pb.dataset.rpc); renderRounds(); return; }
   const sb = e.target.closest('[data-rseen]'); if(sb){ const q = rowOf('p', sb.dataset.rseen), on = !rdSeen(q); rdMark(q, on);
     rounds.keepOpen = rounds.keepOpen || new Set(); if(on) rounds.keepOpen.delete(q.id); else rounds.keepOpen.add(q.id);   // unticked by hand: Next leaves it unticked
     renderRounds(); return; }
@@ -4427,7 +4511,7 @@ function toCSV(){
   const head = ['#','Bed','Intern','Problem','Status','Admitted','Flags', ...ALL_COLS.map(c => colCfg(c.k).h)];
   const q = v => `"${String(v??'').replace(/"/g,'""')}"`;
   const rows = state.patients.map((p,i) => [i+1, p.bed, p.intern, p.problem, p.status, p.admitDate, flagsFor(p).map(f=>f[1]).join('; '),
-    ...ALL_COLS.map(c => { const x = p.cells[c.k]; const ty = colCfg(c.k).type; if(ty === 'ldt') return ldtSummary(x); if(ty === 'proc') return [x.t, isISO(x.d) ? x.d : ''].filter(Boolean).join(' · '); if(ty === 'checkNote') return [x.c ? '✓' : '', x.t].filter(Boolean).join(' '); return [isStatusType(ty) ? SMAP[x.s]?.label : '', x.t].filter(Boolean).join(' | '); })]);
+    ...ALL_COLS.map(c => { const x = p.cells[c.k]; const ty = colCfg(c.k).type; if(ty === 'ldt') return ldtSummary(x); if(ty === 'gtt') return gttSummary(x); if(ty === 'proc') return [x.t, isISO(x.d) ? x.d : ''].filter(Boolean).join(' · '); if(ty === 'checkNote') return [x.c ? '✓' : '', x.t].filter(Boolean).join(' '); return [isStatusType(ty) ? SMAP[x.s]?.label : '', x.t].filter(Boolean).join(' | '); })]);
   return [head, ...rows].map(r => r.map(q).join(',')).join('\r\n');
 }
 function download(name, text, type){
@@ -4877,7 +4961,7 @@ function scRun(a, ctx){
       const cfg = colOf(kind, col), cell = rowOf(kind, id).cells[col];
       scClip = {type:cfg.type, cell:clone(cell), h:cfg.h};
       const st = isStatusType(cfg.type) && SMAP[cell.s];
-      const txt = cfg.type === 'ldt' ? ldtSummary(cell) : cfg.type === 'proc' ? [cell.t, isISO(cell.d) ? fmtShort(cell.d) : ''].filter(Boolean).join(' · ') : [st && st.label, cfg.type === 'checkNote' ? (cell.c ? '✓' : '') : '', cfg.type === 'check' ? (cell.t ? '✓' : '') : cell.t].filter(Boolean).join(' · ');
+      const txt = cfg.type === 'ldt' ? ldtSummary(cell) : cfg.type === 'gtt' ? gttSummary(cell) : cfg.type === 'proc' ? [cell.t, isISO(cell.d) ? fmtShort(cell.d) : ''].filter(Boolean).join(' · ') : [st && st.label, cfg.type === 'checkNote' ? (cell.c ? '✓' : '') : '', cfg.type === 'check' ? (cell.t ? '✓' : '') : cell.t].filter(Boolean).join(' · ');
       try{ navigator.clipboard && navigator.clipboard.writeText(txt).catch(() => {}); }catch(e){}
       toast(`Copied ${cfg.h}${txt ? ': ' + txt : ' (empty)'}`); return; }
     case 'paste': {
@@ -4885,6 +4969,7 @@ function scRun(a, ctx){
       const cfg = colOf(kind, col), src = scClip.cell, st = scClip.type, statusy = isStatusType(cfg.type), srcStatusy = isStatusType(st);
       let patch;
       if(cfg.type === 'proc' || st === 'proc'){ patch = st === 'proc' ? {t:src.t || '', d:src.d || ''} : {t:src.t || ''}; if(cfg.type !== 'proc'){ patch = {t:[src.t, isISO(src.d) ? fmtShort(src.d) : ''].filter(Boolean).join(' ')}; } }
+      else if(cfg.type === 'gtt' || st === 'gtt'){ if(cfg.type !== st){ toast('Drips can only be pasted into another GTT box'); return; } patch = {items:clone(gttItems(src)), s:'', t:''}; }
       else if(cfg.type === 'ldt' || st === 'ldt'){ if(cfg.type !== st){ toast('Lines / drains / tubes can only be pasted into another Avatar box'); return; } patch = {items:clone(ldtItems(src)), s:'', t:''}; }
       else if(statusy) patch = srcStatusy ? {s:src.s || '', t:src.t || ''} : {t:src.t || ''};
       else if(cfg.type === 'choice'){ if(src.t && !optOf(cfg, src.t) && src.t !== 'N/A'){ toast(`“${src.t}” isn't an option for ${cfg.h}`); return; } patch = {t:src.t || ''}; }
@@ -6366,6 +6451,7 @@ function cmdSetPlan(ent, f, vals){
   if(cfg.type === 'proc'){ if(CMD_NO.has(w0)) return done({t:'', d:''}, 'cleared'); const last = vals[vals.length - 1], d = vals.length > 1 ? cmdDate(last) : null, name = (d ? vals.slice(0, -1) : vals).join(' ').trim();
     if(!name && !d) return {err:'Proc: name and optional date — e.g. “proc EGD tomorrow”'}; return done(d ? {t:name || cell.t, d} : {t:name}, `${esc(name || cell.t)}${d ? ' · ' + fmtShort(d) : ''}`); }
   if(cfg.type === 'ldt') return {err:'Lines / drains / tubes: edit the Avatar box on the board'};
+  if(cfg.type === 'gtt') return {err:'Drips: edit the GTT box on the board'};
   if(CMD_NO.has(w0) && vals.length === 1) return done({t:''}, 'cleared');
   if(!raw) return {err:`Type the text for ${esc(h)}`};
   return done({t:raw}, `“${esc(raw)}”`);
@@ -7572,6 +7658,8 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:249, d:'2026-11-22', items:['<b>GTT</b> (drips) column on <b>ICU / CCU boards only</b>: tick what’s running, grouped by Vasopressors, Inotropes, Anti-HTN, Endocrine, Sedation, Analgesia and Anti-arrhythmics, or add another. No doses (nursing titrates them). Shows first in Rounds · Split <b>At a glance</b>; red edge on the census when a pressor is on. Carries over day to day.', 'Rounds · Split: <b>Mark pre-charted</b> button next to Mark discussed; the pre-charted dot is now green; 💬 marks discussed patients in the left list, and each row shows the intern under the hospital day.']},
+  {v:248, d:'2026-11-22', items:['<b>GTT</b> (drips) column on <b>ICU / CCU boards only</b> — hidden on ward boards. Tick what’s running by category (Vasopressors, Inotropes, Anti-HTN, Endocrine, Sedation, Analgesia, Anti-arrhythmics), type each dose, or add another drip. The census shows “Norepi 0.08 · Vaso 0.04” (red edge when a pressor is on); Rounds · Split shows each drip and dose first in <b>At a glance</b>. Drips carry over day to day.']},
   {v:247, d:'2026-11-22', items:['New <b>Imaging</b> column between Lab Rev and Visit, with the same 1–8 status choices as Lab Rev (Complete, Revisit, Pending, Ordered and the rest). It counts toward boxes open and shows in Rounds.']},
   {v:246, d:'2026-11-21', items:['<b>Restore from Files</b> (and Open my data file) now accepts a one-board backup — e.g. ⬇ Download a backup on a computer — and puts it back on the board it came from, leaving your other boards alone.']},
   {v:245, d:'2026-11-21', items:['<b>Appearance</b> setting: ⚙ Settings → Appearance → <b>Automatic</b> (follows the iPad or computer), <b>Light</b> or <b>Dark</b>. Saved on this device.']},

@@ -656,13 +656,11 @@ body.touch #tkBedSel{font-size:15px;padding:8px}#tkTeam{width:130px}#tkText{flex
 .tc.gtt-on{background:var(--panel);color:var(--ink);box-shadow:inset 3px 0 0 #8E44AD}
 .tc.gtt-press{background:var(--panel);color:var(--ink);box-shadow:inset 3px 0 0 #EA4335}
 .tc.gtt-on:focus,.tc.gtt-press:focus{box-shadow:inset 3px 0 0 currentColor, inset 0 0 0 2px var(--focus)}
-.pop:has(.gttlist){width:340px}
+.pop:has(.gttlist){width:260px}
 .gttlist{max-height:340px}
-.gttrow{display:grid;grid-template-columns:20px 1fr 150px;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
+.gttrow{display:grid;grid-template-columns:20px 1fr;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
 .ldtgrp+.gttrow{border-top:0}
 .gttrow.on{background:var(--info-bg)}
-.gttrow input[type=text]{font-size:12px;padding:3px 6px;border:1px solid var(--line2);border-radius:5px;background:var(--panel);width:100%;min-width:0}
-.gttrow input[type=text]:disabled{opacity:.35}
 .gttn{display:flex;align-items:center;gap:6px}
 .gttdot{width:8px;height:8px;border-radius:50%;flex:0 0 8px;background:#999}
 .rs-gv .tc.rs-gttdet{display:flex;flex-wrap:wrap;gap:5px;padding:5px 6px;height:auto;min-height:36px;background:var(--panel);box-shadow:none;border:1px solid var(--line);cursor:pointer}
@@ -751,11 +749,14 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 .rs-pi{display:grid;grid-template-columns:auto 1fr auto;gap:2px 8px;align-items:center;width:100%;text-align:left;border:0;background:none;padding:8px 10px;border-radius:10px;margin:1px 0;cursor:pointer;color:var(--ink);font-family:inherit}
 .rs-pi.on{background:#eaf1ff;box-shadow:inset 3px 0 0 var(--accent)}
 .rs-bed{font:800 14px ui-monospace,"SF Mono",Menlo,monospace}.rs-ck{font-style:normal;color:#1e7e34}
-.rs-hd{font:600 11px ui-monospace,Menlo,monospace;color:var(--muted)}
-.rs-one{grid-column:1/-1;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs-hd{font:600 11px ui-monospace,Menlo,monospace;color:var(--muted);text-align:right}
+.rs-one{grid-column:1/3}
+.rs-int{grid-column:3;justify-self:end;font-size:11px;color:var(--muted);white-space:nowrap;max-width:90px;overflow:hidden;text-overflow:ellipsis}
+.rseenbtn.rpcbtn.on{background:#34A853;border-color:#34A853;color:#fff}
+.rs-one{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rs-pi.dsc .rs-one{opacity:.7}
 .rs-dots{display:flex;gap:3px}.rs-d{width:9px;height:9px;border-radius:50%;display:inline-block}
-.rs-d.pc{background:#8ab4f8}.rs-d.fl{background:#ea4335}
+.rs-d.pc{background:#34A853}.rs-d.fl{background:#ea4335}
 .rs-key{height:var(--rs-fh);box-sizing:border-box;display:flex;align-items:center;padding:0 12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted);flex:none;gap:2px}
 .rs-main{display:flex;flex-direction:column;min-width:0;height:100%;min-height:0}
 .rs-hd2{height:var(--rs-hh);box-sizing:border-box;display:flex;gap:16px;align-items:center;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--line);flex:none;overflow:hidden}
@@ -1620,7 +1621,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '248';
+const APP_VERSION = '249';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2119,10 +2120,10 @@ function practiceDemo(r){
     Object.entries(set).forEach(([k, v]) => { p.cells[k] = Array.isArray(v) ? {s:v[0], t:v[1]} : (typeof v === 'object' ? Object.assign({s:'', t:''}, v) : {s:v, t:''}); }); return p; };
   return normalize({version:1, boardDate:bd, patients:[
       mk('CCU-1', 'Intern A', 'NSTEMI s/p PCI to LAD', 'Existing', 2, {vitals:'C', io:{in:1800, out:2100}, avatar:'C', labrev:['C', 'Trop peaked'], vst:Y, note:['', 'Progress'], bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], pt:['', y], edd:['', addDays(bd, 1)], dest:['', 'Home']}),
-      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {gtt:{items:[{k:'Furosemide', r:'10 mg/hr'}]}, vitals:'C', io:{in:1500, out:2700, t:'goal net −2 L'}, avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
+      mk('CCU-2', 'Intern A', 'ADHF (HFrEF) on furosemide gtt', 'Existing', 3, {gtt:{items:[{k:'Furosemide'}]}, vitals:'C', io:{in:1500, out:2700, t:'goal net −2 L'}, avatar:'C', labrev:['P', 'BMP q12h'], note:['', 'Progress'], labord:{c:true, t:'05:00, 17:00'}, diet:['', '2 g Na / 1.5 L'], dvt:['', 'SQH'], edd:['', addDays(bd, 3)], dest:['', 'Home']}),
       mk('CCU-3', 'Intern A', 'Complete heart block → PPM today', 'Existing', 1, {vitals:'C', io:{in:1200, out:1000}, avatar:['A', 'Temp wire in R IJ'], labrev:'C', note:['', 'Progress'], diet:['', 'NPO after midnight'], dvt:['', 'HELD'], proc:['', 'PPM placement'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
-      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {gtt:{items:[{k:'Norepinephrine', r:'0.05 mcg/kg/min'}, {k:'Milrinone', r:'0.25 mcg/kg/min'}]}, vitals:['R', 'MAP 62–65'], io:{in:2400, out:1650}, avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
-      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {gtt:{items:[{k:'Amiodarone', r:'0.5 mg/min'}, {k:'Lidocaine', r:'1 mg/min'}]}, vitals:'C', io:{in:1600, out:1900}, avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
+      mk('CCU-4', 'Intern B', 'Cardiogenic shock on milrinone', 'Existing', 4, {gtt:{items:[{k:'Norepinephrine'}, {k:'Milrinone'}]}, vitals:['R', 'MAP 62–65'], io:{in:2400, out:1650}, avatar:['A', 'PA catheter, R IJ'], labrev:['X', 'Lactate 2.6'], note:['', 'Progress'], labord:{c:true, t:'05:00, 11:00'}, diet:['', 'Cardiac'], dvt:['', 'SQH'], edd:['', addDays(bd, 6)], dest:['', 'TBD']}),
+      mk('CCU-5', 'Intern B', 'VT storm on amiodarone gtt', 'Existing', 2, {gtt:{items:[{k:'Amiodarone'}, {k:'Lidocaine'}]}, vitals:'C', io:{in:1600, out:1900}, avatar:'C', labrev:['R', 'K 3.6, Mg 1.8 – repleting'], note:['', 'Progress'], diet:['', 'Heart Healthy'], dvt:['', 'SQH'], proc:['', 'EP study pending'], edd:['', addDays(bd, 4)], dest:['', 'Home']}),
       mk('CCU-6', 'Intern B', 'Severe AS, pre-TAVR workup', 'Existing', 5, {hc:Y, vitals:'C', io:{in:1400, out:1300}, avatar:'C', labrev:'C', vst:Y, note:['', 'Progress'], attest:Y, bm:['', y], diet:['', 'Heart Healthy'], dvt:['', 'LMWH'], pt:['', addDays(bd, -2)], ot:['', addDays(bd, -2)], proc:['', 'CTA TAVR protocol'], edd:['', addDays(bd, 2)], dest:['', 'Home']}),
     ], admits:[], archive:[], history:[],
     settings:{team:'', interns:['Intern A', 'Intern B'], internCaps:{'Intern A':5, 'Intern B':5}, tsHours:72, bmDays:3, ptotDays:2, shiftType:r.id}});
@@ -2190,6 +2191,8 @@ function normalize(s){
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
   // v247: new Imaging column sits right after Lab Rev in any saved column order (once)
   if(!s.settings.imgCol){ const co = s.settings.colOrder; if(co && typeof co === 'object') Object.keys(co).forEach(g => { const o = co[g]; if(Array.isArray(o) && !o.includes('img')){ const i = o.indexOf('labrev'); if(i >= 0) o.splice(i + 1, 0, 'img'); } }); s.settings.imgCol = 1; }
+  // v249: drips are names only (no doses)
+  if(!s.settings.gttNoDose){ (s.patients || []).forEach(p => { const c = p.cells && p.cells.gtt; if(c && Array.isArray(c.items)) c.items = c.items.map(i => ({k:i.k})); }); s.settings.gttNoDose = 1; }
   // v239: Uptriage dropped from Disposition (it's just SDU / cSDU / MICU / CCU) — once
   if(!s.settings.noUptriage){ const dc = s.settings.columns.dest; if(dc && Array.isArray(dc.opts)) dc.opts = dc.opts.filter(o => (o.label || '').toLowerCase() !== 'uptriage'); s.settings.noUptriage = 1; }
   // v237: Destination → Disposition, with in-hospital choices (once)
@@ -2740,56 +2743,46 @@ const GTT_GROUPS = [['Vasopressors', ['Epinephrine', 'Norepinephrine', 'Vasopres
   ['Inotropes', ['Dobutamine', 'Milrinone'], 'ino'],
   ['Anti-HTN', ['Nicardipine', 'Nitroprusside', 'Esmolol'], 'htn'],
   ['Endocrine', ['Insulin'], 'endo'],
-  ['Sedation', ['Fentanyl', 'Versed', 'Propofol', 'Precedex', 'Ativan'], 'sed'],
+  ['Sedation', ['Versed', 'Propofol', 'Precedex', 'Ativan'], 'sed'],
   ['Analgesia', ['Morphine', 'Dilaudid', 'Fentanyl'], 'anal'],
-  ['Anti-arrhythmics', ['Amiodarone', 'Adenosine', 'Lidocaine', 'Diltiazem'], 'arr']];
+  ['Anti-arrhythmics', ['Amiodarone', 'Lidocaine', 'Diltiazem'], 'arr']];
 const GTT_SHORT = {Epinephrine:'Epi', Norepinephrine:'Norepi', Vasopressin:'Vaso', Phenylephrine:'Phenyl', 'Angiotensin II':'Ang II', Dopamine:'Dopa', Dobutamine:'Dobut', Milrinone:'Milri',
   Nicardipine:'Nicard', Nitroprusside:'Nipride', Fentanyl:'Fent', Propofol:'Prop', Precedex:'Dex', Amiodarone:'Amio', Adenosine:'Adeno', Lidocaine:'Lido', Diltiazem:'Dilt'};
-const GTT_EG = {Epinephrine:'0.05 mcg/kg/min', Norepinephrine:'0.08 mcg/kg/min', Vasopressin:'0.04 units/min', Phenylephrine:'100 mcg/min', 'Angiotensin II':'20 ng/kg/min', Dopamine:'5 mcg/kg/min',
-  Dobutamine:'2.5 mcg/kg/min', Milrinone:'0.25 mcg/kg/min', Nicardipine:'5 mg/hr', Nitroprusside:'0.5 mcg/kg/min', Esmolol:'50 mcg/kg/min', Insulin:'4 units/hr',
-  Fentanyl:'50 mcg/hr', Versed:'2 mg/hr', Propofol:'20 mcg/kg/min', Precedex:'0.4 mcg/kg/hr', Ativan:'1 mg/hr', Morphine:'2 mg/hr', Dilaudid:'0.5 mg/hr',
-  Amiodarone:'1 mg/min', Adenosine:'dose', Lidocaine:'1 mg/min', Diltiazem:'10 mg/hr'};
 const gttItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
 const gttCat = n => { const l = String(n).toLowerCase(), g = GTT_GROUPS.find(g => g[1].some(x => x.toLowerCase() === l)); return g ? g[2] : 'oth'; };
-const gttLabel = it => it.k + (it.r ? ' ' + it.r : '');
+const gttLabel = it => it.k;
 const gttSummary = cell => gttItems(cell).map(gttLabel).join('; ');
-// census cell: "Norepi 0.08 · Vaso 0.04" (just the number, the units live in the pop-up and Rounds)
-const gttCellTxt = cell => gttItems(cell).map(it => { const m = String(it.r || '').match(/^\s*[\d.]+/); return (GTT_SHORT[it.k] || it.k) + (m ? ' ' + m[0].trim() : ''); }).join(' · ');
-const gttRowHTML = (n, it, g) => `<label class="gttrow ${it ? 'on' : ''}"><input type="checkbox" data-gtt="${esc(n)}" ${it ? 'checked' : ''}><span class="gttn"><i class="gttdot g-${gttCat(n)}"></i>${esc(n)}</span>
-    <input type="text" data-gttr value="${esc(it && it.r || '')}" placeholder="${esc('e.g. ' + (GTT_EG[n] || 'dose / rate'))}" ${it ? '' : 'disabled'} autocomplete="off" aria-label="${esc(n)} dose"></label>`;
+// census cell: "Norepi · Vaso · Prop" (no doses — nursing titrates them)
+const gttCellTxt = cell => gttItems(cell).map(it => GTT_SHORT[it.k] || it.k).join(' · ');
+const gttRowHTML = (n, on) => `<label class="gttrow ${on ? 'on' : ''}"><input type="checkbox" data-gtt="${esc(n)}" ${on ? 'checked' : ''}><span class="gttn"><i class="gttdot g-${gttCat(n)}"></i>${esc(n)}</span></label>`;
 function gttPopHTML(cell){
   const items = gttItems(cell), find = n => items.find(i => i.k.toLowerCase() === n.toLowerCase());
   const known = new Set(GTT_GROUPS.flatMap(g => g[1].map(x => x.toLowerCase()))), extra = items.filter(i => !known.has(i.k.toLowerCase()));
   const html = GTT_GROUPS.map(([h, list]) => `<div class="ldtgrp">${esc(h)}</div>${list.map(n => gttRowHTML(n, find(n))).join('')}`).join('')
-    + `<div class="ldtgrp gttoth" ${extra.length ? '' : 'hidden'}>Other</div>${extra.map(it => gttRowHTML(it.k, it)).join('')}`;
+    + `<div class="ldtgrp gttoth" ${extra.length ? '' : 'hidden'}>Other</div>${extra.map(it => gttRowHTML(it.k, true)).join('')}`;
   return `<div class="ldtlist gttlist">${html}</div>
     <div class="ed"><input type="text" data-gttnew placeholder="Add another drip (e.g. Heparin, Ketamine)"><button class="btn sm" data-gttadd>Add</button></div>
-    <div class="muted" style="font-size:11px;margin-top:5px">Tick what's running and type the dose with its units. Only shows on ICU / CCU boards.</div>`;
+    <div class="muted" style="font-size:11px;margin-top:5px">Tick what's running. Only shows on ICU / CCU boards.</div>`;
 }
 function wireGttPop(el){
   const list = el.querySelector('.gttlist');
-  // Fentanyl sits under both Sedation and Analgesia: the two rows stay in step
-  const sync = src => { const cb = src.querySelector('[data-gtt]'), r = src.querySelector('[data-gttr]');
-    [...list.querySelectorAll('.gttrow')].filter(l => l !== src && l.querySelector('[data-gtt]').dataset.gtt === cb.dataset.gtt).concat([src]).forEach(l => {
-      const c2 = l.querySelector('[data-gtt]'), r2 = l.querySelector('[data-gttr]'); c2.checked = cb.checked; r2.value = r.value; r2.disabled = !cb.checked; l.classList.toggle('on', cb.checked); }); };
-  list.addEventListener('change', e => { const lab = e.target.closest('.gttrow'); if(!lab) return; sync(lab); if(e.target.matches('[data-gtt]') && e.target.checked) lab.querySelector('[data-gttr]').focus(); });
-  list.addEventListener('input', e => { const lab = e.target.closest('.gttrow'); if(lab) sync(lab); });
+  list.addEventListener('change', e => { const lab = e.target.closest('.gttrow'); if(lab) lab.classList.toggle('on', lab.querySelector('[data-gtt]').checked); });
   const nw = el.querySelector('[data-gttnew]');
   const add = () => { const n = nw.value.trim(); if(!n) return; nw.value = '';
     let lab = [...list.querySelectorAll('.gttrow')].find(l => l.querySelector('[data-gtt]').dataset.gtt.toLowerCase() === n.toLowerCase());
-    if(!lab){ const tmp = document.createElement('div'); tmp.innerHTML = gttRowHTML(n, null); lab = tmp.firstElementChild; list.appendChild(lab); list.querySelector('.gttoth').hidden = false; }
-    lab.querySelector('[data-gtt]').checked = true; sync(lab); lab.scrollIntoView({block:'nearest'}); lab.querySelector('[data-gttr]').focus(); };
+    if(!lab){ const tmp = document.createElement('div'); tmp.innerHTML = gttRowHTML(n); lab = tmp.firstElementChild; list.appendChild(lab); list.querySelector('.gttoth').hidden = false; }
+    lab.querySelector('[data-gtt]').checked = true; lab.classList.add('on'); lab.scrollIntoView({block:'nearest'}); nw.focus(); };
   el.querySelector('[data-gttadd]').addEventListener('click', e => { e.stopPropagation(); add(); });
   nw.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); add(); } });
 }
 function commitGtt(p, r, el){
   const seen = new Set(), items = [];
   el.querySelectorAll('.gttrow').forEach(l => { const cb = l.querySelector('[data-gtt]'), k = cb.dataset.gtt; if(!cb.checked || seen.has(k.toLowerCase())) return; seen.add(k.toLowerCase());
-    const it = {k}, v = l.querySelector('[data-gttr]').value.trim(); if(v) it.r = v; items.push(it); });
+    items.push({k}); });
   if(JSON.stringify(items) !== JSON.stringify(gttItems(r.cells[p.k]))) setCell(p.kind, p.id, p.k, {items, s:'', t:''});
 }
-// Rounds · At a glance: one pill per drip, full name and dose
-const gttPills = cell => gttItems(cell).map(it => `<span class="gttpill g-${gttCat(it.k)}"><b>${esc(it.k)}</b>${it.r ? ' ' + esc(it.r) : ''}</span>`).join('');
+// Rounds · At a glance: one pill per drip, full name
+const gttPills = cell => gttItems(cell).map(it => `<span class="gttpill g-${gttCat(it.k)}"><b>${esc(it.k)}</b></span>`).join('');
 
 /* ---------- rendering: shared cell ---------- */
 function procWhen(d){ if(!isISO(d)) return ''; const n = daysBetween(state.boardDate, d); return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n < 0 ? 'past' : 'later'; }
@@ -3998,10 +3991,10 @@ function renderRoundsSplit(){
       <span class="seg rord" role="group" aria-label="Order">${[['intern', 'Intern'], ['bed', 'Bed'], ['list', 'List']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
       <span class="seg rview" role="group" aria-label="Layout"><button type="button" data-rview="classic">Classic</button><button type="button" data-rview="split" class="on">Split</button></span></div>
     <div class="rs-list">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<div class="rs-grp">${esc(q.intern || 'Unassigned')} · ${list.filter(x => x.intern === q.intern).length}</div>` : ''}
-      <button type="button" class="rs-pi ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'dsc' : ''}" data-rgo="${q.id}"><span class="rs-bed">${esc(q.bed || '—')}${rdSeen(q) ? ' <i class="rs-ck">✓</i>' : ''}</span>
+      <button type="button" class="rs-pi ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'dsc' : ''}" data-rgo="${q.id}"><span class="rs-bed">${esc(q.bed || '—')}${rdSeen(q) ? ' <i class="rs-ck" title="Discussed">💬</i>' : ''}</span>
         <span class="rs-dots">${isPc(q) ? '<i class="rs-d pc" title="Pre-charted"></i>' : ''}${rsFlagged(q) ? '<i class="rs-d fl" title="Flagged"></i>' : ''}</span><span class="rs-hd">${hospDay(q) !== null ? 'HD' + hospDay(q) : ''}</span>
-        <span class="rs-one">${esc(q.problem || '')}</span></button>`).join('')}</div>
-    <div class="rs-key"><i class="rs-d pc"></i> pre-charted &nbsp;<i class="rs-d fl"></i> flag &nbsp;✓ discussed</div></aside>`;
+        <span class="rs-one">${esc(q.problem || '')}</span><span class="rs-int">${esc(q.intern || '')}</span></button>`).join('')}</div>
+    <div class="rs-key"><i class="rs-d pc"></i> pre-charted &nbsp;<i class="rs-d fl"></i> flag &nbsp;💬 discussed</div></aside>`;
   if(!list.length){ body.innerHTML = `<div class="rs">${rail}<section class="rs-main"><div class="rempty">No patients in this view.</div><div class="rs-foot"><span style="flex:1"></span><button class="btn" data-r="close">✕ Close</button></div></section></div>`; return; }
   const p = list[i], fl = flagsFor(p), n = hospDay(p), cm = p.comments || {};
   const tile = k => { const cfg = colCfg(k); return cellHTML(p.cells[k], cfg, 'p', p.id, 0, 0, false) + (cm[k] ? `<div class="rcmt">${esc(cm[k])}</div>` : ''); };
@@ -4018,7 +4011,7 @@ function renderRoundsSplit(){
     <div class="rs-hd2"><div class="rs-id"><div class="rs-bigbed">${esc(p.bed || '(no bed)')}</div><div class="muted">${esc(p.intern || 'Unassigned')}${n !== null ? ' · HD ' + n : ''}${isISO(p.cells.edd.t) ? ' · EDD ' + esc(fmtShort(p.cells.edd.t)) : ''}</div></div>
       <div class="rs-oneliner"><label class="rs-gl">One-liner</label><input data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" placeholder="One-liner / problem">
         ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
-      <div class="rs-act"><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
+      <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
       <div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>
       <div class="rs-card"><div class="rs-cardh">Today’s checklist <span class="rs-cnt">${doneN} / ${daily.length} done</span></div><div class="rs-chk">${chk}</div></div>
@@ -4046,6 +4039,7 @@ $('#roundsBody').addEventListener('click', e => {
   const v = e.target.closest('[data-rview]'); if(v){ ui.roundsView = v.dataset.rview; saveUI(); closePop(); renderRounds(); return; }
   const q = e.target.closest('[data-rsq]'); if(q){ const t = $('#rsAdd'); if(t){ t.value = q.dataset.rsq; t.focus(); t.setSelectionRange(t.value.length, t.value.length); } return; }
   const o = e.target.closest('[data-rord]'); if(o){ ui.roundsOrder = o.dataset.rord; saveUI(); renderRounds(); const c = document.querySelector('#roundsBody .rchip.on'); if(c) c.scrollIntoView({block:'nearest', inline:'center'}); return; }
+  const pb = e.target.closest('[data-rpc]'); if(pb){ togglePc(pb.dataset.rpc); renderRounds(); return; }
   const sb = e.target.closest('[data-rseen]'); if(sb){ const q = rowOf('p', sb.dataset.rseen), on = !rdSeen(q); rdMark(q, on);
     rounds.keepOpen = rounds.keepOpen || new Set(); if(on) rounds.keepOpen.delete(q.id); else rounds.keepOpen.add(q.id);   // unticked by hand: Next leaves it unticked
     renderRounds(); return; }
@@ -7664,6 +7658,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:249, d:'2026-11-22', items:['<b>GTT</b> (drips) column on <b>ICU / CCU boards only</b>: tick what’s running, grouped by Vasopressors, Inotropes, Anti-HTN, Endocrine, Sedation, Analgesia and Anti-arrhythmics, or add another. No doses (nursing titrates them). Shows first in Rounds · Split <b>At a glance</b>; red edge on the census when a pressor is on. Carries over day to day.', 'Rounds · Split: <b>Mark pre-charted</b> button next to Mark discussed; the pre-charted dot is now green; 💬 marks discussed patients in the left list, and each row shows the intern under the hospital day.']},
   {v:248, d:'2026-11-22', items:['<b>GTT</b> (drips) column on <b>ICU / CCU boards only</b> — hidden on ward boards. Tick what’s running by category (Vasopressors, Inotropes, Anti-HTN, Endocrine, Sedation, Analgesia, Anti-arrhythmics), type each dose, or add another drip. The census shows “Norepi 0.08 · Vaso 0.04” (red edge when a pressor is on); Rounds · Split shows each drip and dose first in <b>At a glance</b>. Drips carry over day to day.']},
   {v:247, d:'2026-11-22', items:['New <b>Imaging</b> column between Lab Rev and Visit, with the same 1–8 status choices as Lab Rev (Complete, Revisit, Pending, Ordered and the rest). It counts toward boxes open and shows in Rounds.']},
   {v:246, d:'2026-11-21', items:['<b>Restore from Files</b> (and Open my data file) now accepts a one-board backup — e.g. ⬇ Download a backup on a computer — and puts it back on the board it came from, leaving your other boards alone.']},
