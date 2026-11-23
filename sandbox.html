@@ -1206,6 +1206,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 .dcabbr span{flex:1;text-align:center;font-size:9.5px;font-weight:700;letter-spacing:.3px;color:var(--muted)}
 .legend2 span{white-space:nowrap;display:inline-flex;align-items:center;gap:3px}
 .legend2 i{display:inline-block;width:10px;height:6px;border-radius:2px}
+.lyfill{display:block;margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--head)}
 .lysecs{display:flex;gap:8px;align-items:center;margin:0 0 10px}
 .chips2{display:flex;flex-wrap:wrap;gap:4px}
 .chips2 span{background:var(--head);border-radius:6px;padding:2px 7px;font-size:12px}
@@ -1711,7 +1712,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '277';
+const APP_VERSION = '278';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3394,7 +3395,25 @@ function renderCensus(){
   $('#groupIntern').checked = ui.groupBy === 'intern';
   if($('#groupToggles')) $('#groupToggles').innerHTML = CENSUS_GROUPS().map(g => `<label class="grpchk" style="background:var(--g-${g.k})"><input type="checkbox" data-g="${g.k}" ${ui.hidden.includes(g.k)?'':'checked'}>${esc(g.label.split(' —')[0])}</label>`).join('');
   renderSummary();
+  requestAnimationFrame(fitCensusRows);
 }
+/* Fill the screen: when the census is short, share the spare height among the rows so the board breathes.
+   Rows never get shorter than their normal height, so a long census still scrolls. Layout → “Fill the screen”. */
+function fitCensusRows(){
+  const g = $('#censusGrid'), tb = g && g.querySelector('tbody'); if(!tb) return;
+  const rows = [...tb.querySelectorAll('tr[data-id]')]; rows.forEach(r => { r.style.height = ''; });
+  if(ui.fillRows === false || !rows.length || g.offsetParent === null) return;
+  const sc = g.closest('.scroller'); if(!sc) return;
+  const top = tb.getBoundingClientRect().top + sc.scrollTop, bottom = sc.getBoundingClientRect().top + sc.clientHeight;
+  const other = [...tb.querySelectorAll('tr:not([data-id])')].reduce((n, r) => n + r.getBoundingClientRect().height, 0);
+  const hs = rows.map(r => r.getBoundingClientRect().height), used = hs.reduce((a, b) => a + b, 0);
+  const extra = Math.floor((bottom - top - other - used - 2) / rows.length); if(extra < 2) return;
+  rows.forEach((r, i) => { r.style.height = (hs[i] + extra) + 'px'; });
+}
+{ let fr = 0; const go = () => { cancelAnimationFrame(fr); fr = requestAnimationFrame(fitCensusRows); };
+  window.addEventListener('resize', go);
+  // re-fit when the census area appears (switching to the tab) or changes size (side panel, rotation)
+  try{ const sc = document.querySelector('#view-census .scroller'); if(sc && window.ResizeObserver){ let w = 0, h = 0; new ResizeObserver(en => { const r = en[0].contentRect; if(Math.round(r.width) !== w || Math.round(r.height) !== h){ w = Math.round(r.width); h = Math.round(r.height); go(); } }).observe(sc); } }catch(e){} }
 
 /* ---------- discharges ---------- */
 function ctlHTML(p, k){
@@ -4961,6 +4980,7 @@ function copyText(t){
 function layoutEditor(){
   modal(`<h3>Census layout</h3>
     <p class="muted" style="margin:0 0 8px">Tick the columns to show and use the arrows to reorder them within each section. Bed, Intern, Problem, Status and EDD are always shown. To re-order patients, drag the <b>⠿</b> handle next to the row number, or use <b>Sort…</b>.</p>
+    <label class="lyfill"><input type="checkbox" id="lyFill" ${ui.fillRows === false ? '' : 'checked'}> <b>Fill the screen</b> <span class="muted">— rows grow taller so the whole census fits without scrolling (never shorter than normal; a long census still scrolls)</span></label>
     <div class="lysecs"><b>Sections:</b> <span id="groupToggles" style="display:inline-flex;gap:6px"></span></div>
     <div id="lyBody" class="lycols"></div>
     <div style="margin-top:10px;display:flex;gap:8px"><button class="btn sm" id="lyReset">Reset layout to default</button><button class="btn sm" id="lyWidths" title="Column widths are set by dragging the right edge of any column header">Reset column widths</button><button class="btn sm" id="lyCols">Columns &amp; options… <span class="muted">(column types, dropdown lists)</span></button></div>`, [['Done','primary']], m => {
@@ -4978,6 +4998,7 @@ function layoutEditor(){
     m.querySelector('#lyCols').onclick = () => { closeModal(); columnsEditor(); };
     m.addEventListener('change', e => {
       const t = e.target;
+      if(t.id === 'lyFill'){ ui.fillRows = t.checked; saveUI(); renderCensus(); return; }
       if(t.dataset.g){ ui.hidden = t.checked ? ui.hidden.filter(x => x !== t.dataset.g) : [...ui.hidden, t.dataset.g]; saveUI(); renderCensus(); return; }
       if(t.dataset.ly !== 'show') return;
       mutate(() => { const h = state.settings.hiddenCols, k = t.dataset.k; state.settings.hiddenCols = t.checked ? h.filter(x => x !== k) : [...h, k]; });
@@ -7993,6 +8014,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:278, d:'2026-11-23', items:['Census <b>fills the screen</b>: when there’s room, rows grow taller so the whole census shows without scrolling — never shorter than before, so a long census still scrolls. Turn it off in <b>Layout → Fill the screen</b>.']},
   {v:277, d:'2026-11-22', items:['Rounds: the <b>“x/y discussed”</b> count leaves out new admits (they can’t be marked discussed on their first day) — 5 existing + 1 new reads 5/5 once those 5 are done.']},
   {v:276, d:'2026-11-22', items:['iPad: <b>Rounds</b> is now a normal tab — the bottom bar stays visible (Rounds highlighted), tap Census, Tasks or any other tab to leave, and Rounds is still on the same patient when you come back. On a desktop it’s unchanged (the Rounds button on the Census).']},
   {v:275, d:'2026-11-22', items:['iPad: <b>Rounds</b> has its own button in the bottom bar, between Census and Tasks.']},
