@@ -164,6 +164,7 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 @media (prefers-color-scheme: dark){ .tc.t-newadm{background:#2a2d33} .nadpill{background:#3a3f47;color:#aab1bb} }
 .pcchk.off,.rdchk.off,.rseenbtn:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(1)}
 .ptseen{margin-top:8px;align-items:center}.ptseen label{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.arrna{font-size:11.5px;color:var(--muted);white-space:nowrap;font-style:italic}
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
@@ -1751,7 +1752,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '280';
+const APP_VERSION = '281';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2066,10 +2067,10 @@ function asgInfo(a){ const st = visitClockStart(a); if(!st) return null; const s
   const end = seen ? (a.visitAt ? new Date(a.visitAt) : null) : new Date(); return {st, seen, ms: end ? Math.max(0, end - st) : null}; }
 function asgTimerHTML(a){
   const i = asgInfo(a);
-  if(!i){ return arrivalBoard() && !itemDone(a, 'visit') && a.date === state.boardDate ? '<span class="asg wait" title="Not on the floor yet — the clock starts when you set Arrived">not here</span>' : ''; }
-  if(i.seen) return i.ms == null ? '' : `<span class="asg seen" title="Seen ${hhmm(a.visitAt)} — ${asgHM(i.ms)} after ${arrivalBoard() ? 'arrival (Arrived ' + esc(a.arrived || '') + ')' : 'assignment (Time in ' + esc(a.timeIn || '') + ')'}">${asgHM(i.ms)}</span>`;
+  if(!i){ return clockOnArrival(a) && !itemDone(a, 'visit') && a.date === state.boardDate ? '<span class="asg wait" title="Not on the floor yet — the clock starts when you set Arrived">not here</span>' : ''; }
+  if(i.seen) return i.ms == null ? '' : `<span class="asg seen" title="Seen ${hhmm(a.visitAt)} — ${asgHM(i.ms)} after ${clockOnArrival(a) ? 'arrival (Arrived ' + esc(a.arrived || '') + ')' : 'assignment (Time in ' + esc(a.timeIn || '') + ')'}">${asgHM(i.ms)}</span>`;
   if(a.date !== state.boardDate) return '';   // an older admission never ticked as seen: no running clock
-  return `<span class="asg ${asgCls(i.ms)}" data-asg="${a.id}" title="${arrivalBoard() ? `Time since arrival on the floor (Arrived ${esc(a.arrived || '')})` : `Time since assigned (Time in ${esc(a.timeIn || '')})`} — stops when Visit is ticked">${asgHM(i.ms)}</span>`;
+  return `<span class="asg ${asgCls(i.ms)}" data-asg="${a.id}" title="${clockOnArrival(a) ? `Time since arrival on the floor (Arrived ${esc(a.arrived || '')})` : `Time since assigned (Time in ${esc(a.timeIn || '')})`} — stops when Visit is ticked">${asgHM(i.ms)}</span>`;
 }
 function tickAsg(){ document.querySelectorAll('[data-asg]').forEach(el => { const a = state.admits.find(x => x.id === el.dataset.asg); if(!a) return; const i = asgInfo(a); if(!i || i.seen) return;
   const t = asgHM(i.ms), c = 'asg ' + asgCls(i.ms); if(el.textContent !== t) el.textContent = t; if(el.className.trim() !== c.trim()) el.className = c; }); }
@@ -2527,8 +2528,27 @@ function admitClock(a, hm){
 // Tisch boards: you're responsible once the patient is on your floor, so the visit clock starts at Arrived.
 // Bellevue (admitting-only): responsible from assignment, so it starts at Time in.
 const arrivalBoard = () => !typeOf(activeType).admitOnly;
-const visitClockStart = a => arrivalBoard() ? admitClock(a, a.arrived) : admitStart(a);
-const visitClockLabel = () => arrivalBoard() ? 'Arrived → seen' : 'Assigned → seen';
+/* When does the Visit clock start for an admission? (when you become responsible)
+   · Tisch / KP — always when the patient physically arrives on the floor (Arrived)
+   · Bellevue CCU / MICU — always on arrival
+   · Bellevue wards and nights (admitting) — ED admits (and SURGE) from assignment (Time in); transfers
+     (ICU/SDU, internal, OSH) and direct admits on arrival
+   · anything else (VA…) — as before: on arrival, or from Time in on an admitting-only board */
+const ARRIVE_ORIGINS = new Set(['ICU/SDU Transfer', 'Internal Transfer', 'OSH Transfer', 'Direct Admit']);
+const boardSiteK = () => typeOf(activeType).site || '';
+function clockOnArrival(a){
+  const site = boardSiteK();
+  if(site === 'tisch') return true;
+  if(site === 'bellevue') return isCritCare() || ARRIVE_ORIGINS.has(a && a.origin);
+  return arrivalBoard();
+}
+const showArrivedCol = () => arrivalBoard() || boardSiteK() === 'bellevue' || boardSiteK() === 'tisch';
+const arrRuleTxt = () => { const site = boardSiteK(); return site === 'tisch' ? 'Tisch / KP: the Visit clock starts when the patient arrives on the floor.'
+  : site === 'bellevue' && isCritCare() ? 'Bellevue ICU / CCU: the Visit clock starts when the patient arrives.'
+  : site === 'bellevue' ? 'Bellevue wards / nights: ED admits start the Visit clock at Time in (you’re responsible on assignment); transfers and direct admits start it when they arrive.'
+  : arrivalBoard() ? 'The Visit clock starts when the patient arrives on the floor.' : 'The Visit clock starts at Time in.'; };
+const visitClockStart = a => clockOnArrival(a) ? admitClock(a, a.arrived) : admitStart(a);
+const visitClockLabel = () => { const site = boardSiteK(); return site === 'tisch' || (site === 'bellevue' && isCritCare()) ? 'Arrived → seen' : site === 'bellevue' ? 'Responsible → seen' : arrivalBoard() ? 'Arrived → seen' : 'Assigned → seen'; };
 // Start of an admission: its Time in (night times before noon fall on the next morning), else when it was created.
 function admitStart(a){
   if(a.date && /^\d\d:\d\d$/.test(a.timeIn || '')){
@@ -2595,7 +2615,7 @@ function renderAnalytics(G){
       ${ADMIT_PHASES.map((p, i) => `<tr><td><span class="anph"><i class="ps${p.n}"></i>${p.label}</span></td><td class="muted small">${p.keys.map(k => ADMIT_COLMAP[k].h).join(', ')}</td><td>${per[i].length}</td><td><b>${durTxt(median(per[i]))}</b></td><td>${durTxt(avgPh[i])}</td><td class="muted">${per[i].length ? durTxt(Math.min(...per[i])) + ' – ' + durTxt(Math.max(...per[i])) : '—'}</td><td>${avgSum && avgPh[i] ? Math.round(100 * avgPh[i] / avgSum) + '%' : '—'}</td></tr>`).join('')}
       </tbody></table></div>
     <div class="ancard"><h5>Each admission</h5>
-      <table class="antab"><thead><tr><th>#</th><th>Bed</th><th>Problem</th>${scope === 'all' ? '<th>Date</th>' : ''}<th>Time in</th><th title="${arrivalBoard() ? 'Arrived' : 'Time in'} → Visit ticked">To visit</th>${ADMIT_PHASES.map(p => `<th>${p.label}</th>`).join('')}<th>Total</th><th style="min-width:200px"></th></tr></thead><tbody>
+      <table class="antab"><thead><tr><th>#</th><th>Bed</th><th>Problem</th>${scope === 'all' ? '<th>Date</th>' : ''}<th>Time in</th><th title="${esc(arrRuleTxt())} Stops when Visit is ticked.">To visit</th>${ADMIT_PHASES.map(p => `<th>${p.label}</th>`).join('')}<th>Total</th><th style="min-width:200px"></th></tr></thead><tbody>
       ${T.map(x => `<tr data-arow="${x.a.id}"><td><span class="seqtag">#${x.a.seq || '?'}</span></td><td><b>${esc(x.a.bed || '—')}</b></td><td class="muted">${esc(x.a.problem || '')}</td>${scope === 'all' ? `<td>${fmtShort(x.a.date)}</td>` : ''}<td>${esc(x.a.timeIn || '—')}</td><td>${(() => { const i = vis[T.indexOf(x)]; return i != null ? `<span class="${i > 2*3600e3 ? 'red' : ''}">${durTxt(i)}</span>` : '<span class="muted">—</span>'; })()}</td>${x.ph.map(v => `<td>${durTxt(v)}</td>`).join('')}<td><b>${x.total != null ? durTxt(x.total) : x.complete ? '—' : `<span class="muted" title="Still in progress">${durTxt(x.sofar)} so far</span>`}</b></td><td>${bar(x)}</td></tr>`).join('')}
       </tbody></table>
       <div class="legend2" style="margin-top:8px">${ADMIT_PHASES.map(p => `<span><i class="ps${p.n}"></i> ${p.label}</span>`).join('')}<span><i class="ps0"></i> In progress</span></div>
@@ -3778,10 +3798,10 @@ function renderAdmits(){
   // frozen: SEQ (permanent entry number) · # (current count) · Bed · Problem
   const AF = [{w:34},{w:30},{w:96},{w:220}], afL = i => AF.slice(0,i).reduce((x,c) => x + c.w, 0);
   const af = (i, last) => `class="stk${last ? ' last' : ''}" style="left:${afL(i)}px;min-width:${AF[i].w}px;max-width:${AF[i].w}px"`;
-  const F = [['Intern',96],['Origin',130],['Method',80],['Time in',86],['Arrived',150],['Time out',86]].filter(([t]) => (showIntern || t !== 'Intern') && (arrivalBoard() || t !== 'Arrived'));
+  const F = [['Intern',96],['Origin',130],['Method',80],['Time in',86],['Arrived',150],['Time out',86]].filter(([t]) => (showIntern || t !== 'Intern') && (showArrivedCol() || t !== 'Arrived'));
   const W = Object.fromEntries(F);
   let h = `<table class="grid"><thead><tr class="g"><th ${af(0)}></th><th ${af(1)}></th><th colspan="2" class="stk last" style="left:${afL(2)}px;min-width:${AF[2].w + AF[3].w}px">Admission details</th><th colspan="${F.length}"></th>${ADMIT_PHASES.map(ph => `<th class="ph${ph.n}" colspan="${ph.keys.length}"><span class="phlbl">${ph.label} <span class="phsub">· ${ph.keys.length} items</span></span></th>`).join('')}<th colspan="${typeOf(activeType).tasks ? 5 : 4}"></th></tr><tr class="c"><th ${af(0).replace('class="stk', 'class="stk narrowth')} title="SEQ — entry number, permanent, never reused">SEQ</th><th ${af(1).replace('class="stk', 'class="stk narrowth')} title="# — current count, skips admissions that left AMA or were deleted">#</th><th ${af(2)}><span style="display:block;text-align:left">Bed</span></th><th ${af(3, true)}><span style="display:block;text-align:left">Problem</span></th>`;
-  F.forEach(([t]) => h += `<th class="l"${t === 'Arrived' ? ' title="When the patient physically arrived on your floor — starts the Visit clock"' : t === 'Time in' && arrivalBoard() ? ' title="When the admission was assigned to you"' : ''}>${t}</th>`);
+  F.forEach(([t]) => h += `<th class="l"${t === 'Arrived' ? ` title="When the patient physically arrived on your floor. ${esc(arrRuleTxt())}"` : t === 'Time in' ? ' title="When the admission was assigned to you"' : ''}>${t}</th>`);
   ADMIT_PHASES.forEach(ph => ph.keys.forEach((k, i) => h += `<th class="ph${ph.n}${i === 0 ? ' phstart' : ''}">${esc(ADMIT_COLMAP[k].h)}</th>`));
   const withTasks = !!typeOf(activeType).tasks;
   h += `<th>Progress</th>${withTasks ? '<th title="Night tasks for this bed">Tasks</th>' : ''}<th>Census</th><th title="Signed out to a team in the morning">Sign Out</th><th class="l">Team</th></tr></thead><tbody>`;
@@ -3808,7 +3828,7 @@ function renderAdmits(){
     h += `<td${naTd(a.origin)} style="min-width:${W['Origin']}px">${selHTML('origin', a.origin, withNA(ORIGIN_OPTS), {kind:'a', id:a.id})}</td>`;
     h += `<td${naTd(a.method)} style="min-width:${W['Method']}px">${selHTML('method', a.method, withNA(METHOD_OPTS), {kind:'a', id:a.id})}</td>`;
     h += `<td>${inp('timeIn','time',W['Time in'])}</td>`;
-    if(arrivalBoard()) h += `<td class="arrcell">${a.arrived ? inp('arrived','time',96) : `<button class="btn sm arrbtn" data-act="arrnow" data-id="${a.id}" title="Patient is on the floor now — starts the Visit clock. You can edit the time afterwards.">🛏 Arrived now</button>`}</td>`;
+    if(showArrivedCol()) h += `<td class="arrcell">${!clockOnArrival(a) && !a.arrived ? `<span class="arrna" title="${esc(arrRuleTxt())} If this is a transfer, set Origin and the Arrived button appears.">— from Time in</span>` : a.arrived ? inp('arrived','time',96) : `<button class="btn sm arrbtn" data-act="arrnow" data-id="${a.id}" title="Patient is on the floor now — starts the Visit clock. You can edit the time afterwards.">🛏 Arrived now</button>`}</td>`;
     h += `<td>${inp('timeOut','time',W['Time out'])}</td>`;
     ADMIT_PHASES.forEach(ph => ph.keys.forEach((k, i) => h += admitCtl(a, k).replace('<td class="', `<td class="${i === 0 ? 'phstart ' : ''}`).replace('<td style=', `<td class="${i === 0 ? 'phstart' : ''}" style=`)));
     const pa = patientOfAdmit(a);
@@ -6776,7 +6796,7 @@ function cmdField(ent, words){
         if(isHold(ent.a) && ADMIT_COLMAP[w] && w !== 'signout') continue;
         const k = ADMIT_COLMAP[w] ? w : CMD_A_ALIAS[w] || ADMIT_COLS.find(c => nw(c.h) === w)?.k;
         if(k && ADMIT_COLMAP[k]) return {side:'a', k, used:n};
-        const f = CMD_A_FIELDS[w]; if(f && !(f === 'arrived' && !arrivalBoard()) && !(f === 'mlBy' && !isHold(ent.a))) return {side:'a', field:f, used:n};
+        const f = CMD_A_FIELDS[w]; if(f && !(f === 'arrived' && !showArrivedCol()) && !(f === 'mlBy' && !isHold(ent.a))) return {side:'a', field:f, used:n};
       }
       if(side === 'p' && pOK){
         const k = COLMAP[w] ? w : CMD_P_ALIAS[w] || ALL_COLS.find(c => nw(colCfg(c.k).h) === w)?.k;
@@ -6793,7 +6813,7 @@ function cmdField(ent, words){
 function cmdFieldList(ent){
   const L = [];
   if(ent.a){ (isHold(ent.a) ? ADMIT_COLS.filter(c => c.k === 'signout') : ADMIT_COLS).forEach(c => L.push({side:'a', k:c.k, name:nw(c.h), label:c.h, cur:cmdCur('a', ent.a, c.k)}));
-    ['team', 'timeIn', ...(arrivalBoard() ? ['arrived'] : []), ...(isHold(ent.a) ? ['mlBy'] : []), 'problem'].forEach(f => L.push({side:'a', field:f, name:{timeIn:'timein', mlBy:'from'}[f] || f.toLowerCase(), label:{timeIn:'Time in', mlBy:'From (moonlighter)', arrived:'Arrived', team:'Team', problem:'Problem'}[f], cur:ent.a[f] || ''})); }
+    ['team', 'timeIn', ...(showArrivedCol() ? ['arrived'] : []), ...(isHold(ent.a) ? ['mlBy'] : []), 'problem'].forEach(f => L.push({side:'a', field:f, name:{timeIn:'timein', mlBy:'from'}[f] || f.toLowerCase(), label:{timeIn:'Time in', mlBy:'From (moonlighter)', arrived:'Arrived', team:'Team', problem:'Problem'}[f], cur:ent.a[f] || ''})); }
   if(ent.p) ALL_COLS.filter(c => !['ldt'].includes(colCfg(c.k).type)).forEach(c => { if(ent.a && L.some(x => x.name === nw(colCfg(c.k).h))) return; L.push({side:'p', k:c.k, name:nw(colCfg(c.k).h), label:colCfg(c.k).h + (ent.a ? ' (census)' : ''), cur:cmdCur('p', ent.p, c.k)}); });
   return L;
 }
@@ -8114,6 +8134,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:281, d:'2026-11-23', items:['<b>Visit clock follows who’s responsible when</b> (Sandbox preview). Tisch / KP and Bellevue ICU / CCU: it starts when the patient arrives (🛏 Arrived now). Bellevue wards and nights: <b>ED admits</b> start at <b>Time in</b> (Arrived shows “— from Time in”), while <b>transfers</b> (ICU/SDU, internal, OSH) and direct admits wait for Arrived. It’s decided by the admission’s <b>Origin</b> — change Origin and the clock follows.']},
   {v:280, d:'2026-11-23', items:['Calmer Census (Sandbox preview): the pre-charted ✓ and 💬 buttons in each bed cell are now quiet marks (green dot = pre-charted, 💬 = discussed) — change them from the selection menu (<b>Mark pre-charted / Mark discussed</b>, works on several at once) or in Rounds.', 'The ⠿ drag handle is gone: reorder with <b>Move up / down / to top / to bottom</b> in the selection menu, or Sort.', 'Toolbar: Group by intern, Sort and Layout live under <b>View ▾</b>; Add patient and Bulk Add under <b>+ Add ▾</b>.']},
   {v:279, d:'2026-11-23', items:['<b>Select rows</b> on the Census (Sandbox preview): tap the box next to the row number. A bar appears above the table with <b>Left hospital</b>, <b>Remove patient</b>, Move up / Move down, Select all and Clear — works on several patients at once. The small ✕ and the in-row Left hospital button are gone (Discharges and Transfers still have theirs).']},
   {v:278, d:'2026-11-23', items:['Census <b>fills the screen</b>: when there’s room, rows grow taller so the whole census shows without scrolling — never shorter than before, so a long census still scrolls. Turn it off in <b>Layout → Fill the screen</b>.']},
