@@ -1711,7 +1711,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '276';
+const APP_VERSION = '277';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4242,10 +4242,10 @@ function renderRounds(){
   let i = list.findIndex(p => p.id === rounds.id);
   if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
   const filt = [ui.intern && `Intern: ${ui.intern}`, ui.filter === 'open' && 'Open boxes', ui.filter === 'flagged' && 'Flagged', ui.search && `Search: “${ui.search}”`].filter(Boolean);
-  const seenN = list.filter(rdSeen).length, ord = roundsOrder();
+  const seenN = list.filter(rdSeen).length, dTot = list.filter(q => q.status !== 'New').length, ord = roundsOrder();
   const strip = list.length ? `<div class="rstrip" role="tablist" aria-label="Patients">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<span class="rsi">${esc(q.intern || 'Unassigned')}</span>` : ''}<button type="button" class="rchip ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'seen' : ''}" data-rgo="${q.id}" title="${esc((q.problem || '') + (rdSeen(q) ? ' — discussed' : ''))}">${rdSeen(q) ? '✓ ' : ''}${esc(q.bed || '—')}</button>`).join('')}</div>` : '';
   const bar = `<div class="rbar"><h3>Rounds</h3><span class="rcount">${list.length ? `${i+1} / ${list.length}` : '0 patients'}</span>
-    <span class="rseen" title="Patients discussed on rounds today (separate from the Visit box)">✓ ${seenN}/${list.length} discussed</span>
+    <span class="rseen" title="Patients discussed on rounds today (separate from the Visit box) — new admits aren't counted">✓ ${seenN}/${dTot} discussed</span>
     <span class="seg rord" role="group" aria-label="Order">${[['intern', 'By intern'], ['bed', 'By bed'], ['list', 'Census order']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
     <span class="seg rview" role="group" aria-label="Layout"><button type="button" data-rview="classic" class="on">Classic</button><button type="button" data-rview="split">Split</button></span>
     ${list.length ? `<select id="rJump" title="Jump to a patient">${list.map((p,j) => `<option value="${p.id}" ${j===i?'selected':''}>${j+1}. ${esc(p.bed || '(no bed)')} — ${esc(p.intern || 'unassigned')}${p.problem ? ' · ' + esc(p.problem) : ''}</option>`).join('')}</select>` : ''}
@@ -4286,9 +4286,9 @@ const RS_QUICK = ['Labs: ', 'Imaging: ', 'Consult: ', 'Call family: ', 'Med chan
 function rsFlagged(p){ return flagsFor(p).some(f => f[0] === 'warn' || f[0] === 'bad'); }
 function renderRoundsSplit(){
   $('#rounds').classList.add('rsplit');
-  const list = roundsList(), body = $('#roundsBody'), ord = roundsOrder(), seenN = list.filter(rdSeen).length;
+  const list = roundsList(), body = $('#roundsBody'), ord = roundsOrder(), seenN = list.filter(rdSeen).length, dTot = list.filter(q => q.status !== 'New').length;
   let i = list.findIndex(p => p.id === rounds.id); if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
-  const rail = `<aside class="rs-rail"><div class="rs-railhd"><div class="rs-row"><b>Rounds</b><span class="rseen">✓ ${seenN}/${list.length} discussed</span></div>
+  const rail = `<aside class="rs-rail"><div class="rs-railhd"><div class="rs-row"><b>Rounds</b><span class="rseen" title="New admits aren't counted">✓ ${seenN}/${dTot} discussed</span></div>
       <span class="seg rord" role="group" aria-label="Order">${[['intern', 'Intern'], ['bed', 'Bed'], ['list', 'List']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
       <span class="seg rview" role="group" aria-label="Layout"><button type="button" data-rview="classic">Classic</button><button type="button" data-rview="split" class="on">Split</button></span></div>
     <div class="rs-list">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<div class="rs-grp">${esc(q.intern || 'Unassigned')} · ${list.filter(x => x.intern === q.intern).length}</div>` : ''}
@@ -7993,6 +7993,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:277, d:'2026-11-22', items:['Rounds: the <b>“x/y discussed”</b> count leaves out new admits (they can’t be marked discussed on their first day) — 5 existing + 1 new reads 5/5 once those 5 are done.']},
   {v:276, d:'2026-11-22', items:['iPad: <b>Rounds</b> is now a normal tab — the bottom bar stays visible (Rounds highlighted), tap Census, Tasks or any other tab to leave, and Rounds is still on the same patient when you come back. On a desktop it’s unchanged (the Rounds button on the Census).']},
   {v:275, d:'2026-11-22', items:['iPad: <b>Rounds</b> has its own button in the bottom bar, between Census and Tasks.']},
   {v:274, d:'2026-11-22', items:['iPad: the <b>body map</b> (and other pop-up windows) opened from Rounds now appear in front of Rounds instead of behind it.']},
