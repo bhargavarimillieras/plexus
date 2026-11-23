@@ -792,6 +792,7 @@ body.touch #rJump{display:none}   /* the bed strip does the jumping on iPad — 
 /* iPad: Rounds covers the whole screen, above the bottom tab bar (which used to hide its Next button), clear of the status bar */
 body.touch .rounds{z-index:65;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
 body.touch .pop{z-index:70}
+body.touch .scrim{z-index:75}   /* modals (body map, outstanding…) open above Rounds */
 body.standalone .rounds{padding-top:calc(max(env(safe-area-inset-top), 24px) + 8px)}
 .rseen{font-size:12px;font-weight:700;color:#1e7e34;background:#e6f4ea;border-radius:999px;padding:3px 9px}
 .rord button{font-size:12px}
@@ -1708,7 +1709,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '273';
+const APP_VERSION = '274';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7989,6 +7990,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:274, d:'2026-11-22', items:['iPad: the <b>body map</b> (and other pop-up windows) opened from Rounds now appear in front of Rounds instead of behind it.']},
   {v:273, d:'2026-11-22', items:['Rounds · Split: a long <b>Avatar</b> list now wraps onto several lines instead of running off the panel, so the body-map figure button stays visible.']},
   {v:272, d:'2026-11-22', items:['<b>HEP GTT</b> in DVT PPx now shows <b>Heparin</b> in the GTT column (census and Rounds). It’s read-only there — add or remove it from DVT PPx.']},
   {v:271, d:'2026-11-22', items:['<b>PT / OT</b> have a <b>Last seen</b> date again, alongside the recommendation — the census shows e.g. “SAR · 11/20”. A date with no recommendation yet counts as done; Pending still counts as open.', 'With no census cap, the Census ring is a full <b>green</b> circle.']},
