@@ -845,7 +845,10 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 .rs-cardh{font:800 10.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .rs-more summary{cursor:pointer;margin:0}.rs-more[open] summary{margin-bottom:10px}
 .rs-cnt{background:#eef0f4;color:#4a5262;border-radius:999px;padding:2px 8px;letter-spacing:0;text-transform:none;font-size:11.5px}
-.rs-glance{display:grid;grid-template-columns:96px 1fr;gap:8px 10px;align-items:center}
+.rs-glance{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px 10px;align-items:center}
+.rs-gv{min-width:0}
+.rs-gv .tc.t-ldt{white-space:normal;height:auto;padding-top:7px;padding-bottom:7px;max-width:100%}
+.rs-gv .tc.t-ldt .txt{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.4}
 .rs-gl{font:800 10.5px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .rs-gv .tc{min-height:36px;justify-content:flex-start;padding:0 10px;text-align:left}
 .rs-io{display:flex;align-items:center;gap:12px;flex-wrap:wrap}.rs-io>.tc{flex:0 0 130px}
@@ -1705,7 +1708,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '272';
+const APP_VERSION = '273';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7986,6 +7989,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:273, d:'2026-11-22', items:['Rounds · Split: a long <b>Avatar</b> list now wraps onto several lines instead of running off the panel, so the body-map figure button stays visible.']},
   {v:272, d:'2026-11-22', items:['<b>HEP GTT</b> in DVT PPx now shows <b>Heparin</b> in the GTT column (census and Rounds). It’s read-only there — add or remove it from DVT PPx.']},
   {v:271, d:'2026-11-22', items:['<b>PT / OT</b> have a <b>Last seen</b> date again, alongside the recommendation — the census shows e.g. “SAR · 11/20”. A date with no recommendation yet counts as done; Pending still counts as open.', 'With no census cap, the Census ring is a full <b>green</b> circle.']},
   {v:270, d:'2026-11-22', items:['New admits: boxes showing the <b>New admit</b> pill no longer appear under <b>outstanding</b>.', 'New admits: the <b>pre-charted ✓</b> and <b>💬 discussed</b> buttons are greyed out (on the Census and in Rounds) on the day they come in. Rounds’ Next still stops at them on the way through.']},
