@@ -1709,7 +1709,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '274';
+const APP_VERSION = '275';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7445,6 +7445,7 @@ function layoutApply(){
 function layoutSet(v){ LAYOUT = v; try{ localStorage.setItem(LAYOUT_KEY, v); }catch(e){} layoutApply(); }
 try{ touchMQ.addEventListener('change', layoutApply); }catch(e){}
 const TB_ICON = {
+  rounds:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M6 3v5a4 4 0 0 0 8 0V3"/><path d="M10 12v2.5a5 5 0 0 0 10 0V12"/><circle cx="20" cy="10" r="2"/></svg>',
   overview:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.6"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.6"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.6"/></svg>',
   tasks:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 6.5l2 2 3.5-4M4 13.5l2 2 3.5-4"/><path d="M13 7h8M13 14h8M4 20h17"/></svg>',
   census:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14.5h18M9 4v16"/></svg>',
@@ -7452,7 +7453,7 @@ const TB_ICON = {
   discharges:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M3 12h12M11 8l4 4-4 4"/></svg>',
   transfers:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 8h13M13 4l4 4-4 4M20 16H7M11 12l-4 4 4 4"/></svg>',
   more:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="18.5" cy="12" r="1.9"/></svg>'};
-const TB_TABS = [['overview', 'Overview'], ['census', 'Census'], ['tasks', 'Tasks'], ['admits', 'Admissions'], ['discharges', 'Discharges'], ['transfers', 'Transfers'], ['more', 'More']];
+const TB_TABS = [['overview', 'Overview'], ['census', 'Census'], ['rounds', 'Rounds'], ['tasks', 'Tasks'], ['admits', 'Admissions'], ['discharges', 'Discharges'], ['transfers', 'Transfers'], ['more', 'More']];
 // ICU / CCU boards: transfers out to the floor are the usual way patients leave, so Transfers takes Discharges' place in the tab bar (Discharges moves to More)
 const isCritCare = () => { const T = typeOf(activeType), key = (T.rot ? T.rot.tpl + ' ' + (T.rot.tplKey || '') : T.k) || ''; return /icu|ccu/i.test(key); };
 const tbSwap = () => isCritCare() ? ['transfers', 'discharges'] : ['discharges', 'transfers'];   // [in the bar, under More]
@@ -7461,7 +7462,7 @@ function touchBuild(){
   const bar = document.createElement('nav'); bar.className = 'tbar'; bar.id = 'tbar'; bar.setAttribute('aria-label', 'Pages');
   bar.innerHTML = TB_TABS.map(([k, l]) => `<button type="button" data-tt="${k}">${TB_ICON[k]}<span>${l}</span><i class="bdg" hidden></i></button>`).join('');
   document.body.appendChild(bar);
-  bar.addEventListener('click', e => { const b = e.target.closest('[data-tt]'); if(!b) return; if(b.dataset.tt === 'more') moreSheet(); else touchTab(b.dataset.tt); });
+  bar.addEventListener('click', e => { const b = e.target.closest('[data-tt]'); if(!b) return; if(b.dataset.tt === 'more') moreSheet(); else if(b.dataset.tt === 'rounds') openRounds(); else touchTab(b.dataset.tt); });
   // (no ⌘ button on touch screens — the command bar is still there from a hardware keyboard: Ctrl + K)
   const more = document.createElement('button'); more.type = 'button'; more.className = 'hbtn tmore'; more.id = 'tMore'; more.textContent = '⋯'; more.setAttribute('aria-label', 'More');
   more.addEventListener('click', moreSheet); document.querySelector('header.top').appendChild(more);
@@ -7472,7 +7473,7 @@ function touchSync(){
   const t = ui.tab, tasksOn = !$('#tabs button[data-tab=tasks]').hidden, censusOn = !$('#tabs button[data-tab=census]').hidden;
   const [inBar, inMore] = tbSwap();
   bar.querySelectorAll('[data-tt]').forEach(b => b.classList.toggle('on', b.dataset.tt === t || (b.dataset.tt === 'more' && [inMore, 'history'].includes(t))));
-  bar.querySelector('[data-tt=tasks]').hidden = !tasksOn; bar.querySelector('[data-tt=census]').hidden = !censusOn;
+  bar.querySelector('[data-tt=tasks]').hidden = !tasksOn; bar.querySelector('[data-tt=census]').hidden = !censusOn; bar.querySelector('[data-tt=rounds]').hidden = !censusOn || !state.patients.length;
   bar.querySelector(`[data-tt=${inBar}]`).hidden = $(`#tabs button[data-tab=${inBar}]`).hidden; bar.querySelector(`[data-tt=${inMore}]`).hidden = true;
   bar.style.gridTemplateColumns = `repeat(${bar.querySelectorAll('[data-tt]:not([hidden])').length},1fr)`;
   const badge = (k, n, cls) => { const i = bar.querySelector(`[data-tt=${k}] .bdg`); i.hidden = !n; i.textContent = n > 99 ? '99+' : n; i.className = 'bdg ' + (cls || ''); };
@@ -7990,6 +7991,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:275, d:'2026-11-22', items:['iPad: <b>Rounds</b> has its own button in the bottom bar, between Census and Tasks.']},
   {v:274, d:'2026-11-22', items:['iPad: the <b>body map</b> (and other pop-up windows) opened from Rounds now appear in front of Rounds instead of behind it.']},
   {v:273, d:'2026-11-22', items:['Rounds · Split: a long <b>Avatar</b> list now wraps onto several lines instead of running off the panel, so the body-map figure button stays visible.']},
   {v:272, d:'2026-11-22', items:['<b>HEP GTT</b> in DVT PPx now shows <b>Heparin</b> in the GTT column (census and Rounds). It’s read-only there — add or remove it from DVT PPx.']},
