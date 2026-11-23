@@ -227,6 +227,21 @@ body.touch .tc.t-check,body.touch .tc.t-checkNote{-webkit-touch-callout:none;-we
 .hubpc:hover{filter:brightness(1.15)}
 .seqc{display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 8px;font-weight:700;color:var(--muted);height:31px}
 .rowbtns{display:flex;flex-direction:column;opacity:0;transition:opacity .1s}
+.rsel{flex:none;width:18px;height:18px;border-radius:5px;border:1.6px solid var(--line2);background:var(--panel);cursor:pointer;padding:0;margin-left:auto;position:relative}
+.rsel:hover{border-color:var(--accent)}
+.rsel.on{background:var(--accent);border-color:var(--accent)}
+.rsel.on::after{content:'';position:absolute;left:5px;top:1.5px;width:4px;height:9px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg)}
+body.touch .rsel{width:24px;height:24px;border-radius:7px}
+body.touch .rsel.on::after{left:7.5px;top:3px;width:5px;height:11px}
+.seqc{cursor:pointer}
+#censusGrid tr.rsel-on td{background-color:var(--info-bg)}
+#censusGrid tr.rsel-on td.stk{box-shadow:inset 0 0 0 0 transparent}
+.selbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 10px;margin:0 0 8px;border:1.5px solid var(--accent);border-radius:10px;background:var(--info-bg)}
+.selbar[hidden]{display:none}
+.selbar .selN{font-weight:600}
+.selbar select{font:inherit;font-weight:700;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--panel)}
+body.touch .selbar select{font-size:16px;padding:9px 12px}
+@media (prefers-color-scheme: dark){ .rsel{background:#1c1f24} }
 tr:hover .rowbtns{opacity:1}
 .rowbtns button{border:0;background:none;cursor:pointer;color:var(--muted);font-size:9px;line-height:10px;padding:1px 3px}
 .rowbtns button:hover{color:var(--ink)}
@@ -1611,6 +1626,9 @@ body.touch .lrow{padding:14px 16px}
         <button class="btn sm" id="bulkPt" data-tip="Bulk Add patients\nShortcut: Shift+N">⇪ Bulk Add</button>
         <button class="btn sm primary" id="addPt">+ Add patient</button>
       </div>
+      <div class="selbar" id="selBar" hidden><span class="selN"><b id="selN">0</b> selected</span>
+        <select id="selAct" aria-label="Action for the selected patients"><option value="">Choose an action…</option><option value="left">Left hospital ⇥</option><option value="remove">Remove patient</option><option value="up">Move up</option><option value="down">Move down</option></select>
+        <span style="flex:1"></span><button class="btn sm" id="selAll">Select all</button><button class="btn sm" id="selClr">✕ Clear</button></div>
       <div class="scroller"><div id="censusGrid"></div></div>
       </div>
       </div>
@@ -1712,7 +1730,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '278';
+const APP_VERSION = '279';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3177,7 +3195,7 @@ function markLeft(id){
 }
 
 /* ---------- census grid ---------- */
-const STK = [ {k:'seq',w:46},{k:'bed',w:130},{k:'intern',w:96},{k:'hd',w:44},{k:'problem',w:230} ];   // frozen columns
+const STK = [ {k:'seq',w:76},{k:'bed',w:130},{k:'intern',w:96},{k:'hd',w:44},{k:'problem',w:230} ];   // frozen columns
 function stkStyle(i){ let left = 0; for(let j=0;j<i;j++) left += STK[j].w; return `left:${left}px;min-width:${STK[i].w}px;max-width:${STK[i].w}px`; }
 
 function gridHTML(patients, {ro=false} = {}){
@@ -3211,12 +3229,12 @@ function gridHTML(patients, {ro=false} = {}){
       h += `<tr class="grprow"><td colspan="${totalCols}"><div class="grplabel">${esc(p.intern || 'Unassigned')} <span>${mine.length} patient${mine.length===1?'':'s'} · ${(() => { const c = CHUNK[ui.chunk]; return c ? `${mine.reduce((n,x) => n + chunkOpen(x, c.k), 0)} ${c.label} boxes open` : `${mine.reduce((n,x) => n + openCount(x), 0)} boxes open`; })()}</span></div></td></tr>`;
     }
     h += `<tr class="${p.status==='Discharge'?'dc':''}" data-id="${p.id}" data-intern="${esc(p.intern||'')}">`;
-    h += `<td class="stk" style="${stkStyle(0)}"><div class="seqc">${ro ? '' : `<span class="drag" draggable="true" data-drag="${p.id}" title="Drag to move this patient">⠿</span>`}<span>${ri+1}</span>${ro?'':`<span class="rowbtns"><button data-act="up" data-id="${p.id}" title="Move up">▲</button><button data-act="down" data-id="${p.id}" title="Move down">▼</button><button data-act="del" data-id="${p.id}" title="Remove patient">✕</button></span>`}</div></td>`;
+    h += `<td class="stk" style="${stkStyle(0)}"><div class="seqc">${ro ? '' : `<span class="drag" draggable="true" data-drag="${p.id}" title="Drag to move this patient">⠿</span>`}<span>${ri+1}</span>${ro?'':`<button type="button" class="rsel ${rowSel.has(p.id) ? 'on' : ''}" data-rsel="${p.id}" aria-pressed="${rowSel.has(p.id)}" title="Select (then choose Left hospital, Remove… above the table)" aria-label="Select ${esc(p.bed || 'patient')}"></button>`}</div></td>`;
     const allDone = openCount(p) === 0;   // every AM, PM and SW / PT / OT box done (N/A and Lab holiday count; Services and Dispo notes are optional)
     h += `<td class="stk ${allDone ? 'alldone' : ''}" style="${stkStyle(1)}" ${allDone ? 'title="All boxes done for today"' : ''}><div class="bedpc">${bedBoxHTML('p', p, ro, ro ? 60 : 56)}${pcBtn(p, ro)}${rdBtn(p, ro)}</div></td>`;
     h += `<td class="stk" style="${stkStyle(2)}">${selHTML('intern', p.intern, state.settings.interns, {ro, kind:'p', id:p.id})}</td>`;
     h += `<td class="stk hdtd" style="${stkStyle(3)}">${hdCell(p, ro)}</td>`;
-    h += `<td class="stk last" style="${stkStyle(4)}"><div class="probwrap"><input class="cell" data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" ${ro?'disabled':''} placeholder="One-liner / problem">${(fl.length || !ro) ? `<div class="flags">${flagsHTML(p, fl, ro)}${ro ? '' : leftBtn(p, dcSigned(p) === DC_KEYS.length)}</div>` : ''}</div></td>`;
+    h += `<td class="stk last" style="${stkStyle(4)}"><div class="probwrap"><input class="cell" data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" ${ro?'disabled':''} placeholder="One-liner / problem">${(fl.length || !ro) ? `<div class="flags">${flagsHTML(p, fl, ro)}</div>` : ''}</div></td>`;
     h += `<td style="min-width:100px">${selHTML('status', p.status, STATUS_OPTS, {blank:false, ro, kind:'p', id:p.id})}</td>`;
     h += `<td style="min-width:138px">${eddHTML(p, ro)}</td>`;
     let ci = 0;
@@ -3395,8 +3413,47 @@ function renderCensus(){
   $('#groupIntern').checked = ui.groupBy === 'intern';
   if($('#groupToggles')) $('#groupToggles').innerHTML = CENSUS_GROUPS().map(g => `<label class="grpchk" style="background:var(--g-${g.k})"><input type="checkbox" data-g="${g.k}" ${ui.hidden.includes(g.k)?'':'checked'}>${esc(g.label.split(' —')[0])}</label>`).join('');
   renderSummary();
+  syncSelBar();
   requestAnimationFrame(fitCensusRows);
 }
+/* Row selection: tap the box in the # column (or the row number) to select; the bar above the table offers
+   Left hospital / Remove patient / Move up / Move down for whatever is selected. */
+const rowSel = new Set();
+function syncSelBar(){
+  [...rowSel].forEach(id => { if(!rowOf('p', id)) rowSel.delete(id); });
+  const bar = $('#selBar'); if(!bar) return; const n = rowSel.size; bar.hidden = !n; $('#selN').textContent = n;
+  const ps = [...rowSel].map(id => rowOf('p', id)).filter(Boolean), allXf = ps.length && ps.every(p => p.status === 'Transfer'), anyAma = ps.some(p => p.ama);
+  const o = bar.querySelector('#selAct option[value=left]'); o.textContent = allXf ? 'Transferred off ⇥' : anyAma && ps.length === 1 ? 'Left AMA ⇥' : 'Left hospital ⇥';
+  bar.querySelectorAll('#selAct option[value=up], #selAct option[value=down]').forEach(x => { x.disabled = n !== 1; });
+  document.querySelectorAll('#censusGrid tbody tr[data-id]').forEach(tr => tr.classList.toggle('rsel-on', rowSel.has(tr.dataset.id)));
+}
+function selToggle(id){ rowSel.has(id) ? rowSel.delete(id) : rowSel.add(id); const b = document.querySelector(`#censusGrid [data-rsel="${id}"]`); if(b){ b.classList.toggle('on', rowSel.has(id)); b.setAttribute('aria-pressed', rowSel.has(id)); } syncSelBar(); }
+function selAction(act){
+  const ids = [...rowSel].filter(id => rowOf('p', id)); if(!ids.length) return;
+  const beds = ids.map(id => rowOf('p', id).bed || 'patient');
+  if(act === 'up' || act === 'down'){ if(ids.length !== 1){ toast('Select just one patient to move'); return; }
+    mutate(() => { const a = state.patients, i = a.findIndex(p => p.id === ids[0]), j = act === 'up' ? i - 1 : i + 1; if(j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; }); return; }
+  if(act === 'remove'){
+    modal(`<h3>Remove ${ids.length === 1 ? esc(beds[0]) : ids.length + ' patients'}?</h3>${ids.length > 1 ? `<p><b>${beds.map(esc).join(', ')}</b></p>` : ''}<p class="muted">This deletes the row${ids.length === 1 ? '' : 's'} without archiving. If ${ids.length === 1 ? 'the patient has' : 'they have'} physically left, use <b>Left hospital</b> instead so ${ids.length === 1 ? 'they’re' : 'they’re'} kept in the archive.</p>`,
+      [['Cancel'], ['Remove', 'danger', () => { mutate(() => { state.patients = state.patients.filter(x => !ids.includes(x.id)); }, {label:`Removed ${beds.join(', ')}`}); rowSel.clear(); syncSelBar(); }]]);
+    return; }
+  if(act === 'left'){
+    if(ids.length === 1){ rowSel.clear(); syncSelBar(); requestLeft(ids[0]); return; }
+    const miss = ids.map(id => ({p:rowOf('p', id), m:unfinishedFor(rowOf('p', id))})).filter(x => x.m.length);
+    modal(`<h3>Move ${ids.length} patients to History &amp; Archive?</h3><p><b>${beds.map(esc).join(', ')}</b> — use once they've physically left (or transferred off).</p>
+      ${miss.length ? `<div class="warnlist">${miss.map(x => `<div><i class="avdot no"></i><b>${esc(x.p.bed || 'patient')}</b><span class="muted">${x.m.length} ${x.p.status === 'Transfer' ? 'transfer' : 'discharge'} item${x.m.length === 1 ? '' : 's'} not done: ${esc(x.m.map(m => m.what).join(', '))}</span></div>`).join('')}</div>` : ''}`,
+      [['Cancel'], [miss.length ? 'Move them anyway' : 'Move to archive', miss.length ? 'danger-solid' : 'primary', () => { rowSel.clear(); ids.forEach(id => markLeft(id)); syncSelBar(); }]]);
+  }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('#censusGrid [data-rsel]'); if(b){ e.preventDefault(); e.stopPropagation(); selToggle(b.dataset.rsel); return; }
+  const sq = e.target.closest && e.target.closest('#censusGrid .seqc'); if(sq && !e.target.closest('.drag')){ const r = sq.querySelector('[data-rsel]'); if(r) selToggle(r.dataset.rsel); }
+}, true);
+$('#selAct').addEventListener('change', e => { const v = e.target.value; e.target.value = ''; if(v) selAction(v); });
+$('#selClr').addEventListener('click', () => { rowSel.clear(); renderCensus(); });
+$('#selAll').addEventListener('click', () => { document.querySelectorAll('#censusGrid tbody tr[data-id]').forEach(tr => rowSel.add(tr.dataset.id)); renderCensus(); });
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && rowSel.size && !document.querySelector('.scrim, .pop') && ui.tab === 'census'){ rowSel.clear(); renderCensus(); } });
+
 /* Fill the screen: when the census is short, share the spare height among the rows so the board breathes.
    Rows never get shorter than their normal height, so a long census still scrolls. Layout → “Fill the screen”. */
 function fitCensusRows(){
@@ -8014,6 +8071,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:279, d:'2026-11-23', items:['<b>Select rows</b> on the Census (Sandbox preview): tap the box next to the row number. A bar appears above the table with <b>Left hospital</b>, <b>Remove patient</b>, Move up / Move down, Select all and Clear — works on several patients at once. The small ✕ and the in-row Left hospital button are gone (Discharges and Transfers still have theirs).']},
   {v:278, d:'2026-11-23', items:['Census <b>fills the screen</b>: when there’s room, rows grow taller so the whole census shows without scrolling — never shorter than before, so a long census still scrolls. Turn it off in <b>Layout → Fill the screen</b>.']},
   {v:277, d:'2026-11-22', items:['Rounds: the <b>“x/y discussed”</b> count leaves out new admits (they can’t be marked discussed on their first day) — 5 existing + 1 new reads 5/5 once those 5 are done.']},
   {v:276, d:'2026-11-22', items:['iPad: <b>Rounds</b> is now a normal tab — the bottom bar stays visible (Rounds highlighted), tap Census, Tasks or any other tab to leave, and Rounds is still on the same patient when you come back. On a desktop it’s unchanged (the Rounds button on the Census).']},
