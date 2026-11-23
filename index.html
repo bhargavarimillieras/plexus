@@ -790,7 +790,9 @@ body.touch #rJump{display:none}   /* the bed strip does the jumping on iPad — 
 .rbar .rcount{font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
 .rbar select{max-width:280px}
 /* iPad: Rounds covers the whole screen, above the bottom tab bar (which used to hide its Next button), clear of the status bar */
-body.touch .rounds{z-index:65;padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+/* iPad: Rounds is a tab — it sits above the bottom bar (which stays visible) instead of covering it; leave it from the bar */
+body.touch .rounds{z-index:55;bottom:calc(var(--tbarh) + env(safe-area-inset-bottom));padding-bottom:10px;background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}
+body.touch .rounds [data-r="close"],body.touch #roundsBtn{display:none}
 body.touch .pop{z-index:70}
 body.touch .scrim{z-index:75}   /* modals (body map, outstanding…) open above Rounds */
 body.standalone .rounds{padding-top:calc(max(env(safe-area-inset-top), 24px) + 8px)}
@@ -1709,7 +1711,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '275';
+const APP_VERSION = '276';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4221,8 +4223,8 @@ function roundsList(){
   }
   return list;
 }
-function openRounds(id){ closePop(); rounds.open = true; const list = roundsList(); rounds.id = id || (list.find(p => p.id === rounds.id) || list[0] || {}).id || null; $('#rounds').hidden = false; document.body.style.overflow = 'hidden'; renderRounds(); focusRounds(); }
-function closeRounds(){ closePop(); rounds.open = false; $('#rounds').hidden = true; document.body.style.overflow = ''; lastFocus = null;
+function openRounds(id){ closePop(); rounds.open = true; const list = roundsList(); rounds.id = id || (list.find(p => p.id === rounds.id) || list[0] || {}).id || null; $('#rounds').hidden = false; document.body.style.overflow = 'hidden'; renderRounds(); focusRounds(); try{ touchSync(); }catch(e){} }
+function closeRounds(){ closePop(); rounds.open = false; $('#rounds').hidden = true; document.body.style.overflow = ''; lastFocus = null; try{ touchSync(); }catch(e){}
   const tr = rounds.id && document.querySelector(`#censusGrid tr[data-id="${rounds.id}"]`); if(tr){ tr.scrollIntoView({block:'center'}); tr.classList.add('rowpulse'); setTimeout(() => tr.classList.remove('rowpulse'), 1600); } }
 function roundsGo(step, plain){ const list = roundsList(); if(!list.length) return; let i = list.findIndex(p => p.id === rounds.id); const cur = list[i];
   if(step > 0 && !plain && cur){   // → the next patient not yet discussed (you tick Discussed yourself), else just the next
@@ -7467,12 +7469,12 @@ function touchBuild(){
   const more = document.createElement('button'); more.type = 'button'; more.className = 'hbtn tmore'; more.id = 'tMore'; more.textContent = '⋯'; more.setAttribute('aria-label', 'More');
   more.addEventListener('click', moreSheet); document.querySelector('header.top').appendChild(more);
 }
-function touchTab(k){ const b = document.querySelector(`#tabs button[data-tab="${k}"]`); if(b && !b.hidden) b.click(); }
+function touchTab(k){ if(rounds.open) closeRounds(); const b = document.querySelector(`#tabs button[data-tab="${k}"]`); if(b && !b.hidden) b.click(); }
 function touchSync(){
   const bar = $('#tbar'); if(!bar || !state) return;
   const t = ui.tab, tasksOn = !$('#tabs button[data-tab=tasks]').hidden, censusOn = !$('#tabs button[data-tab=census]').hidden;
   const [inBar, inMore] = tbSwap();
-  bar.querySelectorAll('[data-tt]').forEach(b => b.classList.toggle('on', b.dataset.tt === t || (b.dataset.tt === 'more' && [inMore, 'history'].includes(t))));
+  bar.querySelectorAll('[data-tt]').forEach(b => b.classList.toggle('on', rounds.open ? b.dataset.tt === 'rounds' : (b.dataset.tt === t || (b.dataset.tt === 'more' && [inMore, 'history'].includes(t)))));
   bar.querySelector('[data-tt=tasks]').hidden = !tasksOn; bar.querySelector('[data-tt=census]').hidden = !censusOn; bar.querySelector('[data-tt=rounds]').hidden = !censusOn || !state.patients.length;
   bar.querySelector(`[data-tt=${inBar}]`).hidden = $(`#tabs button[data-tab=${inBar}]`).hidden; bar.querySelector(`[data-tt=${inMore}]`).hidden = true;
   bar.style.gridTemplateColumns = `repeat(${bar.querySelectorAll('[data-tt]:not([hidden])').length},1fr)`;
@@ -7991,6 +7993,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:276, d:'2026-11-22', items:['iPad: <b>Rounds</b> is now a normal tab — the bottom bar stays visible (Rounds highlighted), tap Census, Tasks or any other tab to leave, and Rounds is still on the same patient when you come back. On a desktop it’s unchanged (the Rounds button on the Census).']},
   {v:275, d:'2026-11-22', items:['iPad: <b>Rounds</b> has its own button in the bottom bar, between Census and Tasks.']},
   {v:274, d:'2026-11-22', items:['iPad: the <b>body map</b> (and other pop-up windows) opened from Rounds now appear in front of Rounds instead of behind it.']},
   {v:273, d:'2026-11-22', items:['Rounds · Split: a long <b>Avatar</b> list now wraps onto several lines instead of running off the panel, so the body-map figure button stays visible.']},
