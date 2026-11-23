@@ -238,6 +238,18 @@ body.touch .rsel.on::after{left:7.5px;top:3px;width:5px;height:11px}
 #censusGrid tr.rsel-on td.stk{box-shadow:inset 0 0 0 0 transparent}
 .selbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 10px;margin:0 0 8px;border:1.5px solid var(--accent);border-radius:10px;background:var(--info-bg)}
 .selbar[hidden]{display:none}
+.stmarks{display:inline-flex;align-items:center;gap:3px;margin-left:auto;padding-left:4px}
+.stpc{width:9px;height:9px;border-radius:50%;background:#34A853;display:inline-block}
+.strd{font-style:normal;font-size:12px;line-height:1}
+.tmenu{position:relative;display:inline-block}
+.tmpanel{position:absolute;top:calc(100% + 6px);left:0;z-index:30;min-width:280px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.16);padding:6px;display:flex;flex-direction:column;gap:2px}
+.tmpanel[hidden]{display:none}
+.tmpanel.right{left:auto;right:0}
+.tmrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:7px;font:inherit;font-size:13px;text-align:left;background:none;border:0;color:var(--ink);cursor:pointer;white-space:nowrap}
+.tmrow:hover{background:var(--head)}
+.tmrow select{margin-left:auto;font:inherit;padding:4px 6px;min-width:190px}
+.tmbtn .muted{font-size:11.5px;margin-left:auto;padding-left:12px}
+body.touch .tmrow{font-size:15px;padding:12px}
 .selbar .selN{font-weight:600}
 .selbar select{font:inherit;font-weight:700;padding:6px 10px;border-radius:8px;border:1px solid var(--line2);background:var(--panel)}
 body.touch .selbar select{font-size:16px;padding:9px 12px}
@@ -1617,17 +1629,26 @@ body.touch .lrow{padding:14px 16px}
         <div class="spacer"></div>
         <button class="btn sm" id="roundsBtn" title="Go through patients one at a time (← → to move, Esc to close)">▶ Rounds</button>
         <button class="btn sm validate" id="validateBtn">✓ Validation</button>
-        <label class="grpchk" title="Show patients in sections by intern"><input type="checkbox" id="groupIntern"> Group by intern</label>
-        <select id="sortSel" class="btn sm" title="Re-sort the census (you can still drag rows afterwards)">
-          <option value="">Sort…</option><option value="bed">By bed</option><option value="intern">By intern, then bed</option>
-          <option value="edd">By EDD (soonest first)</option><option value="status">By status (New first)</option><option value="admit">By admit date (newest first)</option>
-        </select>
-        <button class="btn sm" id="layoutBtn">Layout</button>
-        <button class="btn sm" id="bulkPt" data-tip="Bulk Add patients\nShortcut: Shift+N">⇪ Bulk Add</button>
-        <button class="btn sm primary" id="addPt">+ Add patient</button>
+        <div class="tmenu"><button class="btn sm" data-tmenu aria-haspopup="true">View ▾</button>
+          <div class="tmpanel right" hidden>
+            <label class="tmrow"><input type="checkbox" id="groupIntern"> Group by intern</label>
+            <label class="tmrow">Sort <select id="sortSel" title="Re-sort the census">
+              <option value="">Choose…</option><option value="bed">By bed</option><option value="intern">By intern, then bed</option>
+              <option value="edd">By EDD (soonest first)</option><option value="status">By status (New first)</option><option value="admit">By admit date (newest first)</option>
+            </select></label>
+            <button class="tmrow tmbtn" id="layoutBtn">Layout… <span class="muted">columns, sections, fill the screen</span></button>
+          </div></div>
+        <div class="tmenu"><button class="btn sm primary" data-tmenu aria-haspopup="true">+ Add ▾</button>
+          <div class="tmpanel right" hidden>
+            <button class="tmrow tmbtn" id="addPt">+ Add patient</button>
+            <button class="tmrow tmbtn" id="bulkPt" data-tip="Bulk Add patients\nShortcut: Shift+N">⇪ Bulk Add <span class="muted">paste a list</span></button>
+          </div></div>
       </div>
       <div class="selbar" id="selBar" hidden><span class="selN"><b id="selN">0</b> selected</span>
-        <select id="selAct" aria-label="Action for the selected patients"><option value="">Choose an action…</option><option value="left">Left hospital ⇥</option><option value="remove">Remove patient</option><option value="up">Move up</option><option value="down">Move down</option></select>
+        <select id="selAct" aria-label="Action for the selected patients"><option value="">Choose an action…</option>
+          <optgroup label="Today"><option value="pc">Mark pre-charted</option><option value="rd">Mark discussed</option></optgroup>
+          <optgroup label="Order"><option value="up">Move up</option><option value="down">Move down</option><option value="top">Move to top</option><option value="bottom">Move to bottom</option></optgroup>
+          <optgroup label="Leaving"><option value="left">Left hospital ⇥</option><option value="remove">Remove patient</option></optgroup></select>
         <span style="flex:1"></span><button class="btn sm" id="selAll">Select all</button><button class="btn sm" id="selClr">✕ Clear</button></div>
       <div class="scroller"><div id="censusGrid"></div></div>
       </div>
@@ -1730,7 +1751,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '279';
+const APP_VERSION = '280';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3195,7 +3216,7 @@ function markLeft(id){
 }
 
 /* ---------- census grid ---------- */
-const STK = [ {k:'seq',w:76},{k:'bed',w:130},{k:'intern',w:96},{k:'hd',w:44},{k:'problem',w:230} ];   // frozen columns
+const STK = [ {k:'seq',w:62},{k:'bed',w:130},{k:'intern',w:96},{k:'hd',w:44},{k:'problem',w:230} ];   // frozen columns
 function stkStyle(i){ let left = 0; for(let j=0;j<i;j++) left += STK[j].w; return `left:${left}px;min-width:${STK[i].w}px;max-width:${STK[i].w}px`; }
 
 function gridHTML(patients, {ro=false} = {}){
@@ -3229,9 +3250,9 @@ function gridHTML(patients, {ro=false} = {}){
       h += `<tr class="grprow"><td colspan="${totalCols}"><div class="grplabel">${esc(p.intern || 'Unassigned')} <span>${mine.length} patient${mine.length===1?'':'s'} · ${(() => { const c = CHUNK[ui.chunk]; return c ? `${mine.reduce((n,x) => n + chunkOpen(x, c.k), 0)} ${c.label} boxes open` : `${mine.reduce((n,x) => n + openCount(x), 0)} boxes open`; })()}</span></div></td></tr>`;
     }
     h += `<tr class="${p.status==='Discharge'?'dc':''}" data-id="${p.id}" data-intern="${esc(p.intern||'')}">`;
-    h += `<td class="stk" style="${stkStyle(0)}"><div class="seqc">${ro ? '' : `<span class="drag" draggable="true" data-drag="${p.id}" title="Drag to move this patient">⠿</span>`}<span>${ri+1}</span>${ro?'':`<button type="button" class="rsel ${rowSel.has(p.id) ? 'on' : ''}" data-rsel="${p.id}" aria-pressed="${rowSel.has(p.id)}" title="Select (then choose Left hospital, Remove… above the table)" aria-label="Select ${esc(p.bed || 'patient')}"></button>`}</div></td>`;
+    h += `<td class="stk" style="${stkStyle(0)}"><div class="seqc"><span>${ri+1}</span>${ro?'':`<button type="button" class="rsel ${rowSel.has(p.id) ? 'on' : ''}" data-rsel="${p.id}" aria-pressed="${rowSel.has(p.id)}" title="Select (then choose Left hospital, Remove… above the table)" aria-label="Select ${esc(p.bed || 'patient')}"></button>`}</div></td>`;
     const allDone = openCount(p) === 0;   // every AM, PM and SW / PT / OT box done (N/A and Lab holiday count; Services and Dispo notes are optional)
-    h += `<td class="stk ${allDone ? 'alldone' : ''}" style="${stkStyle(1)}" ${allDone ? 'title="All boxes done for today"' : ''}><div class="bedpc">${bedBoxHTML('p', p, ro, ro ? 60 : 56)}${pcBtn(p, ro)}${rdBtn(p, ro)}</div></td>`;
+    h += `<td class="stk ${allDone ? 'alldone' : ''}" style="${stkStyle(1)}" ${allDone ? 'title="All boxes done for today"' : ''}><div class="bedpc">${bedBoxHTML('p', p, ro, ro ? 60 : 56)}${stMarks(p)}</div></td>`;
     h += `<td class="stk" style="${stkStyle(2)}">${selHTML('intern', p.intern, state.settings.interns, {ro, kind:'p', id:p.id})}</td>`;
     h += `<td class="stk hdtd" style="${stkStyle(3)}">${hdCell(p, ro)}</td>`;
     h += `<td class="stk last" style="${stkStyle(4)}"><div class="probwrap"><input class="cell" data-field="problem" data-kind="p" data-id="${p.id}" value="${esc(p.problem)}" ${ro?'disabled':''} placeholder="One-liner / problem">${(fl.length || !ro) ? `<div class="flags">${flagsHTML(p, fl, ro)}</div>` : ''}</div></td>`;
@@ -3254,6 +3275,8 @@ const pcPool = () => state.patients.filter(p => p.status !== 'New');
 const pcCount = () => { const L = pcPool(); return {n:L.filter(isPc).length, of:L.length}; };
 const NA_NEW = 'New admit — not needed on the day they come in';
 const pcBtn = (p, ro) => ro ? '' : p.status === 'New' ? `<button type="button" class="pcchk off" disabled title="${NA_NEW}" aria-label="Pre-charted: not needed for a new admit">✓</button>` : `<button type="button" class="pcchk ${isPc(p) ? 'on' : ''}" data-pc="${p.id}" title="${isPc(p) ? 'Pre-charted' : 'Mark pre-charted'} for ${esc(fmtNoYear(state.boardDate))} — clears when the next day starts" aria-label="${isPc(p) ? 'Pre-charted' : 'Not pre-charted'}: ${esc(p.bed || 'patient')}" aria-pressed="${isPc(p)}">✓</button>`;
+// census bed cell: quiet marks only (change them from the selection menu, or in Rounds)
+const stMarks = p => `<span class="stmarks">${isPc(p) ? '<i class="stpc" title="Pre-charted today"></i>' : ''}${rdSeen(p) ? '<i class="strd" title="Discussed on rounds today">💬</i>' : ''}</span>`;
 function togglePc(id){ const p = rowOf('p', id); if(!p) return; const on = !isPc(p);
   mutate(() => { const q = rowOf('p', id); delete q.pcAuto; if(on){ q.pc = state.boardDate; delete q.pcOff; } else { delete q.pc; q.pcOff = state.boardDate; } }, {label:`${p.bed || 'Patient'}: ${on ? 'pre-charted ✓' : 'pre-charted tick removed'} (${fmtNoYear(state.boardDate)})`, cat:'census'}); }
 // 💬 discussed on rounds — the same mark as Rounds mode's “Mark discussed”, resets each day
@@ -3425,12 +3448,23 @@ function syncSelBar(){
   const ps = [...rowSel].map(id => rowOf('p', id)).filter(Boolean), allXf = ps.length && ps.every(p => p.status === 'Transfer'), anyAma = ps.some(p => p.ama);
   const o = bar.querySelector('#selAct option[value=left]'); o.textContent = allXf ? 'Transferred off ⇥' : anyAma && ps.length === 1 ? 'Left AMA ⇥' : 'Left hospital ⇥';
   bar.querySelectorAll('#selAct option[value=up], #selAct option[value=down]').forEach(x => { x.disabled = n !== 1; });
+  const live = ps.filter(p => p.status !== 'New'), allPc = live.length && live.every(isPc), allRd = live.length && live.every(rdSeen);
+  const opc = bar.querySelector('#selAct option[value=pc]'), ord = bar.querySelector('#selAct option[value=rd]');
+  opc.textContent = allPc ? 'Unmark pre-charted' : 'Mark pre-charted'; ord.textContent = allRd ? 'Unmark discussed' : 'Mark discussed'; opc.disabled = ord.disabled = !live.length;
   document.querySelectorAll('#censusGrid tbody tr[data-id]').forEach(tr => tr.classList.toggle('rsel-on', rowSel.has(tr.dataset.id)));
 }
 function selToggle(id){ rowSel.has(id) ? rowSel.delete(id) : rowSel.add(id); const b = document.querySelector(`#censusGrid [data-rsel="${id}"]`); if(b){ b.classList.toggle('on', rowSel.has(id)); b.setAttribute('aria-pressed', rowSel.has(id)); } syncSelBar(); }
 function selAction(act){
   const ids = [...rowSel].filter(id => rowOf('p', id)); if(!ids.length) return;
   const beds = ids.map(id => rowOf('p', id).bed || 'patient');
+  if(act === 'pc' || act === 'rd'){
+    const live = ids.map(id => rowOf('p', id)).filter(p => p.status !== 'New'); if(!live.length){ toast('New admits don’t need this today'); return; }
+    const on = act === 'pc' ? !live.every(isPc) : !live.every(rdSeen), d = state.boardDate, lids = live.map(p => p.id);
+    mutate(() => state.patients.filter(p => lids.includes(p.id)).forEach(q => { if(act === 'pc'){ delete q.pcAuto; if(on){ q.pc = d; delete q.pcOff; } else { delete q.pc; q.pcOff = d; } } else { if(on) q.rd = d; else delete q.rd; } }),
+      {label:`${act === 'pc' ? 'Pre-charted' : 'Discussed'} ${on ? '✓' : 'cleared'}: ${live.map(p => p.bed).join(', ')}`});
+    if(live.length < ids.length) toast('New admits skipped'); return; }
+  if(act === 'top' || act === 'bottom'){
+    mutate(() => { const a = state.patients, sel = a.filter(p => ids.includes(p.id)), rest = a.filter(p => !ids.includes(p.id)); state.patients = act === 'top' ? [...sel, ...rest] : [...rest, ...sel]; }); return; }
   if(act === 'up' || act === 'down'){ if(ids.length !== 1){ toast('Select just one patient to move'); return; }
     mutate(() => { const a = state.patients, i = a.findIndex(p => p.id === ids[0]), j = act === 'up' ? i - 1 : i + 1; if(j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; }); return; }
   if(act === 'remove'){
@@ -3453,6 +3487,15 @@ $('#selAct').addEventListener('change', e => { const v = e.target.value; e.targe
 $('#selClr').addEventListener('click', () => { rowSel.clear(); renderCensus(); });
 $('#selAll').addEventListener('click', () => { document.querySelectorAll('#censusGrid tbody tr[data-id]').forEach(tr => rowSel.add(tr.dataset.id)); renderCensus(); });
 document.addEventListener('keydown', e => { if(e.key === 'Escape' && rowSel.size && !document.querySelector('.scrim, .pop') && ui.tab === 'census'){ rowSel.clear(); renderCensus(); } });
+
+/* toolbar menus (View ▾ / + Add ▾): open on tap, close on the next tap elsewhere or after choosing */
+document.addEventListener('click', e => {
+  const b = e.target.closest && e.target.closest('[data-tmenu]'), open = document.querySelectorAll('.tmpanel:not([hidden])');
+  if(b){ const pnl = b.nextElementSibling, was = !pnl.hidden; open.forEach(x => { x.hidden = true; }); pnl.hidden = was; return; }
+  if(e.target.closest && e.target.closest('.tmpanel')){ if(e.target.closest('.tmbtn')) setTimeout(() => open.forEach(x => { x.hidden = true; }), 0); return; }
+  open.forEach(x => { x.hidden = true; });
+});
+document.addEventListener('change', e => { if(e.target.id === 'sortSel') document.querySelectorAll('.tmpanel').forEach(x => { x.hidden = true; }); });
 
 /* Fill the screen: when the census is short, share the spare height among the rows so the board breathes.
    Rows never get shorter than their normal height, so a long census still scrolls. Layout → “Fill the screen”. */
@@ -8071,6 +8114,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:280, d:'2026-11-23', items:['Calmer Census (Sandbox preview): the pre-charted ✓ and 💬 buttons in each bed cell are now quiet marks (green dot = pre-charted, 💬 = discussed) — change them from the selection menu (<b>Mark pre-charted / Mark discussed</b>, works on several at once) or in Rounds.', 'The ⠿ drag handle is gone: reorder with <b>Move up / down / to top / to bottom</b> in the selection menu, or Sort.', 'Toolbar: Group by intern, Sort and Layout live under <b>View ▾</b>; Add patient and Bulk Add under <b>+ Add ▾</b>.']},
   {v:279, d:'2026-11-23', items:['<b>Select rows</b> on the Census (Sandbox preview): tap the box next to the row number. A bar appears above the table with <b>Left hospital</b>, <b>Remove patient</b>, Move up / Move down, Select all and Clear — works on several patients at once. The small ✕ and the in-row Left hospital button are gone (Discharges and Transfers still have theirs).']},
   {v:278, d:'2026-11-23', items:['Census <b>fills the screen</b>: when there’s room, rows grow taller so the whole census shows without scrolling — never shorter than before, so a long census still scrolls. Turn it off in <b>Layout → Fill the screen</b>.']},
   {v:277, d:'2026-11-22', items:['Rounds: the <b>“x/y discussed”</b> count leaves out new admits (they can’t be marked discussed on their first day) — 5 existing + 1 new reads 5/5 once those 5 are done.']},
