@@ -165,6 +165,14 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .pcchk.off,.rdchk.off,.rseenbtn:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(1)}
 .ptseen{margin-top:8px;align-items:center}.ptseen label{font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
 .warnlist b{white-space:nowrap}
+.tc.t-rv{justify-content:flex-start;gap:4px;flex-wrap:wrap;padding:3px 5px;height:auto;min-height:31px;cursor:default;background:none}
+.rvchip{display:inline-flex;align-items:center;gap:4px;border:1.5px solid var(--rv);background:var(--panel);border-radius:999px;padding:2px 8px 2px 3px;font:600 11.5px/1.3 inherit;font-family:inherit;color:var(--ink);cursor:pointer;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rvchip b{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--rv);color:var(--rvfg);font-size:10.5px}
+.rvchip span{color:var(--muted);font-weight:500;overflow:hidden;text-overflow:ellipsis}
+body.touch .rvchip{font-size:13px;padding:4px 10px 4px 4px}
+th.rvh{min-width:150px}
+.oschip.rv{border-color:#FBBC04;background:#fff8e1}
+.rs-ck2.rv span:first-child{color:#b06000;font-weight:800}
 .arrna{font-size:11.5px;color:var(--muted);white-space:nowrap;font-style:italic}
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
@@ -1753,7 +1761,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '283';
+const APP_VERSION = '284';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2786,7 +2794,22 @@ const chunkReq = ck => chunkKeys(ck).filter(k => !OPTIONAL_KEYS.has(k));
    and never count as open. From the next day (status → Existing) they're ordinary boxes again. */
 const NEW_COVERED = new Set(['vitals', 'io', 'fsg', 'labrev', 'img', 'attest', 'hc']);
 const newCovers = (p, k) => !!p && p.status === 'New' && NEW_COVERED.has(k);
-const chunkOpen = (p, ck) => chunkReq(ck).filter(k => !newCovers(p, k) && !isDone(colCfg(k), p.cells[k] || {})).length;
+/* AM flags → PM follow-ups: marking an AM box “Needs revisit” (R) or “Panic result” (!) finishes it for pre-charting
+   (you've looked and acknowledged it), but it becomes a PM item until it's set to Complete / N/A. */
+const FOLLOW = new Set(['R', 'X']);
+const isFollow = (p, k) => CHUNK.am.keys.includes(k) && isStatusType(colCfg(k).type) && FOLLOW.has((p.cells[k] || {}).s) && !newCovers(p, k) && !colHidden(k);
+const followKeys = p => CHUNK.am.keys.filter(k => COLMAP[k] && isFollow(p, k));
+function openKeys(p, ck){
+  const base = chunkReq(ck).filter(k => !newCovers(p, k) && !isDone(colCfg(k), p.cells[k] || {}));
+  if(ck === 'am') return base.filter(k => !isFollow(p, k));
+  if(ck === 'pm') return [...followKeys(p), ...base];
+  return base;
+}
+const chunkOpen = (p, ck) => openKeys(p, ck).length;
+const rvLabel = k => '↻ ' + colCfg(k).h;
+function revisitCellHTML(p){ const ks = followKeys(p); if(!ks.length) return '<div class="tc t-rv rv-none"></div>';
+  return `<div class="tc t-rv">${ks.map(k => { const c = p.cells[k], st = SMAP[c.s]; return `<button type="button" class="rvchip" data-kind="p" data-id="${p.id}" data-col="${k}" style="--rv:${st.bg};--rvfg:${st.fg}" title="${esc(colCfg(k).h + ': ' + st.label + (c.t ? ' — ' + c.t : '') + ' · tap to update')}"><b>${esc(st.g)}</b>${esc(colCfg(k).h)}${c.t ? `<span>${esc(c.t)}</span>` : ''}</button>`; }).join('')}</div>`; }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.rvchip'); if(!b) return; e.preventDefault(); e.stopPropagation(); openPop(b); }, true);
 // a new admit's Note, Visit and Handoff follow the Admissions tab: done there → done on the census (and undone if it's undone there)
 const ADMIT_SYNC = [
   {k:'note', from:'note', done:t => ['Signed', 'N/A'].includes(t), on:c => c.s === 'C', set:c => { c.s = 'C'; if(!c.t) c.t = 'H&P'; }, clear:c => { c.s = ''; }},
@@ -3255,7 +3278,8 @@ function stkStyle(i){ let left = 0; for(let j=0;j<i;j++) left += STK[j].w; retur
 
 function gridHTML(patients, {ro=false} = {}){
   const ck = !ro && CHUNK[ui.chunk] ? CHUNK[ui.chunk] : null;
-  const visGroups = ck ? [{k:ck.g, label:ck.name, cols:chunkKeys(ck.k).map(k => COLMAP[k])}].filter(g => g.cols.length)
+  const rvCol = ck && ck.k === 'pm' && patients.some(p => followKeys(p).length) ? [{k:'_rv'}] : [];
+  const visGroups = ck ? [{k:ck.g, label:ck.name, cols:[...rvCol, ...chunkKeys(ck.k).map(k => COLMAP[k])]}].filter(g => g.cols.length)
     : CENSUS_GROUPS().filter(g => !ui.hidden.includes(g.k) || ro).map(g => ({...g, cols:visibleCols(g)})).filter(g => g.cols.length);
   const totalCols = STK.length + 2 + visGroups.reduce((n,g) => n + g.cols.length, 0);
   const grouped = !ro && ui.groupBy === 'intern';
@@ -3273,7 +3297,7 @@ function gridHTML(patients, {ro=false} = {}){
   h += `</tr><tr class="c">`;
   ['#','Bed','Intern','HD','Problem'].forEach((t,i) => h += `<th class="stk ${i===4?'last l':''}" style="${stkStyle(i)}" ${t === 'HD' ? 'title="Hospital day (admission day = HD 1)"' : ''}>${t}</th>`);
   h += `<th class="l">Status</th><th class="l">${esc(colCfg('edd').h)}</th>`;
-  visGroups.forEach(g => g.cols.forEach(c => h += `<th class="g-${g.k}" data-ck="${c.k}">${esc(colCfg(c.k).h)}</th>`));
+  visGroups.forEach(g => g.cols.forEach(c => h += c.k === '_rv' ? `<th class="g-${g.k} rvh" data-ck="_rv" title="AM boxes marked Needs revisit or Panic — tap one to update it">↻ Revisit</th>` : `<th class="g-${g.k}" data-ck="${c.k}">${esc(colCfg(c.k).h)}</th>`));
   h += `</tr></thead><tbody>`;
   let lastIntern = null;
   patients.forEach((p, ri) => {
@@ -3294,6 +3318,7 @@ function gridHTML(patients, {ro=false} = {}){
     h += `<td style="min-width:138px">${eddHTML(p, ro)}</td>`;
     let ci = 0;
     visGroups.forEach(g => g.cols.forEach(c => {
+      if(c.k === '_rv'){ h += `<td>${revisitCellHTML(p)}</td>`; ci++; return; }
       const cfg = colCfg(c.k);
       const html = cellHTML(p.cells[c.k], cfg, 'p', p.id, ri, ci++, ro);
       h += `<td>${html}</td>`;
@@ -4457,9 +4482,10 @@ function renderRoundsSplit(){
     const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
   const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' ? 'rs-gtt' : ''}">${k === 'gtt' && gttShown(p.cells.gtt, p).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt, p)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
   const ckCard = c => { const all = chunkKeys(c.k), show = all.filter(k => !RS_GLANCE.includes(k)); if(!show.length) return '';
-    const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(k => isDone(colCfg(k), p.cells[k] || {})).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
-    const cnt = `<span class="rs-cnt" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length} done</span>`;
-    return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh">${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''} ${cnt}</div><div class="rs-chk">${show.map(k => `<div class="rs-ck2 ${!OPTIONAL_KEYS.has(k) && isDone(colCfg(k), p.cells[k] || {}) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
+    const fk = c.k === 'pm' ? followKeys(p) : [], doneK = k => isDone(colCfg(k), p.cells[k] || {}) || (c.k === 'am' && isFollow(p, k));
+    const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(doneK).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
+    const cnt = `<span class="rs-cnt" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length + fk.length} done</span>`;
+    return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh">${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''} ${cnt}</div><div class="rs-chk">${fk.map(k => `<div class="rs-ck2 rv"><span>${esc(rvLabel(k))}</span>${tile(k)}</div>`).join('')}${show.map(k => `<div class="rs-ck2 ${!OPTIONAL_KEYS.has(k) && doneK(k) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
   const nx = rdNext(list, i) || (i < list.length - 1 ? list[i + 1] : null);
   const todos = patientTodos(p.id);
   body.innerHTML = `<div class="rs">${rail}<section class="rs-main">
@@ -5079,7 +5105,7 @@ function jumpToAdmit(id, col){
 /* Outstanding: what's still open for each patient (AM / PM / Dispo — Services and Dispo notes are optional) */
 function outstanding(ck, onlyId){
   const cks = ck ? [ck] : CHUNKS.map(c => c.k);
-  return censusOrder().filter(p => !onlyId || p.id === onlyId).map(p => ({p, by:cks.map(c => ({c, keys:chunkReq(c).filter(k => !newCovers(p, k) && !isDone(colCfg(k), p.cells[k] || {}))})).filter(x => x.keys.length)})).filter(x => x.by.length);
+  return censusOrder().filter(p => !onlyId || p.id === onlyId).map(p => ({p, by:cks.map(c => ({c, keys:openKeys(p, c)})).filter(x => x.keys.length)})).filter(x => x.by.length);
 }
 const censusOrder = () => state.patients.slice();   // the census is kept in the order you've arranged it
 function showOutstanding(ck, onlyId){
@@ -5088,8 +5114,8 @@ function showOutstanding(ck, onlyId){
   const h = `<h3>Outstanding${onlyId && list[0] ? ' · ' + esc(list[0].p.bed || '') : ''}</h3>
     <p class="muted" style="margin-top:-4px">${total ? `<b>${total}</b> open ${esc(scope)} across <b>${list.length}</b> patient${list.length === 1 ? '' : 's'}. Tap one to jump to it.` : `✓ Nothing outstanding — every ${esc(scope.replace(/boxes$/, 'box'))} is done.`} <span class="small">Services and Dispo notes are optional.</span></p>
     ${list.map(({p, by}) => `<div class="vsec"><div class="vhead">${esc(p.bed || '—')} <span class="muted" style="font-weight:500">${esc(p.intern || '')}${p.problem ? ' · ' + esc(p.problem) : ''}</span></div>
-      <div class="osrow">${by.map(b => `<span class="osck">${esc(CHUNK[b.c].label)}</span>${b.keys.map(k => `<button class="oschip" data-jump="${p.id}" data-col="${k}">${esc(colCfg(k).h)}</button>`).join('')}`).join('<span class="ossep"></span>')}</div></div>`).join('')}`;
-  const text = () => list.map(({p, by}) => `${p.bed || '—'}${p.intern ? ' (' + p.intern + ')' : ''}: ` + by.map(b => `${CHUNK[b.c].label} — ${b.keys.map(k => colCfg(k).h).join(', ')}`).join('; ')).join('\n') || 'Nothing outstanding';
+      <div class="osrow">${by.map(b => `<span class="osck">${esc(CHUNK[b.c].label)}</span>${b.keys.map(k => `<button class="oschip ${b.c === 'pm' && isFollow(p, k) ? 'rv' : ''}" data-jump="${p.id}" data-col="${k}">${esc(b.c === 'pm' && isFollow(p, k) ? rvLabel(k) : colCfg(k).h)}</button>`).join('')}`).join('<span class="ossep"></span>')}</div></div>`).join('')}`;
+  const text = () => list.map(({p, by}) => `${p.bed || '—'}${p.intern ? ' (' + p.intern + ')' : ''}: ` + by.map(b => `${CHUNK[b.c].label} — ${b.keys.map(k => b.c === 'pm' && isFollow(p, k) ? rvLabel(k) : colCfg(k).h).join(', ')}`).join('; ')).join('\n') || 'Nothing outstanding';
   modal(h, [...(total ? [['Copy as text', '', () => copyText('Outstanding\n' + text())]] : []), ['Close', 'primary']], m => {
     m.classList.add('wide');
     m.addEventListener('click', e => { const b = e.target.closest('.oschip'); if(!b) return; closeModal(); if(ui.tab !== 'census') scGoTab('census'); jumpTo(b.dataset.jump, b.dataset.col); });
@@ -8149,6 +8175,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:284, d:'2026-11-24', items:['<b>Revisit / Panic → PM follow-ups.</b> In the AM boxes (Vitals, I/O, FSG, Lab Rev, Imaging…), marking <b>Needs revisit</b> or <b>Panic result</b> now counts as done for pre-charting — you’ve looked and acknowledged it — so pre-charted can tick. It then becomes a <b>PM item</b>: a <b>↻ Revisit</b> column in the PM view (tap a chip to update it), in Rounds’ PM card, in <b>outstanding</b>, and in the PM counts. The bed cell only turns green once it’s set to Complete or N/A.']},
   {v:283, d:'2026-11-24', items:['Avatar: <b>brachial</b> added to the PIV locations (it shows on the body map too).']},
   {v:282, d:'2026-11-24', items:['New <b>Left service</b> option in the selection menu (with Left hospital and Remove patient) — for a patient transferred to another service, e.g. on a day you were off. It warns if the transfer steps (accepting team agreed, transfer note, handoff, bed) aren’t done, and archives them as “Left service”.']},
   {v:281, d:'2026-11-23', items:['<b>Visit clock follows who’s responsible when</b>. Tisch / KP and Bellevue ICU / CCU: it starts when the patient arrives (🛏 Arrived now). Bellevue wards and nights: <b>ED admits</b> start at <b>Time in</b> (Arrived shows “— from Time in”), while <b>transfers</b> (ICU/SDU, internal, OSH) and direct admits wait for Arrived. It’s decided by the admission’s <b>Origin</b> — change Origin and the clock follows.']},
