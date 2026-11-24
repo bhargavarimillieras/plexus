@@ -1753,7 +1753,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '282';
+const APP_VERSION = '283';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2852,7 +2852,7 @@ const LDT_GROUPS = [['Vascular access', ['PIV', 'Midline', 'PICC', 'CVC', 'Arter
   ['Airway', ['ETT', 'Trach']],
   ['Drains', ['Chest tube', 'JP drain', 'Pigtail drain', 'Biliary drain', 'EVD']]];
 const ldtGroupOf = n => { const l = String(n).toLowerCase(), i = LDT_GROUPS.findIndex(g => g[1].some(x => x.toLowerCase() === l)); return i < 0 ? LDT_GROUPS.length : i; };
-const LDT_SITES = {'PIV':['hand', 'wrist', 'forearm', 'AC', 'upper arm', 'EJ', 'foot'], 'Midline':['upper arm', 'forearm'], 'PICC':['upper arm'],
+const LDT_SITES = {'PIV':['hand', 'wrist', 'forearm', 'AC', 'brachial', 'upper arm', 'EJ', 'foot'], 'Midline':['upper arm', 'forearm'], 'PICC':['upper arm'],
   'CVC':['IJ', 'subclavian', 'femoral'], 'Arterial line':['radial', 'brachial', 'axillary', 'femoral', 'dorsalis pedis'], 'HD catheter':['IJ', 'femoral', 'subclavian'], 'Port':['chest'],
   'IABP':['femoral', 'axillary'], 'Impella':['femoral', 'axillary'], 'ECMO cannula':['IJ', 'femoral'], 'S-G catheter':['IJ', 'subclavian', 'femoral'], 'Swan-Ganz':['IJ', 'subclavian', 'femoral'],
   'PA catheter':['IJ', 'subclavian', 'femoral'], 'Temporary pacing wire':['IJ', 'femoral'], 'Chest tube':['chest'], 'Pigtail drain':['chest', 'abdomen'], 'JP drain':['abdomen', 'chest', 'neck'], 'Nephrostomy tube':['flank']};
@@ -8149,6 +8149,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:283, d:'2026-11-24', items:['Avatar: <b>brachial</b> added to the PIV locations (it shows on the body map too).']},
   {v:282, d:'2026-11-24', items:['New <b>Left service</b> option in the selection menu (with Left hospital and Remove patient) — for a patient transferred to another service, e.g. on a day you were off. It warns if the transfer steps (accepting team agreed, transfer note, handoff, bed) aren’t done, and archives them as “Left service”.']},
   {v:281, d:'2026-11-23', items:['<b>Visit clock follows who’s responsible when</b>. Tisch / KP and Bellevue ICU / CCU: it starts when the patient arrives (🛏 Arrived now). Bellevue wards and nights: <b>ED admits</b> start at <b>Time in</b> (Arrived shows “— from Time in”), while <b>transfers</b> (ICU/SDU, internal, OSH) and direct admits wait for Arrived. It’s decided by the admission’s <b>Origin</b> — change Origin and the clock follows.']},
   {v:280, d:'2026-11-23', items:['Calmer Census: the pre-charted ✓ and 💬 buttons in each bed cell are now quiet marks (green dot = pre-charted, 💬 = discussed) — change them from the selection menu (<b>Mark pre-charted / Mark discussed</b>, works on several at once) or in Rounds.', 'The ⠿ drag handle is gone: reorder with <b>Move up / down / to top / to bottom</b> in the selection menu, or Sort.', 'Toolbar: Group by intern, Sort and Layout live under <b>View ▾</b>; Add patient and Bulk Add under <b>+ Add ▾</b>.']},
