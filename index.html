@@ -173,6 +173,10 @@ body.touch .rvchip{font-size:13px;padding:4px 10px 4px 4px}
 th.rvh{min-width:150px}
 .oschip.rv{border-color:#FBBC04;background:#fff8e1}
 .rs-ck2.rv span:first-child{color:#b06000;font-weight:800}
+.npoflag{border:1.5px solid #e37400;background:#fff4e5;color:#a35200;border-radius:999px;font:800 10px/1.25 inherit;font-family:inherit;padding:1px 7px;cursor:pointer;white-space:nowrap;margin-top:2px}
+.npoflag.ok{border-color:#34A853;background:#e6f4ea;color:#1e7e34}
+body.touch .npoflag{font-size:11px;padding:2px 8px}
+.tc[data-col=diet]:has(.npoflag){flex-direction:column;justify-content:center;height:auto;min-height:31px;padding-top:3px;padding-bottom:3px}
 .arrna{font-size:11.5px;color:var(--muted);white-space:nowrap;font-style:italic}
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
@@ -1761,7 +1765,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '284';
+const APP_VERSION = '285';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2802,10 +2806,18 @@ const followKeys = p => CHUNK.am.keys.filter(k => COLMAP[k] && isFollow(p, k));
 function openKeys(p, ck){
   const base = chunkReq(ck).filter(k => !newCovers(p, k) && !isDone(colCfg(k), p.cells[k] || {}));
   if(ck === 'am') return base.filter(k => !isFollow(p, k));
-  if(ck === 'pm') return [...followKeys(p), ...base];
+  if(ck === 'pm') return [...followKeys(p), ...(npoNeeded(p) && !npoDone(p) ? ['_npo'] : []), ...base];
   return base;
 }
 const chunkOpen = (p, ck) => openKeys(p, ck).length;
+/* Procedure tomorrow → “NPO @ midnight ordered?” flag on Diet (the current diet stays; this is just the reminder to place the NPO-after-midnight order) */
+const npoNeeded = p => !!p && p.cells && procSorted(p.cells.proc).some(it => procWhen(it.d) === 'tomorrow') && !/^npo/i.test(String((p.cells.diet || {}).t || '').trim());
+const npoDone = p => !!p && p.npoOk === addDays(state.boardDate, 1);
+const keyLabel = (p, k, ck) => k === '_npo' ? 'NPO @ midnight' : ck === 'pm' && isFollow(p, k) ? rvLabel(k) : colCfg(k).h;
+const keyCol = k => k === '_npo' ? 'diet' : k;
+function npoToggle(id){ const p = rowOf('p', id); if(!p) return; const on = !npoDone(p), d = addDays(state.boardDate, 1);
+  mutate(() => { const q = rowOf('p', id); if(on) q.npoOk = d; else delete q.npoOk; }, {label:`${p.bed}: NPO @ midnight ${on ? 'ordered ✓' : 'unchecked'}`}); }
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-npo]'); if(!b) return; e.preventDefault(); e.stopPropagation(); npoToggle(b.dataset.npo); }, true);
 const rvLabel = k => '↻ ' + colCfg(k).h;
 function revisitCellHTML(p){ const ks = followKeys(p); if(!ks.length) return '<div class="tc t-rv rv-none"></div>';
   return `<div class="tc t-rv">${ks.map(k => { const c = p.cells[k], st = SMAP[c.s]; return `<button type="button" class="rvchip" data-kind="p" data-id="${p.id}" data-col="${k}" style="--rv:${st.bg};--rvfg:${st.fg}" title="${esc(colCfg(k).h + ': ' + st.label + (c.t ? ' — ' + c.t : '') + ' · tap to update')}"><b>${esc(st.g)}</b>${esc(colCfg(k).h)}${c.t ? `<span>${esc(c.t)}</span>` : ''}</button>`; }).join('')}</div>`; }
@@ -3124,7 +3136,9 @@ const cellIsNA = (cell, col) => !!cell && (isStatusType(col.type) ? cell.s === '
 const newAdmitCellHTML = col => `<div class="tc t-newadm ${col.size || ''}" title="${esc(col.h)}: covered by today's admission — back to normal from tomorrow"><span class="nadpill">New admit</span></div>`;
 function cellHTML(cell, col, kind, id, ri, ci, ro){
   if(kind === 'p' && NEW_COVERED.has(col.k)){ const r = rowOf('p', id); if(newCovers(r, col.k)) return newAdmitCellHTML(col); }
-  const h = cellHTML0(cell, col, kind, id, ri, ci, ro);
+  let h = cellHTML0(cell, col, kind, id, ri, ci, ro);
+  if(kind === 'p' && col.k === 'diet'){ const r = rowOf('p', id); if(npoNeeded(r)){ const ok = npoDone(r);
+    h = h.replace(/<\/div>$/, `<button type="button" class="npoflag ${ok ? 'ok' : ''}" ${ro ? 'disabled' : `data-npo="${id}"`} title="${ok ? 'NPO after midnight ordered — tap to undo' : 'Procedure tomorrow — is the NPO-after-midnight order in? Tap once it is.'}">${ok ? '✓ NPO @ MN' : 'NPO @ MN?'}</button></div>`); } }
   return cellIsNA(cell, col) ? h.replace('class="tc ', 'class="tc tc-na ') : h;   // N/A cells are lightly greyed out
 }
 function cellHTML0(cell, col, kind, id, ri, ci, ro){
@@ -5114,8 +5128,8 @@ function showOutstanding(ck, onlyId){
   const h = `<h3>Outstanding${onlyId && list[0] ? ' · ' + esc(list[0].p.bed || '') : ''}</h3>
     <p class="muted" style="margin-top:-4px">${total ? `<b>${total}</b> open ${esc(scope)} across <b>${list.length}</b> patient${list.length === 1 ? '' : 's'}. Tap one to jump to it.` : `✓ Nothing outstanding — every ${esc(scope.replace(/boxes$/, 'box'))} is done.`} <span class="small">Services and Dispo notes are optional.</span></p>
     ${list.map(({p, by}) => `<div class="vsec"><div class="vhead">${esc(p.bed || '—')} <span class="muted" style="font-weight:500">${esc(p.intern || '')}${p.problem ? ' · ' + esc(p.problem) : ''}</span></div>
-      <div class="osrow">${by.map(b => `<span class="osck">${esc(CHUNK[b.c].label)}</span>${b.keys.map(k => `<button class="oschip ${b.c === 'pm' && isFollow(p, k) ? 'rv' : ''}" data-jump="${p.id}" data-col="${k}">${esc(b.c === 'pm' && isFollow(p, k) ? rvLabel(k) : colCfg(k).h)}</button>`).join('')}`).join('<span class="ossep"></span>')}</div></div>`).join('')}`;
-  const text = () => list.map(({p, by}) => `${p.bed || '—'}${p.intern ? ' (' + p.intern + ')' : ''}: ` + by.map(b => `${CHUNK[b.c].label} — ${b.keys.map(k => b.c === 'pm' && isFollow(p, k) ? rvLabel(k) : colCfg(k).h).join(', ')}`).join('; ')).join('\n') || 'Nothing outstanding';
+      <div class="osrow">${by.map(b => `<span class="osck">${esc(CHUNK[b.c].label)}</span>${b.keys.map(k => `<button class="oschip ${(b.c === 'pm' && isFollow(p, k)) || k === '_npo' ? 'rv' : ''}" data-jump="${p.id}" data-col="${keyCol(k)}">${esc(keyLabel(p, k, b.c))}</button>`).join('')}`).join('<span class="ossep"></span>')}</div></div>`).join('')}`;
+  const text = () => list.map(({p, by}) => `${p.bed || '—'}${p.intern ? ' (' + p.intern + ')' : ''}: ` + by.map(b => `${CHUNK[b.c].label} — ${b.keys.map(k => keyLabel(p, k, b.c)).join(', ')}`).join('; ')).join('\n') || 'Nothing outstanding';
   modal(h, [...(total ? [['Copy as text', '', () => copyText('Outstanding\n' + text())]] : []), ['Close', 'primary']], m => {
     m.classList.add('wide');
     m.addEventListener('click', e => { const b = e.target.closest('.oschip'); if(!b) return; closeModal(); if(ui.tab !== 'census') scGoTab('census'); jumpTo(b.dataset.jump, b.dataset.col); });
@@ -7030,7 +7044,7 @@ function cmdParse(input){
     const list = outstanding(ck, one && one.id), n = list.reduce((x, o) => x + o.by.reduce((m, b) => m + b.keys.length, 0), 0);
     return {nav:true, html:n ? `Show <b>${n}</b> outstanding ${ck ? CHUNK[ck].label + ' ' : ''}box${n === 1 ? '' : 'es'}${one ? ` for <b>${esc(one.bed)}</b>` : ` · ${list.length} patient${list.length === 1 ? '' : 's'}`}` : `✓ Nothing outstanding${one ? ' for ' + esc(one.bed) : ''}`,
       run:() => { showOutstanding(ck, one && one.id); return ''; },
-      sugg:list.slice(0, 6).map(o => ({label:`${esc(o.p.bed || '—')} <span class="muted">${esc(o.by.map(b => b.keys.map(k => colCfg(k).h).join(', ')).join(' · '))}</span>`, fill:`outstanding ${o.p.bed}`}))};
+      sugg:list.slice(0, 6).map(o => ({label:`${esc(o.p.bed || '—')} <span class="muted">${esc(o.by.map(b => b.keys.map(k => keyLabel(o.p, k, b.c)).join(', ')).join(' · '))}</span>`, fill:`outstanding ${o.p.bed}`}))};
   }
   if(v === 'pc'){
     if(!rest.length){ const left = pcPool().filter(p => !isPc(p));
@@ -8175,6 +8189,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:285, d:'2026-11-24', items:['Procedure <b>tomorrow</b> → the Diet box shows <b>“NPO @ MN ordered?”</b>. Tap it once the NPO-after-midnight order is in (it turns green ✓). The current diet stays as it is. Until it’s ticked it counts as an open PM item (and shows in outstanding). Not shown if the diet is already NPO.']},
   {v:284, d:'2026-11-24', items:['<b>Revisit / Panic → PM follow-ups.</b> In the AM boxes (Vitals, I/O, FSG, Lab Rev, Imaging…), marking <b>Needs revisit</b> or <b>Panic result</b> now counts as done for pre-charting — you’ve looked and acknowledged it — so pre-charted can tick. It then becomes a <b>PM item</b>: a <b>↻ Revisit</b> column in the PM view (tap a chip to update it), in Rounds’ PM card, in <b>outstanding</b>, and in the PM counts. The bed cell only turns green once it’s set to Complete or N/A.']},
   {v:283, d:'2026-11-24', items:['Avatar: <b>brachial</b> added to the PIV locations (it shows on the body map too).']},
   {v:282, d:'2026-11-24', items:['New <b>Left service</b> option in the selection menu (with Left hospital and Remove patient) — for a patient transferred to another service, e.g. on a day you were off. It warns if the transfer steps (accepting team agreed, transfer note, handoff, bed) aren’t done, and archives them as “Left service”.']},
