@@ -608,6 +608,8 @@ body.tkfull #hclocks{margin-right:4px}
 .tlgrid{position:absolute;top:0;bottom:0;left:var(--lw);pointer-events:none;z-index:0}
 .tlline{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
 .tlline.mid{background:var(--line2);width:2px}
+.tllab{box-shadow:-14px 0 0 var(--panel)}.tlline.sub{opacity:.45}.tlh.sub{font-weight:600;opacity:.75}
+.tlzoom{display:flex;align-items:center;gap:6px}.tlzoom[hidden]{display:none}.tlzoom .seg button{padding:4px 9px}
 .tlpast{position:absolute;top:0;bottom:0;background:rgba(127,135,150,.09)}
 .tlnow{position:absolute;top:0;bottom:0;width:2px;background:#EA4335;z-index:2}
 .tlnow span{position:sticky;top:30px;display:inline-block;transform:translateX(-50%);margin-top:-1px;background:#EA4335;color:#fff;font-size:10px;font-weight:800;padding:0 5px;border-radius:7px;font-style:normal}
@@ -1749,6 +1751,7 @@ body.touch .lrow{padding:14px 16px}
         </div>
         <div class="tkbar"><div class="tkstats" id="tkStats"></div><div class="spacer"></div><span id="tkFilter" class="muted small"></span>
           <div class="seg" id="tkSeg"><button data-v="timeline" title="Whole night at a glance — one lane per bed">Timeline</button><button data-v="time" class="on">By time</button><button data-v="patient">By patient</button></div>
+          <div class="tlzoom" id="tkZoom" hidden><span class="muted small">Show</span><div class="seg"><button data-z="0" title="Fit the whole shift on screen">Whole shift</button><button data-z="8">8 h</button><button data-z="4">4 h</button><button data-z="2">2 h</button><button data-z="1">1 h</button></div><button class="btn sm" id="tkZoomNow" title="Scroll to now (or to the first open task when the shift hasn't started)">◎ Now</button></div>
           <label class="grpchk"><input type="checkbox" id="tkShowDone" checked> Show done</label>
           <button class="btn sm" id="tkClearDone">Clear done</button>
           <button class="btn sm" id="tkFull" title="Full screen (Shift+F) — Esc to exit"><svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" style="vertical-align:-2px"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> <span>Full screen</span></button>
@@ -1781,7 +1784,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '295';
+const APP_VERSION = '296';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -5902,7 +5905,9 @@ function diagnostics(){
    Tasks are the same records as to-dos (state.todos) with a typed bed, an optional team and a result,
    so alerts, the clock button, Undo and the activity log all work for them too. */
 const DEFAULT_CHIPS = ['F/u labs','Vitals check','UOP check','Recheck K/Mg','Repeat lactate','F/u blood cx','Check FSG','Reassess pain','Reassess mental status','F/u imaging','Call family'];
-const tkUI = {view:(() => { try{ return localStorage.getItem(`${KEY_PREFIX}.tkView`) || 'time'; }catch(e){ return 'time'; } })(), showDone:true, bed:''};
+const tkUI = {view:(() => { try{ return localStorage.getItem(`${KEY_PREFIX}.tkView`) || 'time'; }catch(e){ return 'time'; } })(), showDone:true, bed:'',
+  zoom:(() => { try{ return +localStorage.getItem(`${KEY_PREFIX}.tlZoom`) || 0; }catch(e){ return 0; } })(), tlScroll:true};   // v296: timeline zoom — 0 = whole shift, else hours on screen
+const TL_ZOOMS = [0, 8, 4, 2, 1];
 // score candidate times: nearest to now, preferring the future
 const tScore = d => { const h = (d - Date.now()) / 3600000; return h >= 0 ? h : -h * 1.6; };
 function nearestDue(h, m){
@@ -6036,12 +6041,14 @@ let tkPop = null;
 function closeTkPop(){ if(tkPop){ tkPop.remove(); tkPop = null; } }
 function timelineHTML(list){
   const timed = list.filter(t => t.due), [a, b] = shiftWindow(timed), span = b - a;
-  const LW = 150, NT = 120, OFF = 26, avail = ($('#tkList').clientWidth || 1200) - LW - NT - 34 - 2 * OFF, W0 = Math.max(600, avail), W = W0 + 2 * OFF, X = d => OFF + Math.round((new Date(d) - a) / span * W0);
+  const LW = 150, NT = 120, OFF = 26, avail = Math.max(300, ($('#tkList').clientWidth || 1200) - LW - NT - 34 - 2 * OFF), spanH = span / 3600e3;
+  const W0 = tkUI.zoom && tkUI.zoom < spanH ? Math.round(avail * spanH / tkUI.zoom) : Math.max(600, avail), W = W0 + 2 * OFF, X = d => OFF + Math.round((new Date(d) - a) / span * W0), pxH = W0 / spanH;
+  const step = pxH >= 260 ? 15 : pxH >= 130 ? 30 : pxH >= 48 ? 60 : 120, lstep = pxH >= 520 ? 15 : pxH >= 130 ? 30 : pxH >= 48 ? 60 : 120;   // finer ticks as you zoom in
   const rows = {}; list.forEach(t => (rows[bedKey(t)] = rows[bedKey(t)] || []).push(t));
   const keys = Object.keys(rows).sort((x, y) => x.localeCompare(y, undefined, {numeric:true}));
-  let hours = ''; for(let t = new Date(a); t <= b; t.setHours(t.getHours() + 1)){ const x = X(t); hours += `<span class="tlh" style="left:${x}px">${pad(t.getHours())}:00</span>`; }
+  let hours = ''; for(let t = new Date(a); t <= b; t.setMinutes(t.getMinutes() + lstep)){ if(lstep === 120 && t.getHours() % 2) continue; hours += `<span class="tlh ${t.getMinutes() ? 'sub' : ''}" style="left:${X(t)}px">${pad(t.getHours())}:${pad(t.getMinutes())}</span>`; }
   const now = Date.now(), nowX = now >= a && now <= b ? X(now) : null;
-  let grid = ''; for(let t = new Date(a); t <= b; t.setHours(t.getHours() + 1)) grid += `<i class="tlline ${t.getHours() === 0 ? 'mid' : ''}" style="left:${X(t)}px"></i>`;
+  let grid = ''; for(let t = new Date(a); t <= b; t.setMinutes(t.getMinutes() + Math.min(step, 60))) grid += `<i class="tlline ${t.getMinutes() ? 'sub' : t.getHours() === 0 ? 'mid' : ''}" style="left:${X(t)}px"></i>`;
   if(nowX !== null) grid += `<i class="tlpast" style="left:${OFF}px;width:${nowX - OFF}px"></i><i class="tlnow" style="left:${nowX}px"></i>`;
   if(nowX !== null) hours += `<span class="tlnowlab" style="left:${nowX}px">${pad(new Date().getHours())}:${pad(new Date().getMinutes())}</span>`;
   const LANE = 26;
@@ -6137,6 +6144,7 @@ function renderTasks(){
   $('#tkStats').innerHTML = all.length ? `<b>${all.length}</b> Task${all.length===1?'':'s'} · <b>${open.length}</b> Open${nE ? ` · <span class="pricount emergent">‼ ${nE} Emergent</span>` : ''}${nU ? ` · <span class="pricount urgent">! ${nU} Urgent</span>` : ''}${over ? ` · <b class="red">${over} Overdue</b>` : ''} · <b>${hourN}</b> Due in the next hour · <b>${done}</b> Done
     <div class="tkprog"><i style="width:${all.length ? Math.round(done / all.length * 100) : 0}%"></i></div>` : '<span class="muted">No tasks yet — add them above as they are signed out to you.</span>';
   document.querySelectorAll('#tkSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === tkUI.view));
+  $('#tkZoom').hidden = tkUI.view !== 'timeline'; document.querySelectorAll('#tkZoom [data-z]').forEach(b => b.classList.toggle('on', +b.dataset.z === tkUI.zoom)); $('#tkZoomNow').hidden = !tkUI.zoom;
   $('#tkShowDone').checked = tkUI.showDone;
   let list = all.filter(t => tkUI.showDone || !t.done); if(tkUI.bed) list = list.filter(t => bedKey(t) === tkUI.bed);
   $('#tkFilter').innerHTML = tkUI.bed ? `Showing <b>${esc(tkUI.bed)}</b> <button class="linkbtn" id="tkClearFilter">show all</button>` : '';
@@ -6169,9 +6177,20 @@ function renderTasks(){
       h += `<div class="tkpat"><div class="tkpathead"><button class="tkbed ${p ? 'linked' : ''}" data-tkbed="${esc(k)}">${esc(todoWhere(L[0]))}</button>${team ? `<span class="tkteam">${esc(team)}</span>` : ''}${p ? `<span class="tkcensus" title="Linked to the census">🔗 On census${p.intern ? ' · ' + esc(p.intern) : ''}</span>${p.problem ? `<span class="muted">${esc(p.problem)}</span>` : ''}` : (() => { const ad = admitByBed(todoWhere(L[0])); return ad ? `<span class="tkcensus" title="Logged on the Admissions tab">${isHold(ad) ? 'Moonlighter hold ' + aTag(ad) : 'Admission #' + (ad.seq || '?')}</span>${ad.problem ? `<span class="muted">${esc(ad.problem)}</span>` : ''}` : admitOnly ? '' : `<button class="linkbtn" data-tklinkgrp="${L[0].id}">Link to census…</button>`; })()}<span class="tkpatn">${o ? `${o} open` : 'all done ✓'} · ${L.length}</span><button class="linkbtn" data-tkaddfor="${esc(todoWhere(L[0]))}" data-team="${esc(team || '')}">+ task</button></div>${L.map(t => row(t, false)).join('')}</div>`; });
   }
   $('#tkList').innerHTML = h;
+  if(tkUI.view === 'timeline' && tkUI.tlScroll){ tkUI.tlScroll = false; tlScrollNow(); }
   if(tkFocusAfter){ const el = document.querySelector(`#tkList [data-tk="${tkFocusAfter.id}"] ${tkFocusAfter.sel}`); tkFocusAfter = null; if(el) el.focus(); }
 }
 let tkFocusAfter = null;
+// v296: timeline zoom
+function tlScrollNow(){ const L = $('#tkList'), n = L && L.querySelector('.tlnow'); if(!L) return;
+  if(!n){ // now is outside the shift: go to the first open task instead (or the start)
+    const xs = [...L.querySelectorAll('.tltrack .tlm:not(.done)')].map(m => parseFloat(m.style.left) || 0); L.scrollLeft = xs.length ? Math.max(0, Math.min(...xs) - 40) : 0; return; }
+  L.scrollLeft = Math.max(0, n.offsetLeft - Math.min(120, (L.clientWidth - 150) * .15)); }
+function setTlZoom(z, anchorFrac){ const L = $('#tkList'), before = L ? (L.scrollLeft + (anchorFrac == null ? L.clientWidth / 2 : anchorFrac)) / Math.max(1, L.scrollWidth) : 0;
+  tkUI.zoom = z; try{ localStorage.setItem(`${KEY_PREFIX}.tlZoom`, String(z)); }catch(e){}
+  closeTkPop(); renderTasks();
+  if(L){ if(!z) L.scrollLeft = 0; else L.scrollLeft = Math.max(0, before * L.scrollWidth - (anchorFrac == null ? L.clientWidth / 2 : anchorFrac)); } }
+const tlZoomStep = dir => { const i = TL_ZOOMS.indexOf(tkUI.zoom), j = Math.max(0, Math.min(TL_ZOOMS.length - 1, (i < 0 ? 0 : i) + dir)); return TL_ZOOMS[j]; };
 /* v293: ✎ Edit a task — patient, text, priority, date + time, team, result; repeats can take the same change */
 function editTaskModal(id, back){
   const t = state.todos.find(x => x.id === id); if(!t) return;
@@ -6292,7 +6311,14 @@ function editChips(){
   $('#tkNextPt').onclick = () => { bed.value = ''; delete bed.dataset.other; delete bed.dataset.none; delete team.dataset.touched; team.value = (state.settings.team || '').trim(); txt.value = ''; tm.value = ''; rep.value = '0'; preview(); bed.focus(); };
   $('#tkChips').addEventListener('click', e => { if(e.target.id === 'tkChipEdit'){ editChips(); return; }
     const c = e.target.closest('[data-chip]'); if(!c) return; txt.value = txt.value.trim() ? `${txt.value.trim()} ${c.dataset.chip}` : c.dataset.chip; preview(); txt.focus(); txt.setSelectionRange(txt.value.length, txt.value.length); });
-  $('#tkSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(!b) return; closeTkPop(); tkUI.view = b.dataset.v; try{ localStorage.setItem(`${KEY_PREFIX}.tkView`, tkUI.view); }catch(err){} renderTasks(); });
+  $('#tkZoom').addEventListener('click', e => { const z = e.target.closest('[data-z]'); if(z){ setTlZoom(+z.dataset.z); if(+z.dataset.z) tlScrollNow(); return; } if(e.target.closest('#tkZoomNow')) tlScrollNow(); });
+  { const L = $('#tkList');   // Ctrl/⌘ + scroll wheel, or pinch on the iPad, zooms the timeline
+    L.addEventListener('wheel', e => { if(tkUI.view !== 'timeline' || !(e.ctrlKey || e.metaKey)) return; e.preventDefault(); if(L._zw) return; L._zw = setTimeout(() => { L._zw = 0; }, 180);
+      const z = tlZoomStep(e.deltaY < 0 ? 1 : -1); if(z !== tkUI.zoom) setTlZoom(z, e.clientX - L.getBoundingClientRect().left); }, {passive:false});
+    let g0 = null; L.addEventListener('gesturestart', e => { if(tkUI.view !== 'timeline') return; e.preventDefault(); g0 = {z:tkUI.zoom, x:e.clientX - L.getBoundingClientRect().left}; });
+    L.addEventListener('gesturechange', e => { if(g0) e.preventDefault(); });
+    L.addEventListener('gestureend', e => { if(!g0) return; e.preventDefault(); const n = e.scale > 1.25 ? 1 : e.scale < .8 ? -1 : 0, x = g0.x; g0 = null; if(n){ const z = tlZoomStep(n * Math.max(1, Math.round(Math.abs(Math.log2(e.scale))))); if(z !== tkUI.zoom) setTlZoom(z, x); } }); }
+  $('#tkSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(!b) return; closeTkPop(); tkUI.tlScroll = true; tkUI.view = b.dataset.v; try{ localStorage.setItem(`${KEY_PREFIX}.tkView`, tkUI.view); }catch(err){} renderTasks(); });
   $('#tkShowDone').addEventListener('change', e => { tkUI.showDone = e.target.checked; renderTasks(); });
   $('#tkCopy').onclick = () => copyText(signBackText());
   $('#tkFull').onclick = () => tkFullOn() ? exitTkFull() : enterTkFull();
@@ -8318,6 +8344,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:296, d:'2026-11-25', items:['<b>Timeline zoom</b> — in the Timeline view, pick how much time fits on screen: <b>Whole shift · 8 h · 4 h · 2 h · 1 h</b>. Zoomed in, the timeline scrolls sideways, opens at now, adds 30- and 15-minute marks, and <b>◎ Now</b> jumps back. Also Ctrl/⌘ + scroll wheel on a desktop, or pinch on the iPad. Your choice is remembered.']},
   {v:295, d:'2026-11-25', items:['Timeline task pop-up: <b>✓ Done</b> is now <b>✓ Complete</b>.']},
   {v:294, d:'2026-11-25', items:['Timeline task pop-up: the <b>✓ Done</b> button no longer spills off the edge — the pop-up is a little wider and its buttons wrap if they need to.']},
   {v:293, d:'2026-11-25', items:['<b>Edit a task</b> — every task now has a <b>✎</b> button (Tasks list, the timeline pop-up and the census ⏰ to-do lists) that opens an editor: move it to another patient, change the text, priority, date and time, team, or result. A repeating task can pass the change to its other open repeats.']},
