@@ -778,6 +778,10 @@ body.touch .gttsearch input{font-size:16px;padding:9px 11px}
 .gttpill.g-press{border-color:rgba(234,67,53,.45)}
 .tc.t-ldt{justify-content:flex-start;font-weight:600}
 .tc.t-ldt{position:relative;padding-right:28px}
+/* v301: compact Avatar column on the census — wraps to 2 lines instead of one very wide line (full list on hover / tap) */
+#censusGrid .tc.t-ldt{white-space:normal;width:158px;min-width:158px;max-width:158px;box-sizing:border-box}
+#censusGrid .tc.t-ldt .txt{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;white-space:normal;font-size:11.5px;line-height:1.2;word-break:normal;overflow-wrap:anywhere}
+body.touch #censusGrid .tc.t-ldt{width:166px;min-width:166px;max-width:166px}
 .avbtn{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:22px;height:22px;border-radius:6px;border:1px solid var(--line2);background:var(--panel);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:var(--accent)}
 .avbtn svg{width:13px;height:13px;fill:currentColor}
 .avbtn:hover{border-color:var(--accent)}
@@ -1799,7 +1803,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '300';
+const APP_VERSION = '301';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -8424,6 +8428,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:301, d:'2026-11-25', items:['Census: the <b>Avatar</b> column is narrower — lines wrap onto two lines instead of stretching the column. Hover (or open the cell / body map) for the full list.']},
   {v:300, d:'2026-11-25', items:['<b>Last BM</b> now turns light red (and gets the “No BM” flag) once the last BM was <b>2 or more days</b> ago — e.g. 11/23 on 11/25. Boards still on the old default of 3 days were moved to 2; change it in ⚙ Settings → Flag no BM after (days).']},
   {v:299, d:'2026-11-25', items:['The light-red <b>Last BM</b> / <b>T&amp;S</b> cells now also show in <b>Rounds</b> (Classic and Split) — before, the red only appeared on the Census grid.']},
   {v:298, d:'2026-11-25', items:['Split Rounds: the <b>x / y done</b> pill on each section turns <b>light orange</b> when 1–2 items are left and <b>light green</b> when the section is complete (also on the Discharge and Transfer cards).']},
