@@ -1781,7 +1781,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '294';
+const APP_VERSION = '295';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6069,7 +6069,7 @@ function openTkPop(btn, id){
     <div class="ed"><input type="text" data-pres value="${esc(t.result || '')}" placeholder="Result / note"></div>
     <div class="ed"><label class="muted small">Time</label><input type="text" data-ptime class="hhmm" inputmode="numeric" maxlength="5" value="${t.due ? hhmmOf(t.due) : ''}" placeholder="HH:MM" style="width:90px"></div>
     <div class="row2"><span style="display:flex;gap:6px">${t.done ? '' : '<button class="btn sm" data-psnz="15">+15</button><button class="btn sm" data-psnz="60">+1h</button>'}<button class="btn sm" data-pedit>✎ Edit…</button><button class="btn sm danger" data-pdel>Delete</button></span>
-      <button class="btn sm primary" data-pdone>${t.done ? 'Reopen' : '✓ Done'}</button></div>`;
+      <button class="btn sm primary" data-pdone>${t.done ? 'Reopen' : '✓ Complete'}</button></div>`;
   document.body.appendChild(tkPop);
   const r = btn.getBoundingClientRect(), w = tkPop.offsetWidth, h = tkPop.offsetHeight;
   let x = Math.min(r.left, innerWidth - w - 8), y = r.bottom + 6; if(y + h > innerHeight - 8) y = Math.max(8, r.top - h - 6);
@@ -8318,6 +8318,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:295, d:'2026-11-25', items:['Timeline task pop-up: <b>✓ Done</b> is now <b>✓ Complete</b>.']},
   {v:294, d:'2026-11-25', items:['Timeline task pop-up: the <b>✓ Done</b> button no longer spills off the edge — the pop-up is a little wider and its buttons wrap if they need to.']},
   {v:293, d:'2026-11-25', items:['<b>Edit a task</b> — every task now has a <b>✎</b> button (Tasks list, the timeline pop-up and the census ⏰ to-do lists) that opens an editor: move it to another patient, change the text, priority, date and time, team, or result. A repeating task can pass the change to its other open repeats.']},
   {v:292, d:'2026-11-25', items:['<b>Last BM</b> turns light red when the last BM was more than 2 days ago, and <b>T&amp;S</b> turns light red once it was collected 3 or more days ago.']},
