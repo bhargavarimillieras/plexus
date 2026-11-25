@@ -178,6 +178,10 @@ th.rvh{min-width:150px}
 body.touch .npoflag{font-size:11px;padding:2px 8px}
 .tc[data-col=diet]:has(.npoflag){flex-direction:column;justify-content:center;height:auto;min-height:31px;padding-top:3px;padding-bottom:3px}
 .arrna{font-size:11.5px;color:var(--muted);white-space:nowrap;font-style:italic}
+.savebox{border:1.5px solid var(--accent);background:var(--info-bg);border-radius:10px;padding:12px 14px;margin:8px 0 10px}
+.setdet{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0}
+.setdet summary{cursor:pointer;list-style-position:outside}
+.setdet[open] summary{margin-bottom:6px}
 .pcchk{flex:none;width:19px;height:19px;border-radius:50%;border:1.5px solid var(--line2);background:var(--panel);color:transparent;font:900 11px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;display:grid;place-items:center;padding:0;transition:background .12s,border-color .12s}
 .pcchk:hover{border-color:#34A853;color:#34A85399}
 .pcchk.on{background:#34A853;border-color:#34A853;color:#fff}
@@ -1768,7 +1772,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '289';
+const APP_VERSION = '290';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4811,9 +4815,21 @@ function agoText(iso){
   if(m < 1) return 'just now'; if(m < 60) return `${m} min ago`;
   const h = Math.round(m/60); if(h < 48) return `${h}h ago`; return `${Math.round(h/24)}d ago`;
 }
+/* Full backup = everything: rotations (name, block, schedule), every board, tasks, settings, logs. This is what every “Back up” button makes. */
+const fullBackupName = () => { const t = new Date(), r = ROTS[activeType], what = r ? `${r.block ? 'Block ' + r.block + ' ' : ''}${r.name}` : typeOf(activeType).short || typeOf(activeType).label;
+  return `Plexus ${SANDBOX ? 'SANDBOX ' : ''}FULL backup - ${what} - ${todayISO()} ${pad(t.getHours())}${pad(t.getMinutes())}.json`.replace(/[\\/:*?"<>|]/g, '').replace('–', '-'); };
 function backupNow(why){
+  const t = new Date(), name = fullBackupName(), pkg = collectAll(); pkg.backupKind = 'full';
+  download(name, JSON.stringify(pkg), 'application/json');
+  logAdd([{cat:'system', msg:`Downloaded full backup ${name}${why === 'quiet' ? ' (automatic, New Shift)' : ''}`}]);
+  try{ localStorage.setItem(backupKeyFor(activeType), t.toISOString()); localStorage.setItem(FILESBAK_KEY, t.toISOString()); }catch(e){}
+  renderBackupInd(); try{ touchSync(); renderChrome(); }catch(e){}
+  if(why !== 'quiet') toast(`💾 Full backup downloaded: ${name}`);
+}
+// rarely needed: just the open board (no rotations, no other boards)
+function backupBoardOnly(why){
   const t = new Date();
-  const name = `Plexus ${SANDBOX ? 'SANDBOX ' : ''}backup ${typeOf(activeType).label.replace('–','-')} ${state.boardDate} ${pad(t.getHours())}${pad(t.getMinutes())}.json`;
+  const name = `Plexus ${SANDBOX ? 'SANDBOX ' : ''}board-only backup ${typeOf(activeType).label.replace('–','-')} ${state.boardDate} ${pad(t.getHours())}${pad(t.getMinutes())}.json`;
   download(name, JSON.stringify({...state, backupSavedAt:t.toISOString(), appVersion:APP_VERSION, edition:EDITION, log:actLog}, null, 1), 'application/json');
   logAdd([{cat:'system', msg:`Downloaded backup ${name}${why === 'quiet' ? ' (automatic, New Shift)' : ''}`}]);
   try{ localStorage.setItem(backupKeyFor(activeType), t.toISOString()); }catch(e){}
@@ -4878,7 +4894,16 @@ function settings(){
       <label class="muted">Move it to <select id="mvTo">${SITES.map(x => `<optgroup label="${esc(x.label)}">${SHIFT_TYPES.filter(t => t.site === x.k && t.k !== activeType).map(t => `<option value="${t.k}">${esc(t.label)}${boardCount(t.k) ? ' (has a board)' : ''}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <button class="btn sm" id="mvGo">Move board</button><span class="muted small">For when a board was filed under the wrong shift type — patients, tasks, history and log all move.</span></div>
     <hr>
-    <b>Data file <span class="muted" style="font-weight:500">— USB drive or network folder</span></b>
+    <b>Save &amp; move your data</b>
+    <div class="savebox">
+      <p style="margin:0 0 8px"><b>💾 Full backup</b> = <b>everything</b>: your rotations (name, block, schedule), every board, tasks, settings and shortcuts. Use it to move between the iPad and a computer, or to keep a safe copy. Files are named <b>Plexus FULL backup - … .json</b>.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary" id="bExport">💾 Save full backup</button>
+        <button class="btn" id="bImport">📂 Restore from a backup file…</button>
+      </div>
+      <p class="muted small" style="margin:8px 0 0">Restore takes a full backup, or an older <i>one-board</i> file (named like “Plexus backup Bellevue CCU 2026-11-24 1901.json”) — but that kind only brings back the one board, not the rotation. On the iPad the same buttons are <b>More → Back up to Files</b> and <b>More → Restore from Files</b>.</p>
+    </div>
+    <details class="setdet"><summary><b>Live data file</b> <span class="muted">— Chrome / Edge: keep working in one file that saves as you go</span></summary>
     <p class="muted" style="margin:4px 0 8px">Keep everything (your rotations and boards, settings and shortcuts) in one file you carry with you. Every change saves to it automatically. On another computer, open this board and choose <b>Open my data file</b>. Works in Chrome and Edge. Use an encrypted, hospital-approved drive or folder.</p>
     <div class="dfstat ${DF.handle ? DF.status : 'off'}">${esc(dfStatusText())}</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${dfSupported() ? `
@@ -4889,6 +4914,7 @@ function settings(){
       <button class="btn" data-df="create" title="Save everything on this computer now into a new file">${DF.handle ? 'Save a copy to a different file…' : 'Save this board to a file…'}</button>
       ${DF.handle ? '<button class="btn danger" data-df="stop">Stop using the file</button>' : ''}` : ''}
     </div>
+    </details>
     <hr>
     <b>Backups</b>
     <p class="muted" style="margin:4px 0 8px">Your board saves automatically in this browser, but that copy is lost if browser data is cleared (common on hospital workstations at logoff). Backup files are downloaded to your Downloads folder — restore one on any computer. Last backup: <b>${lastBackup() ? new Date(lastBackup()).toLocaleString() + ' (' + agoText(lastBackup()) + ')' : 'never'}</b>.</p>
@@ -4904,15 +4930,15 @@ function settings(){
       </div>
       <div style="margin-top:8px"><button class="btn sm primary" data-df="bklist">🗂 View &amp; restore backups…</button> <span class="muted small">${abkLastAt ? 'Last automatic backup ' + agoText(abkLastAt) : 'No automatic backup yet'}</span></div>
     </div>
-    <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" id="sAutoBk" ${s.autoBackup ? 'checked' : ''}> Automatically download a backup every time I start a New Shift</label>
+    <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" id="sAutoBk" ${s.autoBackup ? 'checked' : ''}> Automatically download a <b>full backup</b> every time I start a New Shift</label>
     <label style="display:flex;gap:6px;align-items:center;margin:6px 0 10px">Show “Backup due” after <input type="number" id="sBkHrs" min="1" value="${s.backupWarnHours}" style="width:70px"> hours without a backup</label>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn primary" id="bExport">Back up now (.json)</button>
-      <button class="btn" id="bImport">Restore backup / settings…</button>
-      <button class="btn" id="bCsv">Export census (.csv for Excel)</button>
-      <button class="btn" id="bSetExp" title="Saves team, interns, caps, columns, options and layout for all shift types — no patient data">Export settings only (.json)</button>
-      <input type="file" id="bFile" accept=".json,application/json" hidden>
-    </div>
+    <details class="setdet"><summary><b>Other exports</b> <span class="muted">— this board only, Excel, settings only</span></summary>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+      <button class="btn" id="bBoardOnly" title="Just the open board — no rotations, no other boards. Usually you want 💾 Save full backup instead.">This board only (.json)</button>
+      <button class="btn" id="bCsv">Census for Excel (.csv)</button>
+      <button class="btn" id="bSetExp" title="Saves team, interns, caps, columns, options and layout for all shift types — no patient data">Settings only, no patients (.json)</button>
+    </div></details>
+    <input type="file" id="bFile" accept=".json,application/json" hidden>
     <hr>
     <b>Privacy &amp; printing</b>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0">
@@ -4963,6 +4989,7 @@ function settings(){
       il.addEventListener('click', e => { const b = e.target.closest('[data-irm]'); if(b) b.closest('.irow').remove(); });
       il.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.matches('[data-iname],[data-icap]')){ e.preventDefault(); m.querySelector('#sAddIntern').click(); } });
       m.querySelector('#bExport').onclick = () => { closeModal(); backupNow(); };
+      m.querySelector('#bBoardOnly').onclick = () => { closeModal(); backupBoardOnly(); };
       m.querySelector('#bSetExp').onclick = () => exportSettings();
       m.querySelector('#mvGo').onclick = () => { const to = m.querySelector('#mvTo').value; closeModal(); moveBoard(to); };
       m.querySelector('#sCmdDock').onchange = e => cmdDockSet(e.target.value);
@@ -7040,7 +7067,7 @@ function cmdParse(input){
     signout:['Copy the morning sign-out list', () => { copyText(soText(state.boardDate)); return 'Sign-out list copied'; }],
     full:['Tasks full screen on / off', () => { if(ui.tab !== 'tasks' && !scGoTab('tasks')) return ''; tkFullOn() ? exitTkFull() : enterTkFull(); return ''; }],
     rounds:['Start Rounds', () => { if(!state.patients.length) return 'No patients on the census'; openRounds(); return ''; }],
-    backup:['Back up now (download + automatic copy)', () => { backupNow(); autoBackup('manual', true); return ''; }],
+    backup:['Save a full backup (everything) + automatic copy', () => { backupNow(); autoBackup('manual', true); return ''; }],
     print:['Print the sign-out sheet', () => { printSheet(); return ''; }], take:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], leaving:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], hide:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }], lock:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }],
     whatsnew:['What’s new in this version', () => { whatsNew(null); return ''; }], changes:['What’s new in this version', () => { whatsNew(null); return ''; }],
     newshift:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], start:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], precharting:['Start pre-charting for the next day…', () => { newDay(); return ''; }],
@@ -7715,7 +7742,7 @@ const filesBackupDue = () => { if(!isTouch() || !state) return false; const any 
 function filesBackup(){
   const t = new Date(), pkg = collectAll(); pkg.backupKind = 'files';
   const r = ROTS[activeType], what = r ? `${r.block ? 'Block ' + r.block + ' ' : ''}${r.name}` : typeOf(activeType).short;
-  const name = `Plexus ${SANDBOX ? 'SANDBOX ' : ''}backup - ${what} - ${todayISO()} ${pad(t.getHours())}${pad(t.getMinutes())}.json`.replace(/[\\/:*?"<>|]/g, '');
+  const name = fullBackupName(); void what;
   const txt = JSON.stringify(pkg), done = how => { try{ localStorage.setItem(FILESBAK_KEY, t.toISOString()); }catch(e){}
     logAdd([{cat:'system', msg:`Backed up everything — ${name}${how ? ' (' + how + ')' : ''}`}]); touchSync(); try{ renderChrome(); }catch(e){} };
   let f = null; try{ f = new File([txt], name, {type:'application/json'}); }catch(e){}
@@ -8217,6 +8244,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:290, d:'2026-11-25', items:['<b>Every “Back up” now saves a full backup</b> — rotations (with block and schedule), every board, tasks and settings — named <b>Plexus FULL backup - … .json</b>. That includes ⚙ Settings, the header backup button, the command bar and the automatic New Shift download. (Before, “Back up now” saved only the open board.)', '⚙ Settings has a clearer <b>Save &amp; move your data</b> section: <b>💾 Save full backup</b> and <b>📂 Restore from a backup file…</b> up front; the live data file and the rarer exports (this board only, Excel, settings only) are folded away underneath.']},
   {v:289, d:'2026-11-25', items:['<b>Open my data file</b> now accepts a <b>one-board backup</b> (e.g. “Plexus backup Bellevue CCU 2026-11-24 1901.json” from ⬇ Download a backup or the automatic New Shift backup) and restores that board — before, it refused it with a message that was easy to miss. A file that isn’t a Plexus backup at all now gets a clear pop-up instead of a passing message.']},
   {v:288, d:'2026-11-25', items:['Fixed: on the start screen, questions like <b>“Which copy should the board use?”</b> (after Open my data file) appeared <i>behind</i> the start screen, so Plexus seemed to do nothing while it waited for an answer you couldn’t see. They — and messages — now appear on top.']},
   {v:287, d:'2026-11-25', items:['<b>Open my data file</b> from the start screen now goes straight into your board once the file loads. Before, it loaded the file but just redrew the start screen, so it looked like nothing had happened.']},
