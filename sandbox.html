@@ -622,6 +622,12 @@ body.tkfull #hclocks{margin-right:4px}
 .tlm.done{background:var(--head);color:var(--muted);text-decoration:line-through}.tlm.done b{text-decoration:none;background:#34A853;color:#fff}
 .tlm.sm{position:static;height:20px;max-width:calc(var(--nt) - 14px);font-size:11px;padding:0 7px}
 .tkpop{width:340px}
+.tkedit{display:grid;grid-template-columns:110px 1fr;gap:8px 12px;align-items:center;min-width:min(520px,80vw)}
+.tkedit label.f{margin:0;font-weight:700}.tkedit #teOther{grid-column:2}.tkedit .tecb{grid-column:1/-1;font-size:13px;display:flex;gap:6px;align-items:center}
+.tkedit .tkpri button[data-ppri="urgent"].on{background:#FF8A00;color:#fff}.tkedit .tkpri button[data-ppri="emergent"].on{background:#D93025;color:#fff}
+.tkedit .tkpri{justify-self:start}
+@media (max-width:600px){.tkedit{grid-template-columns:1fr}.tkedit #teOther{grid-column:1}}
+.tkrow .tkedbtn{font-size:15px}
 .tkpt{font-size:13px;margin:2px 0 8px;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
 /* night task manager */
 .tkclocks{display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap}
@@ -1774,7 +1780,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '292';
+const APP_VERSION = '293';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -5694,7 +5700,7 @@ function todoRowHTML(t, withWho){
     <span class="tddue ${st}" title="${t.due ? new Date(t.due).toLocaleString() : 'No due time'}">${esc(t.done ? 'done ' + hhmmOf(t.doneAt) : dueLabel(t))}</span>
     ${t.done ? '' : `<input type="time" class="tdtime" data-tdtime value="${hhmmOf(t.due)}" title="Due time">`}
     ${withWho && p ? `<button class="ib" data-tdedit="${t.pid}" title="All to-dos for this patient">⋯</button>` : ''}
-    <button class="ib" data-tddel title="Delete this to-do">✕</button></div>`;
+    <button class="ib" data-tdfull title="Edit this to-do — patient, text, priority, date/time">✎</button><button class="ib" data-tddel title="Delete this to-do">✕</button></div>`;
 }
 function wireTodoRows(root, rerender){
   root.addEventListener('change', e => {
@@ -5708,6 +5714,8 @@ function wireTodoRows(root, rerender){
     const row = e.target.closest('[data-td]');
     if(e.target.closest('[data-tdpri]') && row){ const t = state.todos.find(x => x.id === row.dataset.td); if(t){ updateTodo(t.id, {pri:nextPri(t.pri || '')}); rerender(); } return; }
     if(e.target.closest('[data-tddel]') && row){ deleteTodo(row.dataset.td); rerender(); toast('To-do deleted', true); return; }
+    if(e.target.closest('[data-tdfull]') && row){ const t = state.todos.find(x => x.id === row.dataset.td), pid = t && t.pid, inOne = !!root.closest('.modal') && !!root.closest('.modal').querySelector('#tdList');
+      editTaskModal(row.dataset.td, () => { if(inOne && pid) todoEditor(pid); else todoPanel(); }); return; }
     const ed = e.target.closest('[data-tdedit]'); if(ed){ closeModal(); todoEditor(ed.dataset.tdedit); return; }
     const j = e.target.closest('[data-tdjump]'); if(j){ const t = state.todos.find(x => x.id === j.dataset.tdjump), p = t && todoPatient(t); if(p){ closeModal(); if(rounds.open) closeRounds(); jumpToPatient(p.id); } }
   });
@@ -6059,7 +6067,7 @@ function openTkPop(btn, id){
     <div class="seg tkpri" style="margin-bottom:6px">${['', 'urgent', 'emergent'].map(p => `<button type="button" data-ppri="${p}" class="${(t.pri || '') === p ? 'on' : ''}">${PRI[p].label}</button>`).join('')}</div>
     <div class="ed"><input type="text" data-pres value="${esc(t.result || '')}" placeholder="Result / note"></div>
     <div class="ed"><label class="muted small">Time</label><input type="text" data-ptime class="hhmm" inputmode="numeric" maxlength="5" value="${t.due ? hhmmOf(t.due) : ''}" placeholder="HH:MM" style="width:90px"></div>
-    <div class="row2"><span style="display:flex;gap:6px">${t.done ? '' : '<button class="btn sm" data-psnz="15">+15</button><button class="btn sm" data-psnz="60">+1h</button>'}<button class="btn sm danger" data-pdel>Delete</button></span>
+    <div class="row2"><span style="display:flex;gap:6px">${t.done ? '' : '<button class="btn sm" data-psnz="15">+15</button><button class="btn sm" data-psnz="60">+1h</button>'}<button class="btn sm" data-pedit>✎ Edit…</button><button class="btn sm danger" data-pdel>Delete</button></span>
       <button class="btn sm primary" data-pdone>${t.done ? 'Reopen' : '✓ Done'}</button></div>`;
   document.body.appendChild(tkPop);
   const r = btn.getBoundingClientRect(), w = tkPop.offsetWidth, h = tkPop.offsetHeight;
@@ -6075,6 +6083,7 @@ function openTkPop(btn, id){
     if(b.dataset.ppri !== undefined){ closeTkPop(); tkUpdate(id, {pri:b.dataset.ppri}); return; }
     if(b.hasAttribute('data-pdone')){ const rv = res.value.trim(); closeTkPop(); tkUpdate(id, {done:!t.done, ...(rv !== (t.result || '') ? {result:rv} : {})}); return; }
     if(b.dataset.psnz){ const base = t.due ? Math.max(Date.now(), new Date(t.due).getTime()) : Date.now(), d = new Date(base + b.dataset.psnz * 60000); closeTkPop(); tkUpdate(id, {due:localISO(d)}); toast(`Snoozed to ${pad(d.getHours())}:${pad(d.getMinutes())}`); return; }
+    if(b.hasAttribute('data-pedit')){ closeTkPop(); editTaskModal(id); return; }
     if(b.hasAttribute('data-pdel')){ closeTkPop(); mutate(() => { state.todos = state.todos.filter(x => x.id !== id); }); toast('Task deleted', true); } });
   (t.done ? res : res).focus();
 }
@@ -6141,7 +6150,7 @@ function renderTasks(){
       <input class="tkres" data-tkres value="${esc(t.result || '')}" placeholder="${t.done ? 'Result / what you did' : 'Result / note'}">
       <span class="tddue ${s}">${esc(t.done ? 'done ' + hhmmOf(t.doneAt) : dueLabel(t))}</span>
       ${t.done ? '<span class="tksp"></span>' : `<button class="btn sm" data-tksnz="15" title="Snooze 15 min">+15</button><button class="btn sm" data-tksnz="60" title="Snooze 1 h">+1h</button>`}
-      <button class="ib" data-tkdel title="Delete">✕</button></div>`; };
+      <button class="ib tkedbtn" data-tkedit title="Edit this task — patient, text, priority, date/time, team">✎</button><button class="ib" data-tkdel title="Delete">✕</button></div>`; };
   let h = '';
   if(!list.length) h = all.length ? '<div class="muted tdnone">Nothing to show with these filters.</div>' : '';
   else if(tkUI.view === 'timeline'){ h = timelineHTML(list); }
@@ -6162,6 +6171,63 @@ function renderTasks(){
   if(tkFocusAfter){ const el = document.querySelector(`#tkList [data-tk="${tkFocusAfter.id}"] ${tkFocusAfter.sel}`); tkFocusAfter = null; if(el) el.focus(); }
 }
 let tkFocusAfter = null;
+/* v293: ✎ Edit a task — patient, text, priority, date + time, team, result; repeats can take the same change */
+function editTaskModal(id, back){
+  const t = state.todos.find(x => x.id === id); if(!t) return;
+  const cur = todoWhere(t), curP = todoPatient(t), noPt = !curP && !t.aid && !(t.bed || '').trim();
+  const pts = state.patients.filter(p => p.bed).slice().sort((a, b) => a.bed.localeCompare(b.bed, undefined, {numeric:true}));
+  const ads = state.admits.filter(a => a.date === state.boardDate && a.bed && !admitClosed(a) && !censusByBed(a.bed));
+  const known = new Set([...pts.map(p => p.bed.toUpperCase()), ...ads.map(a => a.bed.toUpperCase())]);
+  const selV = noPt ? '__none' : known.has(cur.toUpperCase()) ? cur : '__other';
+  const opt = (v, l) => `<option value="${esc(v)}" ${v.toUpperCase() === selV.toUpperCase() ? 'selected' : ''}>${l}</option>`;
+  const later = t.series ? state.todos.filter(x => x.series === t.series && x.id !== t.id && !x.done) : [];
+  const dDate = t.due ? t.due.slice(0, 10) : '', dTime = t.due ? hhmmOf(t.due) : '';
+  modal(`<h3>✎ Edit task</h3>
+    <div class="tkedit">
+      <label class="f">Patient</label>
+      <select id="teBed">${pts.length ? `<optgroup label="Census">${pts.map(p => opt(p.bed, `${esc(p.bed)}${p.intern ? ' — ' + esc(p.intern) : ''}${p.problem ? ' · ' + esc(p.problem.slice(0, 40)) : ''}`)).join('')}</optgroup>` : ''}
+        ${ads.length ? `<optgroup label="Admissions">${ads.map(a => opt(a.bed, `${esc(a.bed)} · ${esc(admLabel(a))}`)).join('')}</optgroup>` : ''}${opt('__other', 'Other bed / not on the board…')}${opt('__none', 'No patient (general task)')}</select>
+      <input type="text" id="teOther" placeholder="Bed" value="${selV === '__other' ? esc(cur) : ''}" ${selV === '__other' ? '' : 'hidden'}>
+      <label class="f">Task</label><input type="text" id="teText" value="${esc(t.text)}">
+      <label class="f">Priority</label><div class="seg tkpri" id="tePri">${['', 'urgent', 'emergent'].map(k => `<button type="button" data-ppri="${k}" class="${(t.pri || '') === k ? 'on' : ''}">${PRI[k].label}</button>`).join('')}</div>
+      <label class="f">Due</label><div style="display:flex;gap:8px;align-items:center"><input type="date" id="teDate" value="${dDate}"><input type="text" id="teTime" class="hhmm" inputmode="numeric" maxlength="5" placeholder="HH:MM" value="${dTime}" style="width:90px"><button type="button" class="btn sm" id="teNoTime">No time</button></div>
+      <label class="f">Team</label><input type="text" id="teTeam" value="${esc(t.team || '')}" placeholder="Team (optional)">
+      <label class="f">Result / note</label><input type="text" id="teRes" value="${esc(t.result || '')}" placeholder="Result / what you did">
+      ${later.length ? `<label class="tecb"><input type="checkbox" id="teAll" checked> Also change the patient, text, priority and team of the other ${later.length} open repeat${later.length === 1 ? '' : 's'}</label>` : ''}
+    </div>`,
+    [['Delete', 'danger', () => { closeModal(); tkDelete(t); return false; }], ['Cancel', '', () => { if(back) setTimeout(back, 0); }], ['Save', 'primary', () => {
+      const m = modalEl, v = id => m.querySelector(id).value.trim();
+      const text = v('#teText'); if(!text){ toast('The task needs some text'); m.querySelector('#teText').focus(); return false; }
+      const patch = {text, pri:m.querySelector('#tePri').dataset.p, team:v('#teTeam'), result:v('#teRes')};
+      const bs = m.querySelector('#teBed').value, bed = bs === '__none' ? '' : bs === '__other' ? v('#teOther') : bs;
+      if(bs === '__other' && !bed){ toast('Type the bed, or pick “No patient”'); m.querySelector('#teOther').focus(); return false; }
+      const p = censusByBed(bed), ad = !p && bed ? admitByBed(bed) : null;
+      const where = {pid:p ? p.id : null, aid:ad && !admitClosed(ad) ? ad.id : '', bed:p ? '' : bed};
+      const tm = m.querySelector('#teTime'); if(tm.value.trim()) finishHHMM(tm);
+      const tv = tm.value.trim(), dv = m.querySelector('#teDate').value;
+      if(tv && !parseHHMM(tv)){ toast('Use HH:MM, 24-hour — e.g. 21:00'); tm.focus(); return false; }
+      let due = '';
+      if(tv){ if(dv && dv !== dDate) due = `${dv}T${tv}`;            // a new date was picked: use it as typed
+        else if(dv && tv === dTime) due = t.due;                       // unchanged
+        else if(dv && dDate) due = `${dv}T${tv}`;                      // same day, new time
+        else due = localISO(parseHHMM(tv)); }                          // no date yet: the next time it comes round on this shift
+      else if(dv && dv !== dDate){ toast('Add a time for that date (HH:MM)'); tm.focus(); return false; }
+      const all = later.length && m.querySelector('#teAll').checked;
+      mutate(() => { const T = state.todos.find(x => x.id === id); if(!T) return;
+        Object.assign(T, patch, where); if(due !== (T.due || '')){ T.due = due; alertedTodos.delete(id); }
+        if(all) state.todos.forEach(x => { if(x.series === T.series && x.id !== id && !x.done) Object.assign(x, {text, pri:patch.pri, team:patch.team}, where); }); },
+        {label:`Edited task “${text}” — ${bed || 'no patient'}`, cat:'todo'});
+      toast('Task updated', true); if(back) setTimeout(back, 0);
+    }]], m => {
+      const pri = m.querySelector('#tePri'); pri.dataset.p = t.pri || '';
+      pri.addEventListener('click', e => { const b = e.target.closest('[data-ppri]'); if(!b) return; pri.dataset.p = b.dataset.ppri; pri.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); });
+      const bs = m.querySelector('#teBed'), ot = m.querySelector('#teOther');
+      bs.addEventListener('change', () => { ot.hidden = bs.value !== '__other'; if(!ot.hidden) ot.focus(); });
+      m.querySelector('#teNoTime').onclick = () => { m.querySelector('#teTime').value = ''; m.querySelector('#teDate').value = ''; };
+      m.querySelectorAll('input[type=text]').forEach(i => i.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); m.querySelector('.actions .btn.primary').click(); } }));
+      setTimeout(() => { const x = m.querySelector('#teText'); x.focus(); x.setSelectionRange(x.value.length, x.value.length); }, 0);
+    });
+}
 async function tkDelete(t){
   const later = t.series ? state.todos.filter(x => x.series === t.series && x.id !== t.id && !x.done && (x.due || '') > (t.due || '')) : [];
   let all = false;
@@ -6242,6 +6308,7 @@ function editChips(){
     if(e.target.closest('[data-tklink]')){ linkTaskModal(id); return; }
     if(e.target.closest('[data-tkpri]')){ const np = nextPri(t.pri || ''); tkUpdate(id, {pri:np}); toast(`Priority: ${PRI[np].label}`); return; }
     if(e.target.closest('[data-tkdel]')){ tkDelete(t); return; }
+    if(e.target.closest('[data-tkedit]')){ editTaskModal(id); return; }
     const sz = e.target.closest('[data-tksnz]'); if(sz){ const base = t.due ? Math.max(Date.now(), new Date(t.due).getTime()) : Date.now(); const d = new Date(base + sz.dataset.tksnz * 60000); tkUpdate(id, {due:localISO(d)}); toast(`Snoozed to ${pad(d.getHours())}:${pad(d.getMinutes())}`); }
   });
   L.addEventListener('change', e => {
@@ -8250,6 +8317,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:293, d:'2026-11-25', items:['<b>Edit a task</b> — every task now has a <b>✎</b> button (Tasks list, the timeline pop-up and the census ⏰ to-do lists) that opens an editor: move it to another patient, change the text, priority, date and time, team, or result. A repeating task can pass the change to its other open repeats.']},
   {v:292, d:'2026-11-25', items:['<b>Last BM</b> turns light red when the last BM was more than 2 days ago, and <b>T&amp;S</b> turns light red once it was collected 3 or more days ago.']},
   {v:291, d:'2026-11-25', items:['<b>The Tasks tab now shows on day shifts too</b> (wards, CCU/MICU days and day shifts in a rotation) — on desktop and in the iPad tab bar. Day boards still open on Census.']},
   {v:290, d:'2026-11-25', items:['<b>Every “Back up” now saves a full backup</b> — rotations (with block and schedule), every board, tasks and settings — named <b>Plexus FULL backup - … .json</b>. That includes ⚙ Settings, the header backup button, the command bar and the automatic New Shift download. (Before, “Back up now” saved only the open board.)', '⚙ Settings has a clearer <b>Save &amp; move your data</b> section: <b>💾 Save full backup</b> and <b>📂 Restore from a backup file…</b> up front; the live data file and the rarer exports (this board only, Excel, settings only) are folded away underneath.']},
