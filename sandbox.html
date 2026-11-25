@@ -154,8 +154,8 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .grid .tc.tc-na{background:#eef0f3 !important;color:#8a919c !important;box-shadow:none !important}
 .grid .tc.tc-na .box,.grid .tc.tc-na .cn{opacity:.75}
 @media (prefers-color-scheme: dark){ .grid .tc.tc-na{background:#2a2d33 !important;color:#8a919c !important} }
-.grid .tc.tc-old{background:#fde4e4 !important}
-@media (prefers-color-scheme: dark){ .grid .tc.tc-old{background:#4a2326 !important} }
+.tc.tc-old,.grid .tc.tc-old{background:#fde4e4 !important}
+@media (prefers-color-scheme: dark){ .tc.tc-old,.grid .tc.tc-old{background:#4a2326 !important} }
 .plist{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;margin-bottom:6px}
 .prow{display:grid;grid-template-columns:1fr 138px auto;gap:6px;align-items:center}
 .prow input{min-width:0}
@@ -1799,7 +1799,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '298';
+const APP_VERSION = '299';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -8423,6 +8423,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:299, d:'2026-11-25', items:['The light-red <b>Last BM</b> / <b>T&amp;S</b> cells now also show in <b>Rounds</b> (Classic and Split) — before, the red only appeared on the Census grid.']},
   {v:298, d:'2026-11-25', items:['Split Rounds: the <b>x / y done</b> pill on each section turns <b>light orange</b> when 1–2 items are left and <b>light green</b> when the section is complete (also on the Discharge and Transfer cards).']},
   {v:297, d:'2026-11-25', items:['<b>Lab Ord ↔ Tasks</b> — each time in a patient\'s Lab Ord box (e.g. “05:00, 3 pm”) is now a <b>Labs</b> task at that time. Change or remove a time in Lab Ord and the task follows; re-time, move or delete the task and Lab Ord follows. Clearing a task that\'s already done leaves the time in Lab Ord.', '<b>Rounds: Discharge and Transfer cards</b> — a patient going home (Discharge status, or EDD today/tomorrow) shows Disposition, DC Instructions, MDR, Summary, Orders and Transportation; a Transfer shows destination, accepting team, reason and the transfer checklist. All editable right from Rounds (Classic and Split).']},
   {v:296, d:'2026-11-25', items:['<b>Timeline zoom</b> — in the Timeline view, pick how much time fits on screen: <b>Whole shift · 8 h · 4 h · 2 h · 1 h</b>. Zoomed in, the timeline scrolls sideways, opens at now, adds 30- and 15-minute marks, and <b>◎ Now</b> jumps back. Also Ctrl/⌘ + scroll wheel on a desktop, or pinch on the iPad. Your choice is remembered.']},
