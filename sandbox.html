@@ -608,7 +608,20 @@ body.tkfull #hclocks{margin-right:4px}
 .tlgrid{position:absolute;top:0;bottom:0;left:var(--lw);pointer-events:none;z-index:0}
 .tlline{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
 .tlline.mid{background:var(--line2);width:2px}
-.tllab{box-shadow:-14px 0 0 var(--panel)}.tlline.sub{opacity:.45}.tlh.sub{font-weight:600;opacity:.75}
+.tllab{box-shadow:-14px 0 0 var(--panel)}.tlline.sub{opacity:.45}
+.rs-leave{border-left:4px solid #34A853}.rs-leave.rs-xf{border-left-color:#7B61FF}
+.rs-lvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 10px;margin-top:6px}
+.rs-lvf{display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:var(--muted);min-width:0}
+.rs-lvf > div,.rs-lvf > input{border:1px solid var(--line2);border-radius:7px;background:var(--panel);min-height:34px;display:flex;align-items:center;overflow:hidden}
+.rs-lvf > input{padding:4px 8px;font-size:13.5px;color:var(--ink)}
+.rs-lvf select.cell{width:100%;border:0;background:transparent;font-size:13.5px;padding:6px;color:inherit;font-weight:600}
+.rs-lvf > div.oc{font-weight:700}.rs-lvf > div{min-width:0 !important}
+.rs-xchecks{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.rs-xc{display:flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:18px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;background:var(--panel)}
+.rs-xc.on{background:#E6F4EA;border-color:#34A853;color:#137333}
+@media (prefers-color-scheme: dark){ .rs-xc.on{background:#16361f;color:#8fd6a4} }
+body.touch .rs-xc input{width:20px;height:20px}
+.rleave{margin:10px 0}.rleave .rs-card{border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:10px 12px;margin-bottom:8px}.tlh.sub{font-weight:600;opacity:.75}
 .tlzoom{display:flex;align-items:center;gap:6px}.tlzoom[hidden]{display:none}.tlzoom .seg button{padding:4px 9px}
 .tlpast{position:absolute;top:0;bottom:0;background:rgba(127,135,150,.09)}
 .tlnow{position:absolute;top:0;bottom:0;width:2px;background:#EA4335;z-index:2}
@@ -1784,7 +1797,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '296';
+const APP_VERSION = '297';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2345,7 +2358,7 @@ function switchBoard(k){
   activeType = k; try{ localStorage.setItem(TYPE_KEY, k); }catch(e){}
   let next = null;
   try{ const raw = localStorage.getItem(storeKeyFor(k)); if(raw){ const s2 = JSON.parse(raw); if(s2 && Array.isArray(s2.patients)) next = normalize(s2); } }catch(e){}
-  state = next || (SANDBOX && demoFor(k)) || emptyBoard(from);
+  state = next || (SANDBOX && demoFor(k)) || emptyBoard(from); afterLoad();
   undoStack.length = 0; histSel = null; pendingLeft = null; clearTimeout(leftTimer);
   loadLog(); logAdd([{cat:'shift', msg:`Opened the ${typeOf(k).label} board`}]);
   ui.tab = typeOf(k).tab; ui.filter = 'all'; ui.intern = ''; ui.search = ''; if(typeOf(k).admitOnly) ui.admitView = 'today';
@@ -2495,12 +2508,56 @@ function mutate(fn, {render=true, label=null, cat='system'} = {}){
   let prev = null; try{ prev = JSON.parse(before); }catch(e){}
   if(prev) syncLinked(prev);
   try{ if(prev) carryTaskBeds(prev); }catch(e){}
+  try{ syncLabTasks(prev); }catch(e){ console.warn('lab sync', e); }
   try{ stampPhases(prev); }catch(e){}
   abkDirty = true;
   try{ logAdd(label ? [{cat, msg:label}] : diffStates(prev, state)); }catch(e){}
   save(); if(render) renderAll(); else renderSummary();
   try{ navRestore(nk); }catch(e){}
   if(carryNote){ const m = carryNote; carryNote = ''; setTimeout(() => toast(m, true), 0); }
+}
+/* v297: Lab Ord times ↔ Tasks. Each time in a census patient's Lab Ord box is a “Labs” task at that time (todo.lab = true, todo.labT = 'HH:MM').
+   Both ways: type/edit/remove a time in Lab Ord → the task is added/moved/deleted; move/delete a lab task (or give it no time) → Lab Ord follows.
+   Clearing a task that's already ✓ done (e.g. “Clear done”) leaves the time in Lab Ord — those labs happened. */
+function labTokHM(tok){ const x = String(tok || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  if(x === 'noon') return '12:00'; if(x === 'midnight') return '00:00';
+  const m = x.match(/^(\d{1,2})(?::?(\d{2}))?\s?(a|p|am|pm|a\.m\.|p\.m\.)?(?:\s*labs?)?$/); if(!m) return null;
+  let h = +m[1], mi = +(m[2] || 0); if(mi > 59) return null; const ap = (m[3] || '')[0];
+  if(ap){ if(h < 1 || h > 12) return null; if(ap === 'p' && h < 12) h += 12; if(ap === 'a' && h === 12) h = 0; } else if(h > 23) return null;
+  return `${pad(h)}:${pad(mi)}`; }
+const labToks = t => (t || '').split(',').map(x => x.trim()).filter(Boolean);
+const labHMs = cell => cell && cell.t !== 'Lab holiday' ? labToks(cell.t).map(labTokHM).filter(Boolean) : [];
+function labDue(hm){   // the next time this clock time comes round (from the start of the board's shift, if that's still ahead)
+  const [h, m] = hm.split(':').map(Number); let base = new Date(); try{ const a = shiftStartDate(); if(a > base) base = new Date(a.getTime() - 3 * 3600e3); }catch(e){}
+  const d = new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, m); if(d < base) d.setDate(d.getDate() + 1); return localISO(d); }
+function labCellEdit(p, fn){ const c = p.cells.labord; if(!c) return; let toks = labToks(c.t === 'Lab holiday' ? '' : c.t); toks = fn(toks); c.t = toks.join(', '); if(toks.length) c.c = true; }
+const labTaskNew = (p, hm) => ({id:uid(), pid:p.id, aid:'', bed:'', team:'', text:'Labs', due:labDue(hm), done:false, doneAt:'', result:'', series:'', every:0, src:'labord', lab:true, labT:hm, pri:'', createdAt:localISO()});
+function syncLabTasks(prev){
+  if(!state || !state.todos || !COLMAP.labord) return;
+  const prevP = prev ? Object.fromEntries((prev.patients || []).map(x => [x.id, x])) : {}, prevT = prev ? Object.fromEntries((prev.todos || []).filter(t => t.lab).map(t => [t.id, t])) : {};
+  const nowT = Object.fromEntries(state.todos.map(t => [t.id, t]));
+  // 1 · task side → Lab Ord (only when something happened to a lab task in this change)
+  if(prev){
+    Object.values(prevT).forEach(o => { const t = nowT[o.id], op = state.patients.find(x => x.id === o.pid);
+      if(!t){ if(op && !o.done) labCellEdit(op, ts => { const i = ts.findIndex(x => labTokHM(x) === o.labT); if(i >= 0) ts.splice(i, 1); return ts; }); return; }   // deleted
+      if(t.pid !== o.pid){ if(op) labCellEdit(op, ts => { const i = ts.findIndex(x => labTokHM(x) === o.labT); if(i >= 0) ts.splice(i, 1); return ts; });   // moved to another patient
+        const np = state.patients.find(x => x.id === t.pid); if(np && t.due){ const hm = hhmmOf(t.due); t.labT = hm; labCellEdit(np, ts => ts.some(x => labTokHM(x) === hm) ? ts : [...ts, hm]); } else { t.lab = false; delete t.labT; } return; }
+      if(!t.due){ if(op) labCellEdit(op, ts => { const i = ts.findIndex(x => labTokHM(x) === o.labT); if(i >= 0) ts.splice(i, 1); return ts; }); t.lab = false; delete t.labT; return; }   // time cleared → plain task
+      const hm = hhmmOf(t.due); if(hm !== o.labT && op){ labCellEdit(op, ts => { const i = ts.findIndex(x => labTokHM(x) === o.labT); if(i >= 0) ts[i] = hm; else ts.push(hm); return ts; }); t.labT = hm; }   // re-timed
+    });
+  }
+  // 2 · Lab Ord side → tasks
+  state.patients.forEach(p => { const c = p.cells.labord; if(!c) return;
+    const want = labHMs(c), have = state.todos.filter(t => t.lab && t.pid === p.id);
+    const pc = prevP[p.id], before = pc && pc.cells && pc.cells.labord ? labHMs(pc.cells.labord) : null;
+    if(prev && before && before.join() === want.join() && !have.some(t => !prevT[t.id])) return;   // nothing changed for this patient
+    if(!prev && (state.labInit || {})[p.id]) return;
+    const spare = have.filter(t => !want.includes(t.labT)), add = want.filter(hm => !have.some(t => t.labT === hm) && !(prev && before && before.includes(hm)));   // a time that was already there with no task (its done task was cleared) stays task-less
+    if(!prev){ add.forEach(hm => state.todos.push(labTaskNew(p, hm))); state.labInit = Object.assign(state.labInit || {}, {[p.id]:1}); return; }   // first time on this board: make tasks for the times already there
+    add.forEach(hm => { const t = spare.shift(); if(t){ t.labT = hm; t.due = labDue(hm); t.done = false; t.doneAt = ''; } else state.todos.push(labTaskNew(p, hm)); });   // a changed time moves its task
+    if(spare.length){ const gone = new Set(spare.map(t => t.id)); state.todos = state.todos.filter(t => !gone.has(t.id)); }
+    state.labInit = Object.assign(state.labInit || {}, {[p.id]:1});
+  });
 }
 /* When a bed changes (ED → floor), tasks typed against the old bed move with the patient.
    Tasks linked to a census patient already follow; this covers tasks matched by bed (admitting nights, admissions not on a census). */
@@ -2847,7 +2904,7 @@ const ADMIT_SYNC = [
   {k:'vst', from:'visit', done:t => t === 'Yes' || t === 'N/A', on:c => !!c.t, set:c => { c.t = 'Yes'; }, clear:c => { c.t = ''; }},
   {k:'handoff', from:'handoff', done:t => ['Signed', 'N/A'].includes(t), on:c => !!c.t, set:c => { c.t = 'Yes'; }, clear:c => { c.t = ''; }}];
 // after a board is loaded: bring derived ticks up to date (new-admit Note / Visit / Handoff, auto pre-charted) and save if anything changed
-function afterLoad(){ try{ const before = JSON.stringify(state); syncAdmitNotes(); autoPc(); if(JSON.stringify(state) !== before) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} }
+function afterLoad(){ try{ const before = JSON.stringify(state); syncAdmitNotes(); autoPc(); try{ syncLabTasks(null); }catch(e){ console.warn("lab sync", e); } if(JSON.stringify(state) !== before) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} }
 function syncAdmitNotes(){
   state.patients.forEach(p => { if(p.status !== 'New') return; const a = admitOf(p); if(!a) return;
     ADMIT_SYNC.forEach(m => { const c = p.cells[m.k], ac = a.cells[m.from]; if(!c || !ac) return;
@@ -3758,7 +3815,7 @@ function renderTransfers(){
   });
   $('#xferGrid').innerHTML = h + `</tbody></table><datalist id="xDestList2">${XFER_DESTS.map(d => `<option value="${esc(d)}">`).join('')}</datalist>`;
 }
-$('#xferGrid').addEventListener('change', e => {
+function xferChange(e){
   const t = e.target, id = t.dataset.id; if(!id || (!t.dataset.xf && !t.dataset.xc)) return;
   const p = rowOf('p', id); if(!p) return;
   const isText = !!t.dataset.xf;
@@ -3767,7 +3824,9 @@ $('#xferGrid').addEventListener('change', e => {
     if(isText) p.transfer[t.dataset.xf] = t.value.trim(); else p.transfer.checks[t.dataset.xc] = t.checked;
   }, {render: !isText});
   if(isText){ renderCensus(); }
-});
+}
+$('#xferGrid').addEventListener('change', xferChange);
+$('#roundsBody').addEventListener('change', xferChange);
 $('#xferStart').addEventListener('change', e => {
   const id = e.target.value; if(!id) return;
   mutate(() => { const p = rowOf('p', id); if(p){ p.status = 'Transfer'; p.transfer = xferOf(p); } });
@@ -4489,12 +4548,28 @@ function renderRounds(){
     ${fl.length || n !== null ? `<div class="rflags">${hdPill(p, true)}${fl.map(([l,t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="rtodos ${patientTodos(p.id).length ? '' : 'empty'}" id="rTodos"><h4><span>⏰ To-dos${patientTodos(p.id).length ? '' : ' <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">— none for this patient</span>'}</span><button class="btn sm" data-tdedit="${p.id}">+ Add / edit ${scLabel('todo')}</button></h4>
       ${patientTodos(p.id).map(t => todoRowHTML(t, false)).join('')}</div>
+    ${rdLeaveCard(p) ? `<div class="rleave">${rdLeaveCard(p)}</div>` : ''}
     ${sections}
     <div class="rnav"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
       <span class="muted small rkeys" style="align-self:center">${scLabel('rNext')} next · ${scLabel('rPrev')} back · ${scLabel('rUnfinished')} next unfinished · ${scLabel('rVisit')} visit · ${scLabel('rowDone')} all Daily done · <kbd>←</kbd><kbd>→</kbd> always move · <kbd>Esc</kbd> closes · <a href="#" data-sc-open>all shortcuts</a></span>
       ${(() => { const nx = rdNext(list, i) || (i < list.length - 1 ? list[i + 1] : null);
         return `<button class="btn primary" data-r="next" ${nx ? '' : 'disabled'}>${nx ? esc(nx.bed || 'Next') : 'All seen'} →</button>`; })()}</div>
   </div>`;
+}
+/* v297: patients going home or moving — their Discharges / Transfers fields, editable right in Rounds */
+const ctlBox = (p, k) => { const h = ctlHTML(p, k); return h.replace(/^<td/, '<div').replace(/<\/td>$/, '</div>'); };
+function rdLeaveCard(p){
+  let h = '';
+  if(dcBucket(p) || p.status === 'Discharge'){ const n = dcSigned(p), when = p.status === 'Discharge' || dcBucket(p) === 'today' ? 'today' : dcBucket(p) === 'tomorrow' ? 'tomorrow' : 'past EDD';
+    h += `<div class="rs-card rs-leave rs-dc"><div class="rs-cardh"><span>🏠 Discharge <span class="muted" style="font-weight:600;text-transform:none;letter-spacing:0">· ${when}</span></span> <span class="rs-cnt">${n === DC_KEYS.length ? '<span class="flag ready">Ready for DC</span>' : `${n} / ${DC_KEYS.length} signed`}</span></div>
+      <div class="rs-lvgrid">${['dest', ...DC_KEYS, 'transport'].filter(k => COLMAP[k]).map(k => `<label class="rs-lvf ${DC_KEYS.includes(k) ? 'dc' : ''}"><span>${esc(colCfg(k).h)}</span>${ctlBox(p, k)}</label>`).join('')}</div></div>`; }
+  if(p.status === 'Transfer'){ const x = xferOf(p), n = xferDone(p);
+    const inp = (f, ph) => `<label class="rs-lvf"><span>${{dest:'Transferring to', team:'Accepting team', reason:'Reason'}[f]}</span><input class="cell" data-xf="${f}" data-id="${p.id}" value="${esc(x[f] || '')}" placeholder="${ph}" ${f === 'dest' ? 'list="xDestListR"' : ''}></label>`;
+    h += `<div class="rs-card rs-leave rs-xf"><div class="rs-cardh">⇄ Transfer <span class="rs-cnt">${n === XFER_CHECKS.length ? '<span class="flag xfer">Ready ✓</span>' : `${n} / ${XFER_CHECKS.length} done`}</span></div>
+      <div class="rs-lvgrid">${inp('dest', 'e.g. MICU')}${inp('team', 'optional')}${inp('reason', 'e.g. needs pressors')}</div>
+      <div class="rs-xchecks">${XFER_CHECKS.map(([k, l]) => `<label class="rs-xc ${x.checks[k] ? 'on' : ''}"><input type="checkbox" data-xc="${k}" data-id="${p.id}" ${x.checks[k] ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div>
+      <datalist id="xDestListR">${XFER_DESTS.map(d => `<option value="${esc(d)}">`).join('')}</datalist></div>`; }
+  return h;
 }
 /* ---------- Rounds · Split view: everyone on the left, one patient on the right ---------- */
 const RS_GLANCE = ['avatar', 'io', 'diet', 'gtt', 'dvt', 'dest'];
@@ -4531,6 +4606,7 @@ function renderRoundsSplit(){
         ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
       <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
+      ${rdLeaveCard(p)}
       <div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>
       ${CHUNKS.map(ckCard).join('')}
     </div>
@@ -6322,8 +6398,8 @@ function editChips(){
   $('#tkShowDone').addEventListener('change', e => { tkUI.showDone = e.target.checked; renderTasks(); });
   $('#tkCopy').onclick = () => copyText(signBackText());
   $('#tkFull').onclick = () => tkFullOn() ? exitTkFull() : enterTkFull();
-  $('#tkClearDone').onclick = () => { const n = taskList().filter(t => t.done && (!t.pid || t.src === 'tasks')).length; if(!n){ toast('No finished tasks to clear'); return; }
-    mutate(() => { state.todos = state.todos.filter(t => !(t.done && (!t.pid || t.src === 'tasks'))); }, {label:`Cleared ${n} finished task${n===1?'':'s'}`, cat:'todo'}); toast(`${n} finished task${n===1?'':'s'} cleared`, true); };
+  $('#tkClearDone').onclick = () => { const n = taskList().filter(t => t.done && (!t.pid || t.src === 'tasks' || t.lab)).length; if(!n){ toast('No finished tasks to clear'); return; }
+    mutate(() => { state.todos = state.todos.filter(t => !(t.done && (!t.pid || t.src === 'tasks' || t.lab))); }, {label:`Cleared ${n} finished task${n===1?'':'s'}`, cat:'todo'}); toast(`${n} finished task${n===1?'':'s'} cleared`, true); };
   const L = $('#view-tasks');
   L.addEventListener('click', e => {
     const mk = e.target.closest('[data-tlm]'); if(mk){ openTkPop(mk, mk.dataset.tlm); return; }
@@ -8344,6 +8420,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:297, d:'2026-11-25', items:['<b>Lab Ord ↔ Tasks</b> — each time in a patient\'s Lab Ord box (e.g. “05:00, 3 pm”) is now a <b>Labs</b> task at that time. Change or remove a time in Lab Ord and the task follows; re-time, move or delete the task and Lab Ord follows. Clearing a task that\'s already done leaves the time in Lab Ord.', '<b>Rounds: Discharge and Transfer cards</b> — a patient going home (Discharge status, or EDD today/tomorrow) shows Disposition, DC Instructions, MDR, Summary, Orders and Transportation; a Transfer shows destination, accepting team, reason and the transfer checklist. All editable right from Rounds (Classic and Split).']},
   {v:296, d:'2026-11-25', items:['<b>Timeline zoom</b> — in the Timeline view, pick how much time fits on screen: <b>Whole shift · 8 h · 4 h · 2 h · 1 h</b>. Zoomed in, the timeline scrolls sideways, opens at now, adds 30- and 15-minute marks, and <b>◎ Now</b> jumps back. Also Ctrl/⌘ + scroll wheel on a desktop, or pinch on the iPad. Your choice is remembered.']},
   {v:295, d:'2026-11-25', items:['Timeline task pop-up: <b>✓ Done</b> is now <b>✓ Complete</b>.']},
   {v:294, d:'2026-11-25', items:['Timeline task pop-up: the <b>✓ Done</b> button no longer spills off the edge — the pop-up is a little wider and its buttons wrap if they need to.']},
@@ -8752,7 +8829,7 @@ if(!tabLocked) showLaunch({boot:true});
 { const tryWN = n => { if(modalEl || tabLocked || (SANDBOX && !(() => { try{ return localStorage.getItem(SEEN_KEY); }catch(e){ return ''; } })())){ if(SANDBOX && !modalEl && !tabLocked){ try{ localStorage.setItem(SEEN_KEY, APP_VERSION); }catch(e){} return; } if(n < 20) setTimeout(() => tryWN(n + 1), 1500); return; } whatsNewBoot(); };
   whenLaunched(() => setTimeout(() => tryWN(0), 600)); }
 // test hook for the automated checks (sandbox only)
-if(SANDBOX) window.__wmTest = {get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, switchBoard, showLaunch, get launching(){ return launching; }, get rots(){ return ROTS; }, typeOf, addDays, renderAll, shiftStartDate, shiftEndDate, dayGo(d){ mutate(() => { state.boardDate = d; }); }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
+if(SANDBOX) window.__wmTest = {syncLabTasks, labTokHM, get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, switchBoard, showLaunch, get launching(){ return launching; }, get rots(){ return ROTS; }, typeOf, addDays, renderAll, shiftStartDate, shiftEndDate, dayGo(d){ mutate(() => { state.boardDate = d; }); }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
 setTimeout(() => { try{ const bad = runDiagnostics().filter(r => r.lvl === 'fail'); if(bad.length) toast(`Self-check found ${bad.length} problem${bad.length===1?'':'s'}: ${bad[0].title} — see Settings → Run self-check`); }catch(e){} }, 1500);
 })();
 </script>
