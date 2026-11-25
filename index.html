@@ -608,6 +608,21 @@ body.tkfull #hclocks{margin-right:4px}
 .tlgrid{position:absolute;top:0;bottom:0;left:var(--lw);pointer-events:none;z-index:0}
 .tlline{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
 .tlline.mid{background:var(--line2);width:2px}
+.tllab{box-shadow:-14px 0 0 var(--panel)}.tlline.sub{opacity:.45}
+.rs-leave{border-left:4px solid #34A853}.rs-leave.rs-xf{border-left-color:#7B61FF}
+.rs-lvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 10px;margin-top:6px}
+.rs-lvf{display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:var(--muted);min-width:0}
+.rs-lvf > div,.rs-lvf > input{border:1px solid var(--line2);border-radius:7px;background:var(--panel);min-height:34px;display:flex;align-items:center;overflow:hidden}
+.rs-lvf > input{padding:4px 8px;font-size:13.5px;color:var(--ink)}
+.rs-lvf select.cell{width:100%;border:0;background:transparent;font-size:13.5px;padding:6px;color:inherit;font-weight:600}
+.rs-lvf > div.oc{font-weight:700}.rs-lvf > div{min-width:0 !important}
+.rs-xchecks{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.rs-xc{display:flex;align-items:center;gap:6px;border:1px solid var(--line2);border-radius:18px;padding:6px 12px;font-size:13px;font-weight:600;cursor:pointer;background:var(--panel)}
+.rs-xc.on{background:#E6F4EA;border-color:#34A853;color:#137333}
+@media (prefers-color-scheme: dark){ .rs-xc.on{background:#16361f;color:#8fd6a4} }
+body.touch .rs-xc input{width:20px;height:20px}
+.rleave{margin:10px 0}.rleave .rs-card{border:1px solid var(--line);border-left-width:4px;border-radius:10px;padding:10px 12px;margin-bottom:8px}.tlh.sub{font-weight:600;opacity:.75}
+.tlzoom{display:flex;align-items:center;gap:6px}.tlzoom[hidden]{display:none}.tlzoom .seg button{padding:4px 9px}
 .tlpast{position:absolute;top:0;bottom:0;background:rgba(127,135,150,.09)}
 .tlnow{position:absolute;top:0;bottom:0;width:2px;background:#EA4335;z-index:2}
 .tlnow span{position:sticky;top:30px;display:inline-block;transform:translateX(-50%);margin-top:-1px;background:#EA4335;color:#fff;font-size:10px;font-weight:800;padding:0 5px;border-radius:7px;font-style:normal}
@@ -928,6 +943,8 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 .rs-next{padding:12px 22px;font-size:15px}
 body.touch .rs-pi{padding:10px 10px}
 @media (prefers-color-scheme: dark){.rs-pi.on{background:rgba(66,133,244,.18)}.rs-cnt,.rs-quick button{background:rgba(255,255,255,.08);color:#c3cad6}}
+.rs-cnt.near{background:#FFE8C7;color:#8a4b00}.rs-cnt.ok{background:#DDF3E3;color:#137333}
+@media (prefers-color-scheme: dark){.rs-cnt.near{background:#4a3313;color:#ffcf8a}.rs-cnt.ok{background:#173a22;color:#8fd6a4}}
 @media (max-width:900px){.rs{grid-template-columns:200px 1fr}.rs-body{grid-template-columns:1fr}.rs-plan{position:static;min-height:0}}
 .rbody{width:100%;max-width:1180px;margin:0 auto;padding:18px 20px 40px;box-sizing:border-box}
 .rhead{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
@@ -1749,6 +1766,7 @@ body.touch .lrow{padding:14px 16px}
         </div>
         <div class="tkbar"><div class="tkstats" id="tkStats"></div><div class="spacer"></div><span id="tkFilter" class="muted small"></span>
           <div class="seg" id="tkSeg"><button data-v="timeline" title="Whole night at a glance — one lane per bed">Timeline</button><button data-v="time" class="on">By time</button><button data-v="patient">By patient</button></div>
+          <div class="tlzoom" id="tkZoom" hidden><span class="muted small">Show</span><div class="seg"><button data-z="0" title="Fit the whole shift on screen">Whole shift</button><button data-z="8">8 h</button><button data-z="4">4 h</button><button data-z="2">2 h</button><button data-z="1">1 h</button></div><button class="btn sm" id="tkZoomNow" title="Scroll to now (or to the first open task when the shift hasn't started)">◎ Now</button></div>
           <label class="grpchk"><input type="checkbox" id="tkShowDone" checked> Show done</label>
           <button class="btn sm" id="tkClearDone">Clear done</button>
           <button class="btn sm" id="tkFull" title="Full screen (Shift+F) — Esc to exit"><svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" style="vertical-align:-2px"><path d="M2 6V2h4M10 2h4v4M14 10v4h-4M6 14H2v-4" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg> <span>Full screen</span></button>
@@ -1781,7 +1799,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '295';
+const APP_VERSION = '298';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2342,7 +2360,7 @@ function switchBoard(k){
   activeType = k; try{ localStorage.setItem(TYPE_KEY, k); }catch(e){}
   let next = null;
   try{ const raw = localStorage.getItem(storeKeyFor(k)); if(raw){ const s2 = JSON.parse(raw); if(s2 && Array.isArray(s2.patients)) next = normalize(s2); } }catch(e){}
-  state = next || (SANDBOX && demoFor(k)) || emptyBoard(from);
+  state = next || (SANDBOX && demoFor(k)) || emptyBoard(from); afterLoad();
   undoStack.length = 0; histSel = null; pendingLeft = null; clearTimeout(leftTimer);
   loadLog(); logAdd([{cat:'shift', msg:`Opened the ${typeOf(k).label} board`}]);
   ui.tab = typeOf(k).tab; ui.filter = 'all'; ui.intern = ''; ui.search = ''; if(typeOf(k).admitOnly) ui.admitView = 'today';
@@ -2492,12 +2510,56 @@ function mutate(fn, {render=true, label=null, cat='system'} = {}){
   let prev = null; try{ prev = JSON.parse(before); }catch(e){}
   if(prev) syncLinked(prev);
   try{ if(prev) carryTaskBeds(prev); }catch(e){}
+  try{ syncLabTasks(prev); }catch(e){ console.warn('lab sync', e); }
   try{ stampPhases(prev); }catch(e){}
   abkDirty = true;
   try{ logAdd(label ? [{cat, msg:label}] : diffStates(prev, state)); }catch(e){}
   save(); if(render) renderAll(); else renderSummary();
   try{ navRestore(nk); }catch(e){}
   if(carryNote){ const m = carryNote; carryNote = ''; setTimeout(() => toast(m, true), 0); }
+}
+/* v297: Lab Ord times ↔ Tasks. Each time in a census patient's Lab Ord box is a “Labs” task at that time (todo.lab = true, todo.labT = 'HH:MM').
+   Both ways: type/edit/remove a time in Lab Ord → the task is added/moved/deleted; move/delete a lab task (or give it no time) → Lab Ord follows.
+   Clearing a task that's already ✓ done (e.g. “Clear done”) leaves the time in Lab Ord — those labs happened. */
+function labTokHM(tok){ const x = String(tok || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  if(x === 'noon') return '12:00'; if(x === 'midnight') return '00:00';
+  const m = x.match(/^(\d{1,2})(?::?(\d{2}))?\s?(a|p|am|pm|a\.m\.|p\.m\.)?(?:\s*labs?)?$/); if(!m) return null;
+  let h = +m[1], mi = +(m[2] || 0); if(mi > 59) return null; const ap = (m[3] || '')[0];
+  if(ap){ if(h < 1 || h > 12) return null; if(ap === 'p' && h < 12) h += 12; if(ap === 'a' && h === 12) h = 0; } else if(h > 23) return null;
+  return `${pad(h)}:${pad(mi)}`; }
+const labToks = t => (t || '').split(',').map(x => x.trim()).filter(Boolean);
+const labHMs = cell => cell && cell.t !== 'Lab holiday' ? labToks(cell.t).map(labTokHM).filter(Boolean) : [];
+function labDue(hm){   // the next time this clock time comes round (from the start of the board's shift, if that's still ahead)
+  const [h, m] = hm.split(':').map(Number); let base = new Date(); try{ const a = shiftStartDate(); if(a > base) base = new Date(a.getTime() - 3 * 3600e3); }catch(e){}
+  const d = new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, m); if(d < base) d.setDate(d.getDate() + 1); return localISO(d); }
+function labCellEdit(p, fn){ const c = p.cells.labord; if(!c) return; let toks = labToks(c.t === 'Lab holiday' ? '' : c.t); toks = fn(toks); c.t = toks.join(', '); if(toks.length) c.c = true; }
+const labTaskNew = (p, hm) => ({id:uid(), pid:p.id, aid:'', bed:'', team:'', text:'Labs', due:labDue(hm), done:false, doneAt:'', result:'', series:'', every:0, src:'labord', lab:true, labT:hm, pri:'', createdAt:localISO()});
+function syncLabTasks(prev){
+  if(!state || !state.todos || !COLMAP.labord) return;
+  const prevP = prev ? Object.fromEntries((prev.patients || []).map(x => [x.id, x])) : {}, prevT = prev ? Object.fromEntries((prev.todos || []).filter(t => t.lab).map(t => [t.id, t])) : {};
+  const nowT = Object.fromEntries(state.todos.map(t => [t.id, t]));
+  // 1 · task side → Lab Ord (only when something happened to a lab task in this change)
+  if(prev){
+    Object.values(prevT).forEach(o => { const t = nowT[o.id], op = state.patients.find(x => x.id === o.pid);
+      if(!t){ if(op && !o.done) labCellEdit(op, ts => { const i = ts.findIndex(x => labTokHM(x) === o.labT); if(i >= 0) ts.splice(i, 1); return ts; }); return; }   // deleted
+      if(t.pid !== o.pid){ if(op) labCellEdit(op, ts => { const i = ts.findIndex(x => labTokHM(x) === o.labT); if(i >= 0) ts.splice(i, 1); return ts; });   // moved to another patient
+        const np = state.patients.find(x => x.id === t.pid); if(np && t.due){ const hm = hhmmOf(t.due); t.labT = hm; labCellEdit(np, ts => ts.some(x => labTokHM(x) === hm) ? ts : [...ts, hm]); } else { t.lab = false; delete t.labT; } return; }
+      if(!t.due){ if(op) labCellEdit(op, ts => { const i = ts.findIndex(x => labTokHM(x) === o.labT); if(i >= 0) ts.splice(i, 1); return ts; }); t.lab = false; delete t.labT; return; }   // time cleared → plain task
+      const hm = hhmmOf(t.due); if(hm !== o.labT && op){ labCellEdit(op, ts => { const i = ts.findIndex(x => labTokHM(x) === o.labT); if(i >= 0) ts[i] = hm; else ts.push(hm); return ts; }); t.labT = hm; }   // re-timed
+    });
+  }
+  // 2 · Lab Ord side → tasks
+  state.patients.forEach(p => { const c = p.cells.labord; if(!c) return;
+    const want = labHMs(c), have = state.todos.filter(t => t.lab && t.pid === p.id);
+    const pc = prevP[p.id], before = pc && pc.cells && pc.cells.labord ? labHMs(pc.cells.labord) : null;
+    if(prev && before && before.join() === want.join() && !have.some(t => !prevT[t.id])) return;   // nothing changed for this patient
+    if(!prev && (state.labInit || {})[p.id]) return;
+    const spare = have.filter(t => !want.includes(t.labT)), add = want.filter(hm => !have.some(t => t.labT === hm) && !(prev && before && before.includes(hm)));   // a time that was already there with no task (its done task was cleared) stays task-less
+    if(!prev){ add.forEach(hm => state.todos.push(labTaskNew(p, hm))); state.labInit = Object.assign(state.labInit || {}, {[p.id]:1}); return; }   // first time on this board: make tasks for the times already there
+    add.forEach(hm => { const t = spare.shift(); if(t){ t.labT = hm; t.due = labDue(hm); t.done = false; t.doneAt = ''; } else state.todos.push(labTaskNew(p, hm)); });   // a changed time moves its task
+    if(spare.length){ const gone = new Set(spare.map(t => t.id)); state.todos = state.todos.filter(t => !gone.has(t.id)); }
+    state.labInit = Object.assign(state.labInit || {}, {[p.id]:1});
+  });
 }
 /* When a bed changes (ED → floor), tasks typed against the old bed move with the patient.
    Tasks linked to a census patient already follow; this covers tasks matched by bed (admitting nights, admissions not on a census). */
@@ -2844,7 +2906,7 @@ const ADMIT_SYNC = [
   {k:'vst', from:'visit', done:t => t === 'Yes' || t === 'N/A', on:c => !!c.t, set:c => { c.t = 'Yes'; }, clear:c => { c.t = ''; }},
   {k:'handoff', from:'handoff', done:t => ['Signed', 'N/A'].includes(t), on:c => !!c.t, set:c => { c.t = 'Yes'; }, clear:c => { c.t = ''; }}];
 // after a board is loaded: bring derived ticks up to date (new-admit Note / Visit / Handoff, auto pre-charted) and save if anything changed
-function afterLoad(){ try{ const before = JSON.stringify(state); syncAdmitNotes(); autoPc(); if(JSON.stringify(state) !== before) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} }
+function afterLoad(){ try{ const before = JSON.stringify(state); syncAdmitNotes(); autoPc(); try{ syncLabTasks(null); }catch(e){ console.warn("lab sync", e); } if(JSON.stringify(state) !== before) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} }
 function syncAdmitNotes(){
   state.patients.forEach(p => { if(p.status !== 'New') return; const a = admitOf(p); if(!a) return;
     ADMIT_SYNC.forEach(m => { const c = p.cells[m.k], ac = a.cells[m.from]; if(!c || !ac) return;
@@ -3755,7 +3817,7 @@ function renderTransfers(){
   });
   $('#xferGrid').innerHTML = h + `</tbody></table><datalist id="xDestList2">${XFER_DESTS.map(d => `<option value="${esc(d)}">`).join('')}</datalist>`;
 }
-$('#xferGrid').addEventListener('change', e => {
+function xferChange(e){
   const t = e.target, id = t.dataset.id; if(!id || (!t.dataset.xf && !t.dataset.xc)) return;
   const p = rowOf('p', id); if(!p) return;
   const isText = !!t.dataset.xf;
@@ -3764,7 +3826,9 @@ $('#xferGrid').addEventListener('change', e => {
     if(isText) p.transfer[t.dataset.xf] = t.value.trim(); else p.transfer.checks[t.dataset.xc] = t.checked;
   }, {render: !isText});
   if(isText){ renderCensus(); }
-});
+}
+$('#xferGrid').addEventListener('change', xferChange);
+$('#roundsBody').addEventListener('change', xferChange);
 $('#xferStart').addEventListener('change', e => {
   const id = e.target.value; if(!id) return;
   mutate(() => { const p = rowOf('p', id); if(p){ p.status = 'Transfer'; p.transfer = xferOf(p); } });
@@ -4486,12 +4550,28 @@ function renderRounds(){
     ${fl.length || n !== null ? `<div class="rflags">${hdPill(p, true)}${fl.map(([l,t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="rtodos ${patientTodos(p.id).length ? '' : 'empty'}" id="rTodos"><h4><span>⏰ To-dos${patientTodos(p.id).length ? '' : ' <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">— none for this patient</span>'}</span><button class="btn sm" data-tdedit="${p.id}">+ Add / edit ${scLabel('todo')}</button></h4>
       ${patientTodos(p.id).map(t => todoRowHTML(t, false)).join('')}</div>
+    ${rdLeaveCard(p) ? `<div class="rleave">${rdLeaveCard(p)}</div>` : ''}
     ${sections}
     <div class="rnav"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
       <span class="muted small rkeys" style="align-self:center">${scLabel('rNext')} next · ${scLabel('rPrev')} back · ${scLabel('rUnfinished')} next unfinished · ${scLabel('rVisit')} visit · ${scLabel('rowDone')} all Daily done · <kbd>←</kbd><kbd>→</kbd> always move · <kbd>Esc</kbd> closes · <a href="#" data-sc-open>all shortcuts</a></span>
       ${(() => { const nx = rdNext(list, i) || (i < list.length - 1 ? list[i + 1] : null);
         return `<button class="btn primary" data-r="next" ${nx ? '' : 'disabled'}>${nx ? esc(nx.bed || 'Next') : 'All seen'} →</button>`; })()}</div>
   </div>`;
+}
+/* v297: patients going home or moving — their Discharges / Transfers fields, editable right in Rounds */
+const ctlBox = (p, k) => { const h = ctlHTML(p, k); return h.replace(/^<td/, '<div').replace(/<\/td>$/, '</div>'); };
+function rdLeaveCard(p){
+  let h = '';
+  if(dcBucket(p) || p.status === 'Discharge'){ const n = dcSigned(p), when = p.status === 'Discharge' || dcBucket(p) === 'today' ? 'today' : dcBucket(p) === 'tomorrow' ? 'tomorrow' : 'past EDD';
+    h += `<div class="rs-card rs-leave rs-dc"><div class="rs-cardh"><span>🏠 Discharge <span class="muted" style="font-weight:600;text-transform:none;letter-spacing:0">· ${when}</span></span> <span class="rs-cnt ${n === DC_KEYS.length ? 'ok' : DC_KEYS.length - n <= 2 ? 'near' : ''}">${n === DC_KEYS.length ? '✓ Ready for DC' : `${n} / ${DC_KEYS.length} signed`}</span></div>
+      <div class="rs-lvgrid">${['dest', ...DC_KEYS, 'transport'].filter(k => COLMAP[k]).map(k => `<label class="rs-lvf ${DC_KEYS.includes(k) ? 'dc' : ''}"><span>${esc(colCfg(k).h)}</span>${ctlBox(p, k)}</label>`).join('')}</div></div>`; }
+  if(p.status === 'Transfer'){ const x = xferOf(p), n = xferDone(p);
+    const inp = (f, ph) => `<label class="rs-lvf"><span>${{dest:'Transferring to', team:'Accepting team', reason:'Reason'}[f]}</span><input class="cell" data-xf="${f}" data-id="${p.id}" value="${esc(x[f] || '')}" placeholder="${ph}" ${f === 'dest' ? 'list="xDestListR"' : ''}></label>`;
+    h += `<div class="rs-card rs-leave rs-xf"><div class="rs-cardh">⇄ Transfer <span class="rs-cnt ${n === XFER_CHECKS.length ? 'ok' : XFER_CHECKS.length - n <= 2 ? 'near' : ''}">${n === XFER_CHECKS.length ? '✓ Ready' : `${n} / ${XFER_CHECKS.length} done`}</span></div>
+      <div class="rs-lvgrid">${inp('dest', 'e.g. MICU')}${inp('team', 'optional')}${inp('reason', 'e.g. needs pressors')}</div>
+      <div class="rs-xchecks">${XFER_CHECKS.map(([k, l]) => `<label class="rs-xc ${x.checks[k] ? 'on' : ''}"><input type="checkbox" data-xc="${k}" data-id="${p.id}" ${x.checks[k] ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div>
+      <datalist id="xDestListR">${XFER_DESTS.map(d => `<option value="${esc(d)}">`).join('')}</datalist></div>`; }
+  return h;
 }
 /* ---------- Rounds · Split view: everyone on the left, one patient on the right ---------- */
 const RS_GLANCE = ['avatar', 'io', 'diet', 'gtt', 'dvt', 'dest'];
@@ -4518,7 +4598,8 @@ function renderRoundsSplit(){
   const ckCard = c => { const all = chunkKeys(c.k), show = all.filter(k => !RS_GLANCE.includes(k)); if(!show.length) return '';
     const fk = c.k === 'pm' ? followKeys(p) : [], doneK = k => isDone(colCfg(k), p.cells[k] || {}) || (c.k === 'am' && isFollow(p, k));
     const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(doneK).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
-    const cnt = `<span class="rs-cnt" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length + fk.length} done</span>`;
+    const tot = req.length + fk.length, left = tot - done, cntCls = !left ? 'ok' : left <= 2 ? 'near' : '';
+    const cnt = `<span class="rs-cnt ${cntCls}" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length + fk.length} done</span>`;
     return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh">${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''} ${cnt}</div><div class="rs-chk">${fk.map(k => `<div class="rs-ck2 rv"><span>${esc(rvLabel(k))}</span>${tile(k)}</div>`).join('')}${show.map(k => `<div class="rs-ck2 ${!OPTIONAL_KEYS.has(k) && doneK(k) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
   const nx = rdNext(list, i) || (i < list.length - 1 ? list[i + 1] : null);
   const todos = patientTodos(p.id);
@@ -4528,6 +4609,7 @@ function renderRoundsSplit(){
         ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
       <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
+      ${rdLeaveCard(p)}
       <div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>
       ${CHUNKS.map(ckCard).join('')}
     </div>
@@ -5902,7 +5984,9 @@ function diagnostics(){
    Tasks are the same records as to-dos (state.todos) with a typed bed, an optional team and a result,
    so alerts, the clock button, Undo and the activity log all work for them too. */
 const DEFAULT_CHIPS = ['F/u labs','Vitals check','UOP check','Recheck K/Mg','Repeat lactate','F/u blood cx','Check FSG','Reassess pain','Reassess mental status','F/u imaging','Call family'];
-const tkUI = {view:(() => { try{ return localStorage.getItem(`${KEY_PREFIX}.tkView`) || 'time'; }catch(e){ return 'time'; } })(), showDone:true, bed:''};
+const tkUI = {view:(() => { try{ return localStorage.getItem(`${KEY_PREFIX}.tkView`) || 'time'; }catch(e){ return 'time'; } })(), showDone:true, bed:'',
+  zoom:(() => { try{ return +localStorage.getItem(`${KEY_PREFIX}.tlZoom`) || 0; }catch(e){ return 0; } })(), tlScroll:true};   // v296: timeline zoom — 0 = whole shift, else hours on screen
+const TL_ZOOMS = [0, 8, 4, 2, 1];
 // score candidate times: nearest to now, preferring the future
 const tScore = d => { const h = (d - Date.now()) / 3600000; return h >= 0 ? h : -h * 1.6; };
 function nearestDue(h, m){
@@ -6036,12 +6120,14 @@ let tkPop = null;
 function closeTkPop(){ if(tkPop){ tkPop.remove(); tkPop = null; } }
 function timelineHTML(list){
   const timed = list.filter(t => t.due), [a, b] = shiftWindow(timed), span = b - a;
-  const LW = 150, NT = 120, OFF = 26, avail = ($('#tkList').clientWidth || 1200) - LW - NT - 34 - 2 * OFF, W0 = Math.max(600, avail), W = W0 + 2 * OFF, X = d => OFF + Math.round((new Date(d) - a) / span * W0);
+  const LW = 150, NT = 120, OFF = 26, avail = Math.max(300, ($('#tkList').clientWidth || 1200) - LW - NT - 34 - 2 * OFF), spanH = span / 3600e3;
+  const W0 = tkUI.zoom && tkUI.zoom < spanH ? Math.round(avail * spanH / tkUI.zoom) : Math.max(600, avail), W = W0 + 2 * OFF, X = d => OFF + Math.round((new Date(d) - a) / span * W0), pxH = W0 / spanH;
+  const step = pxH >= 260 ? 15 : pxH >= 130 ? 30 : pxH >= 48 ? 60 : 120, lstep = pxH >= 520 ? 15 : pxH >= 130 ? 30 : pxH >= 48 ? 60 : 120;   // finer ticks as you zoom in
   const rows = {}; list.forEach(t => (rows[bedKey(t)] = rows[bedKey(t)] || []).push(t));
   const keys = Object.keys(rows).sort((x, y) => x.localeCompare(y, undefined, {numeric:true}));
-  let hours = ''; for(let t = new Date(a); t <= b; t.setHours(t.getHours() + 1)){ const x = X(t); hours += `<span class="tlh" style="left:${x}px">${pad(t.getHours())}:00</span>`; }
+  let hours = ''; for(let t = new Date(a); t <= b; t.setMinutes(t.getMinutes() + lstep)){ if(lstep === 120 && t.getHours() % 2) continue; hours += `<span class="tlh ${t.getMinutes() ? 'sub' : ''}" style="left:${X(t)}px">${pad(t.getHours())}:${pad(t.getMinutes())}</span>`; }
   const now = Date.now(), nowX = now >= a && now <= b ? X(now) : null;
-  let grid = ''; for(let t = new Date(a); t <= b; t.setHours(t.getHours() + 1)) grid += `<i class="tlline ${t.getHours() === 0 ? 'mid' : ''}" style="left:${X(t)}px"></i>`;
+  let grid = ''; for(let t = new Date(a); t <= b; t.setMinutes(t.getMinutes() + Math.min(step, 60))) grid += `<i class="tlline ${t.getMinutes() ? 'sub' : t.getHours() === 0 ? 'mid' : ''}" style="left:${X(t)}px"></i>`;
   if(nowX !== null) grid += `<i class="tlpast" style="left:${OFF}px;width:${nowX - OFF}px"></i><i class="tlnow" style="left:${nowX}px"></i>`;
   if(nowX !== null) hours += `<span class="tlnowlab" style="left:${nowX}px">${pad(new Date().getHours())}:${pad(new Date().getMinutes())}</span>`;
   const LANE = 26;
@@ -6137,6 +6223,7 @@ function renderTasks(){
   $('#tkStats').innerHTML = all.length ? `<b>${all.length}</b> Task${all.length===1?'':'s'} · <b>${open.length}</b> Open${nE ? ` · <span class="pricount emergent">‼ ${nE} Emergent</span>` : ''}${nU ? ` · <span class="pricount urgent">! ${nU} Urgent</span>` : ''}${over ? ` · <b class="red">${over} Overdue</b>` : ''} · <b>${hourN}</b> Due in the next hour · <b>${done}</b> Done
     <div class="tkprog"><i style="width:${all.length ? Math.round(done / all.length * 100) : 0}%"></i></div>` : '<span class="muted">No tasks yet — add them above as they are signed out to you.</span>';
   document.querySelectorAll('#tkSeg button').forEach(b => b.classList.toggle('on', b.dataset.v === tkUI.view));
+  $('#tkZoom').hidden = tkUI.view !== 'timeline'; document.querySelectorAll('#tkZoom [data-z]').forEach(b => b.classList.toggle('on', +b.dataset.z === tkUI.zoom)); $('#tkZoomNow').hidden = !tkUI.zoom;
   $('#tkShowDone').checked = tkUI.showDone;
   let list = all.filter(t => tkUI.showDone || !t.done); if(tkUI.bed) list = list.filter(t => bedKey(t) === tkUI.bed);
   $('#tkFilter').innerHTML = tkUI.bed ? `Showing <b>${esc(tkUI.bed)}</b> <button class="linkbtn" id="tkClearFilter">show all</button>` : '';
@@ -6169,9 +6256,20 @@ function renderTasks(){
       h += `<div class="tkpat"><div class="tkpathead"><button class="tkbed ${p ? 'linked' : ''}" data-tkbed="${esc(k)}">${esc(todoWhere(L[0]))}</button>${team ? `<span class="tkteam">${esc(team)}</span>` : ''}${p ? `<span class="tkcensus" title="Linked to the census">🔗 On census${p.intern ? ' · ' + esc(p.intern) : ''}</span>${p.problem ? `<span class="muted">${esc(p.problem)}</span>` : ''}` : (() => { const ad = admitByBed(todoWhere(L[0])); return ad ? `<span class="tkcensus" title="Logged on the Admissions tab">${isHold(ad) ? 'Moonlighter hold ' + aTag(ad) : 'Admission #' + (ad.seq || '?')}</span>${ad.problem ? `<span class="muted">${esc(ad.problem)}</span>` : ''}` : admitOnly ? '' : `<button class="linkbtn" data-tklinkgrp="${L[0].id}">Link to census…</button>`; })()}<span class="tkpatn">${o ? `${o} open` : 'all done ✓'} · ${L.length}</span><button class="linkbtn" data-tkaddfor="${esc(todoWhere(L[0]))}" data-team="${esc(team || '')}">+ task</button></div>${L.map(t => row(t, false)).join('')}</div>`; });
   }
   $('#tkList').innerHTML = h;
+  if(tkUI.view === 'timeline' && tkUI.tlScroll){ tkUI.tlScroll = false; tlScrollNow(); }
   if(tkFocusAfter){ const el = document.querySelector(`#tkList [data-tk="${tkFocusAfter.id}"] ${tkFocusAfter.sel}`); tkFocusAfter = null; if(el) el.focus(); }
 }
 let tkFocusAfter = null;
+// v296: timeline zoom
+function tlScrollNow(){ const L = $('#tkList'), n = L && L.querySelector('.tlnow'); if(!L) return;
+  if(!n){ // now is outside the shift: go to the first open task instead (or the start)
+    const xs = [...L.querySelectorAll('.tltrack .tlm:not(.done)')].map(m => parseFloat(m.style.left) || 0); L.scrollLeft = xs.length ? Math.max(0, Math.min(...xs) - 40) : 0; return; }
+  L.scrollLeft = Math.max(0, n.offsetLeft - Math.min(120, (L.clientWidth - 150) * .15)); }
+function setTlZoom(z, anchorFrac){ const L = $('#tkList'), before = L ? (L.scrollLeft + (anchorFrac == null ? L.clientWidth / 2 : anchorFrac)) / Math.max(1, L.scrollWidth) : 0;
+  tkUI.zoom = z; try{ localStorage.setItem(`${KEY_PREFIX}.tlZoom`, String(z)); }catch(e){}
+  closeTkPop(); renderTasks();
+  if(L){ if(!z) L.scrollLeft = 0; else L.scrollLeft = Math.max(0, before * L.scrollWidth - (anchorFrac == null ? L.clientWidth / 2 : anchorFrac)); } }
+const tlZoomStep = dir => { const i = TL_ZOOMS.indexOf(tkUI.zoom), j = Math.max(0, Math.min(TL_ZOOMS.length - 1, (i < 0 ? 0 : i) + dir)); return TL_ZOOMS[j]; };
 /* v293: ✎ Edit a task — patient, text, priority, date + time, team, result; repeats can take the same change */
 function editTaskModal(id, back){
   const t = state.todos.find(x => x.id === id); if(!t) return;
@@ -6292,12 +6390,19 @@ function editChips(){
   $('#tkNextPt').onclick = () => { bed.value = ''; delete bed.dataset.other; delete bed.dataset.none; delete team.dataset.touched; team.value = (state.settings.team || '').trim(); txt.value = ''; tm.value = ''; rep.value = '0'; preview(); bed.focus(); };
   $('#tkChips').addEventListener('click', e => { if(e.target.id === 'tkChipEdit'){ editChips(); return; }
     const c = e.target.closest('[data-chip]'); if(!c) return; txt.value = txt.value.trim() ? `${txt.value.trim()} ${c.dataset.chip}` : c.dataset.chip; preview(); txt.focus(); txt.setSelectionRange(txt.value.length, txt.value.length); });
-  $('#tkSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(!b) return; closeTkPop(); tkUI.view = b.dataset.v; try{ localStorage.setItem(`${KEY_PREFIX}.tkView`, tkUI.view); }catch(err){} renderTasks(); });
+  $('#tkZoom').addEventListener('click', e => { const z = e.target.closest('[data-z]'); if(z){ setTlZoom(+z.dataset.z); if(+z.dataset.z) tlScrollNow(); return; } if(e.target.closest('#tkZoomNow')) tlScrollNow(); });
+  { const L = $('#tkList');   // Ctrl/⌘ + scroll wheel, or pinch on the iPad, zooms the timeline
+    L.addEventListener('wheel', e => { if(tkUI.view !== 'timeline' || !(e.ctrlKey || e.metaKey)) return; e.preventDefault(); if(L._zw) return; L._zw = setTimeout(() => { L._zw = 0; }, 180);
+      const z = tlZoomStep(e.deltaY < 0 ? 1 : -1); if(z !== tkUI.zoom) setTlZoom(z, e.clientX - L.getBoundingClientRect().left); }, {passive:false});
+    let g0 = null; L.addEventListener('gesturestart', e => { if(tkUI.view !== 'timeline') return; e.preventDefault(); g0 = {z:tkUI.zoom, x:e.clientX - L.getBoundingClientRect().left}; });
+    L.addEventListener('gesturechange', e => { if(g0) e.preventDefault(); });
+    L.addEventListener('gestureend', e => { if(!g0) return; e.preventDefault(); const n = e.scale > 1.25 ? 1 : e.scale < .8 ? -1 : 0, x = g0.x; g0 = null; if(n){ const z = tlZoomStep(n * Math.max(1, Math.round(Math.abs(Math.log2(e.scale))))); if(z !== tkUI.zoom) setTlZoom(z, x); } }); }
+  $('#tkSeg').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if(!b) return; closeTkPop(); tkUI.tlScroll = true; tkUI.view = b.dataset.v; try{ localStorage.setItem(`${KEY_PREFIX}.tkView`, tkUI.view); }catch(err){} renderTasks(); });
   $('#tkShowDone').addEventListener('change', e => { tkUI.showDone = e.target.checked; renderTasks(); });
   $('#tkCopy').onclick = () => copyText(signBackText());
   $('#tkFull').onclick = () => tkFullOn() ? exitTkFull() : enterTkFull();
-  $('#tkClearDone').onclick = () => { const n = taskList().filter(t => t.done && (!t.pid || t.src === 'tasks')).length; if(!n){ toast('No finished tasks to clear'); return; }
-    mutate(() => { state.todos = state.todos.filter(t => !(t.done && (!t.pid || t.src === 'tasks'))); }, {label:`Cleared ${n} finished task${n===1?'':'s'}`, cat:'todo'}); toast(`${n} finished task${n===1?'':'s'} cleared`, true); };
+  $('#tkClearDone').onclick = () => { const n = taskList().filter(t => t.done && (!t.pid || t.src === 'tasks' || t.lab)).length; if(!n){ toast('No finished tasks to clear'); return; }
+    mutate(() => { state.todos = state.todos.filter(t => !(t.done && (!t.pid || t.src === 'tasks' || t.lab))); }, {label:`Cleared ${n} finished task${n===1?'':'s'}`, cat:'todo'}); toast(`${n} finished task${n===1?'':'s'} cleared`, true); };
   const L = $('#view-tasks');
   L.addEventListener('click', e => {
     const mk = e.target.closest('[data-tlm]'); if(mk){ openTkPop(mk, mk.dataset.tlm); return; }
@@ -8318,6 +8423,9 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:298, d:'2026-11-25', items:['Split Rounds: the <b>x / y done</b> pill on each section turns <b>light orange</b> when 1–2 items are left and <b>light green</b> when the section is complete (also on the Discharge and Transfer cards).']},
+  {v:297, d:'2026-11-25', items:['<b>Lab Ord ↔ Tasks</b> — each time in a patient\'s Lab Ord box (e.g. “05:00, 3 pm”) is now a <b>Labs</b> task at that time. Change or remove a time in Lab Ord and the task follows; re-time, move or delete the task and Lab Ord follows. Clearing a task that\'s already done leaves the time in Lab Ord.', '<b>Rounds: Discharge and Transfer cards</b> — a patient going home (Discharge status, or EDD today/tomorrow) shows Disposition, DC Instructions, MDR, Summary, Orders and Transportation; a Transfer shows destination, accepting team, reason and the transfer checklist. All editable right from Rounds (Classic and Split).']},
+  {v:296, d:'2026-11-25', items:['<b>Timeline zoom</b> — in the Timeline view, pick how much time fits on screen: <b>Whole shift · 8 h · 4 h · 2 h · 1 h</b>. Zoomed in, the timeline scrolls sideways, opens at now, adds 30- and 15-minute marks, and <b>◎ Now</b> jumps back. Also Ctrl/⌘ + scroll wheel on a desktop, or pinch on the iPad. Your choice is remembered.']},
   {v:295, d:'2026-11-25', items:['Timeline task pop-up: <b>✓ Done</b> is now <b>✓ Complete</b>.']},
   {v:294, d:'2026-11-25', items:['Timeline task pop-up: the <b>✓ Done</b> button no longer spills off the edge — the pop-up is a little wider and its buttons wrap if they need to.']},
   {v:293, d:'2026-11-25', items:['<b>Edit a task</b> — every task now has a <b>✎</b> button (Tasks list, the timeline pop-up and the census ⏰ to-do lists) that opens an editor: move it to another patient, change the text, priority, date and time, team, or result. A repeating task can pass the change to its other open repeats.']},
@@ -8725,7 +8833,7 @@ if(!tabLocked) showLaunch({boot:true});
 { const tryWN = n => { if(modalEl || tabLocked || (SANDBOX && !(() => { try{ return localStorage.getItem(SEEN_KEY); }catch(e){ return ''; } })())){ if(SANDBOX && !modalEl && !tabLocked){ try{ localStorage.setItem(SEEN_KEY, APP_VERSION); }catch(e){} return; } if(n < 20) setTimeout(() => tryWN(n + 1), 1500); return; } whatsNewBoot(); };
   whenLaunched(() => setTimeout(() => tryWN(0), 600)); }
 // test hook for the automated checks (sandbox only)
-if(SANDBOX) window.__wmTest = {get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, switchBoard, showLaunch, get launching(){ return launching; }, get rots(){ return ROTS; }, typeOf, addDays, renderAll, shiftStartDate, shiftEndDate, dayGo(d){ mutate(() => { state.boardDate = d; }); }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
+if(SANDBOX) window.__wmTest = {syncLabTasks, labTokHM, get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, switchBoard, showLaunch, get launching(){ return launching; }, get rots(){ return ROTS; }, typeOf, addDays, renderAll, shiftStartDate, shiftEndDate, dayGo(d){ mutate(() => { state.boardDate = d; }); }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
 setTimeout(() => { try{ const bad = runDiagnostics().filter(r => r.lvl === 'fail'); if(bad.length) toast(`Self-check found ${bad.length} problem${bad.length===1?'':'s'}: ${bad[0].title} — see Settings → Run self-check`); }catch(e){} }, 1500);
 })();
 </script>
