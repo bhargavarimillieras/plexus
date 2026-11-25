@@ -943,6 +943,8 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 .rs-next{padding:12px 22px;font-size:15px}
 body.touch .rs-pi{padding:10px 10px}
 @media (prefers-color-scheme: dark){.rs-pi.on{background:rgba(66,133,244,.18)}.rs-cnt,.rs-quick button{background:rgba(255,255,255,.08);color:#c3cad6}}
+.rs-cnt.near{background:#FFE8C7;color:#8a4b00}.rs-cnt.ok{background:#DDF3E3;color:#137333}
+@media (prefers-color-scheme: dark){.rs-cnt.near{background:#4a3313;color:#ffcf8a}.rs-cnt.ok{background:#173a22;color:#8fd6a4}}
 @media (max-width:900px){.rs{grid-template-columns:200px 1fr}.rs-body{grid-template-columns:1fr}.rs-plan{position:static;min-height:0}}
 .rbody{width:100%;max-width:1180px;margin:0 auto;padding:18px 20px 40px;box-sizing:border-box}
 .rhead{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
@@ -1797,7 +1799,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '297';
+const APP_VERSION = '298';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4561,11 +4563,11 @@ const ctlBox = (p, k) => { const h = ctlHTML(p, k); return h.replace(/^<td/, '<d
 function rdLeaveCard(p){
   let h = '';
   if(dcBucket(p) || p.status === 'Discharge'){ const n = dcSigned(p), when = p.status === 'Discharge' || dcBucket(p) === 'today' ? 'today' : dcBucket(p) === 'tomorrow' ? 'tomorrow' : 'past EDD';
-    h += `<div class="rs-card rs-leave rs-dc"><div class="rs-cardh"><span>🏠 Discharge <span class="muted" style="font-weight:600;text-transform:none;letter-spacing:0">· ${when}</span></span> <span class="rs-cnt">${n === DC_KEYS.length ? '<span class="flag ready">Ready for DC</span>' : `${n} / ${DC_KEYS.length} signed`}</span></div>
+    h += `<div class="rs-card rs-leave rs-dc"><div class="rs-cardh"><span>🏠 Discharge <span class="muted" style="font-weight:600;text-transform:none;letter-spacing:0">· ${when}</span></span> <span class="rs-cnt ${n === DC_KEYS.length ? 'ok' : DC_KEYS.length - n <= 2 ? 'near' : ''}">${n === DC_KEYS.length ? '✓ Ready for DC' : `${n} / ${DC_KEYS.length} signed`}</span></div>
       <div class="rs-lvgrid">${['dest', ...DC_KEYS, 'transport'].filter(k => COLMAP[k]).map(k => `<label class="rs-lvf ${DC_KEYS.includes(k) ? 'dc' : ''}"><span>${esc(colCfg(k).h)}</span>${ctlBox(p, k)}</label>`).join('')}</div></div>`; }
   if(p.status === 'Transfer'){ const x = xferOf(p), n = xferDone(p);
     const inp = (f, ph) => `<label class="rs-lvf"><span>${{dest:'Transferring to', team:'Accepting team', reason:'Reason'}[f]}</span><input class="cell" data-xf="${f}" data-id="${p.id}" value="${esc(x[f] || '')}" placeholder="${ph}" ${f === 'dest' ? 'list="xDestListR"' : ''}></label>`;
-    h += `<div class="rs-card rs-leave rs-xf"><div class="rs-cardh">⇄ Transfer <span class="rs-cnt">${n === XFER_CHECKS.length ? '<span class="flag xfer">Ready ✓</span>' : `${n} / ${XFER_CHECKS.length} done`}</span></div>
+    h += `<div class="rs-card rs-leave rs-xf"><div class="rs-cardh">⇄ Transfer <span class="rs-cnt ${n === XFER_CHECKS.length ? 'ok' : XFER_CHECKS.length - n <= 2 ? 'near' : ''}">${n === XFER_CHECKS.length ? '✓ Ready' : `${n} / ${XFER_CHECKS.length} done`}</span></div>
       <div class="rs-lvgrid">${inp('dest', 'e.g. MICU')}${inp('team', 'optional')}${inp('reason', 'e.g. needs pressors')}</div>
       <div class="rs-xchecks">${XFER_CHECKS.map(([k, l]) => `<label class="rs-xc ${x.checks[k] ? 'on' : ''}"><input type="checkbox" data-xc="${k}" data-id="${p.id}" ${x.checks[k] ? 'checked' : ''}> ${esc(l)}</label>`).join('')}</div>
       <datalist id="xDestListR">${XFER_DESTS.map(d => `<option value="${esc(d)}">`).join('')}</datalist></div>`; }
@@ -4596,7 +4598,8 @@ function renderRoundsSplit(){
   const ckCard = c => { const all = chunkKeys(c.k), show = all.filter(k => !RS_GLANCE.includes(k)); if(!show.length) return '';
     const fk = c.k === 'pm' ? followKeys(p) : [], doneK = k => isDone(colCfg(k), p.cells[k] || {}) || (c.k === 'am' && isFollow(p, k));
     const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(doneK).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
-    const cnt = `<span class="rs-cnt" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length + fk.length} done</span>`;
+    const tot = req.length + fk.length, left = tot - done, cntCls = !left ? 'ok' : left <= 2 ? 'near' : '';
+    const cnt = `<span class="rs-cnt ${cntCls}" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length + fk.length} done</span>`;
     return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh">${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''} ${cnt}</div><div class="rs-chk">${fk.map(k => `<div class="rs-ck2 rv"><span>${esc(rvLabel(k))}</span>${tile(k)}</div>`).join('')}${show.map(k => `<div class="rs-ck2 ${!OPTIONAL_KEYS.has(k) && doneK(k) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
   const nx = rdNext(list, i) || (i < list.length - 1 ? list[i + 1] : null);
   const todos = patientTodos(p.id);
@@ -8420,6 +8423,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:298, d:'2026-11-25', items:['Split Rounds: the <b>x / y done</b> pill on each section turns <b>light orange</b> when 1–2 items are left and <b>light green</b> when the section is complete (also on the Discharge and Transfer cards).']},
   {v:297, d:'2026-11-25', items:['<b>Lab Ord ↔ Tasks</b> — each time in a patient\'s Lab Ord box (e.g. “05:00, 3 pm”) is now a <b>Labs</b> task at that time. Change or remove a time in Lab Ord and the task follows; re-time, move or delete the task and Lab Ord follows. Clearing a task that\'s already done leaves the time in Lab Ord.', '<b>Rounds: Discharge and Transfer cards</b> — a patient going home (Discharge status, or EDD today/tomorrow) shows Disposition, DC Instructions, MDR, Summary, Orders and Transportation; a Transfer shows destination, accepting team, reason and the transfer checklist. All editable right from Rounds (Classic and Split).']},
   {v:296, d:'2026-11-25', items:['<b>Timeline zoom</b> — in the Timeline view, pick how much time fits on screen: <b>Whole shift · 8 h · 4 h · 2 h · 1 h</b>. Zoomed in, the timeline scrolls sideways, opens at now, adds 30- and 15-minute marks, and <b>◎ Now</b> jumps back. Also Ctrl/⌘ + scroll wheel on a desktop, or pinch on the iPad. Your choice is remembered.']},
   {v:295, d:'2026-11-25', items:['Timeline task pop-up: <b>✓ Done</b> is now <b>✓ Complete</b>.']},
