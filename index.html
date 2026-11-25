@@ -1765,7 +1765,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '285';
+const APP_VERSION = '286';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6553,6 +6553,15 @@ async function dfLink(h, viaUser){
   try{
     let perm = h.queryPermission ? await h.queryPermission({mode:'readwrite'}) : 'granted';
     if(perm !== 'granted' && viaUser && h.requestPermission) perm = await h.requestPermission({mode:'readwrite'});
+    if(perm !== 'granted' && viaUser){
+      // The browser (often a managed hospital computer) won't let Plexus save back to this file — load a copy instead of doing nothing
+      try{ const txt = await (await h.getFile()).text(); DF.handle = null; DF.name = ''; DF.status = 'off'; renderBackupInd(); renderDfBanner();
+        const snap = () => { try{ return JSON.stringify(collectAll().boards); }catch(e){ return ''; } }, b4 = snap();
+        await restoreFile(txt, h.name);
+        if(snap() !== b4) toast(`Loaded a copy of ${h.name} — this computer won't let Plexus save back to it, so use 🧳 Take with me before you leave`, true);
+        return true; }
+      catch(e){ toast(`Couldn't read ${h.name}: ${e.message || e.name}`); return false; }
+    }
     if(perm !== 'granted'){ DF.handle = h; DF.name = h.name; DF.status = 'needs'; renderBackupInd(); renderDfBanner(); return false; }
     const fobj = await h.getFile(), text = await fobj.text(); DF.lastMod = fobj.lastModified;
     let pkg = null; if(text.trim()){ try{ pkg = JSON.parse(text); }catch(e){} if(!pkg || pkg.kind !== 'wardsMatrixData'){ toast(`${h.name} isn't a Plexus data file`); return false; } }
@@ -6589,8 +6598,16 @@ async function dfCreate(){
   catch(e){ if(e && e.name !== 'AbortError') toast(`Couldn't create the file: ${e.message || e.name}`); }
 }
 async function dfOpen(){
-  try{ const [h] = await window.showOpenFilePicker({types:DF_TYPES, multiple:false}); return await dfLink(h, true); }
-  catch(e){ if(e && e.name !== 'AbortError') toast(`Couldn't open the file: ${e.message || e.name}`); return false; }
+  let h;
+  try{ [h] = await window.showOpenFilePicker({types:DF_TYPES, multiple:false}); }
+  catch(e){ if(e && e.name === 'AbortError') return false;
+    // the live-file picker is blocked here (policy, embedded window…) — fall back to an ordinary file picker and load a copy
+    toast('This computer blocks live file saving — choose the file again to load a copy');
+    return await new Promise(res => { const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';
+      inp.onchange = () => { const f = inp.files[0]; if(!f) return res(false); f.text().then(async tx => res((await restoreFile(tx, f.name)) !== false)).catch(() => { toast('Couldn’t read that file'); res(false); }); };
+      inp.click(); }); }
+  try{ return await dfLink(h, true); }
+  catch(e){ toast(`Couldn't open ${h && h.name || 'the file'}: ${e.message || e.name}`); return false; }
 }
 // From the launch screen (e.g. a fresh remote desktop): open the data file, then show its boards with the last-used one picked
 async function launchOpenFile(opts){
@@ -8189,6 +8206,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:286, d:'2026-11-25', items:['<b>Open my data file…</b> no longer does nothing on computers that won’t let Plexus save back to the file (common on managed hospital computers): it loads a copy of the file instead and tells you so — use 🧳 Take with me before you leave.']},
   {v:285, d:'2026-11-24', items:['Procedure <b>tomorrow</b> → the Diet box shows <b>“NPO @ MN ordered?”</b>. Tap it once the NPO-after-midnight order is in (it turns green ✓). The current diet stays as it is. Until it’s ticked it counts as an open PM item (and shows in outstanding). Not shown if the diet is already NPO.']},
   {v:284, d:'2026-11-24', items:['<b>Revisit / Panic → PM follow-ups.</b> In the AM boxes (Vitals, I/O, FSG, Lab Rev, Imaging…), marking <b>Needs revisit</b> or <b>Panic result</b> now counts as done for pre-charting — you’ve looked and acknowledged it — so pre-charted can tick. It then becomes a <b>PM item</b>: a <b>↻ Revisit</b> column in the PM view (tap a chip to update it), in Rounds’ PM card, in <b>outstanding</b>, and in the PM counts. The bed cell only turns green once it’s set to Complete or N/A.']},
   {v:283, d:'2026-11-24', items:['Avatar: <b>brachial</b> added to the PIV locations (it shows on the body map too).']},
