@@ -621,7 +621,8 @@ body.tkfull #hclocks{margin-right:4px}
 .tlm.over{background:#EA4335;color:#fff}.tlm.over b{background:rgba(255,255,255,.25)}
 .tlm.done{background:var(--head);color:var(--muted);text-decoration:line-through}.tlm.done b{text-decoration:none;background:#34A853;color:#fff}
 .tlm.sm{position:static;height:20px;max-width:calc(var(--nt) - 14px);font-size:11px;padding:0 7px}
-.tkpop{width:340px}
+.pop.tkpop{width:380px;max-width:calc(100vw - 16px)}
+.tkpop .row2{flex-wrap:wrap;gap:8px;align-items:center}.tkpop .row2 > span{flex-wrap:wrap}.tkpop .row2 .btn{white-space:nowrap}.tkpop .row2 [data-pdone]{margin-left:auto}
 .tkedit{display:grid;grid-template-columns:110px 1fr;gap:8px 12px;align-items:center;min-width:min(520px,80vw)}
 .tkedit label.f{margin:0;font-weight:700}.tkedit #teOther{grid-column:2}.tkedit .tecb{grid-column:1/-1;font-size:13px;display:flex;gap:6px;align-items:center}
 .tkedit .tkpri button[data-ppri="urgent"].on{background:#FF8A00;color:#fff}.tkedit .tkpri button[data-ppri="emergent"].on{background:#D93025;color:#fff}
@@ -1780,7 +1781,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '293';
+const APP_VERSION = '294';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -8317,6 +8318,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:294, d:'2026-11-25', items:['Timeline task pop-up: the <b>✓ Done</b> button no longer spills off the edge — the pop-up is a little wider and its buttons wrap if they need to.']},
   {v:293, d:'2026-11-25', items:['<b>Edit a task</b> — every task now has a <b>✎</b> button (Tasks list, the timeline pop-up and the census ⏰ to-do lists) that opens an editor: move it to another patient, change the text, priority, date and time, team, or result. A repeating task can pass the change to its other open repeats.']},
   {v:292, d:'2026-11-25', items:['<b>Last BM</b> turns light red when the last BM was more than 2 days ago, and <b>T&amp;S</b> turns light red once it was collected 3 or more days ago.']},
   {v:291, d:'2026-11-25', items:['<b>The Tasks tab now shows on day shifts too</b> (wards, CCU/MICU days and day shifts in a rotation) — on desktop and in the iPad tab bar. Day boards still open on Census.']},
