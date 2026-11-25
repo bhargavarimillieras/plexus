@@ -1765,7 +1765,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '286';
+const APP_VERSION = '287';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6610,10 +6610,13 @@ async function dfOpen(){
   catch(e){ toast(`Couldn't open ${h && h.name || 'the file'}: ${e.message || e.name}`); return false; }
 }
 // From the launch screen (e.g. a fresh remote desktop): open the data file, then show its boards with the last-used one picked
+// after a data file / backup loads from the launch screen, go straight into its board — redrawing the launch screen looked like nothing happened
+function launchEnterLoaded(opts){ if(!launching) return; showLaunch(opts);
+  setTimeout(() => { const g = document.querySelector('#launch [data-lgo]:not([disabled])'); if(g){ g.click(); toast('📂 Data file opened'); } }, 0); }
 async function launchOpenFile(opts){
-  if(dfSupported()){ const ok = await dfOpen(); if(ok && launching) showLaunch(opts); return; }
+  if(dfSupported()){ const ok = await dfOpen(); if(ok) launchEnterLoaded(opts); return; }
   const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json,application/json';   // no live file saving in this browser: load a copy
-  inp.onchange = () => { const f = inp.files[0]; if(f) f.text().then(async tx => { await restoreFile(tx, f.name); if(launching) showLaunch(opts); }).catch(() => toast('Couldn’t read that file')); }; inp.click();
+  inp.onchange = () => { const f = inp.files[0]; if(f) f.text().then(async tx => { await restoreFile(tx, f.name); launchEnterLoaded(opts); }).catch(() => toast('Couldn’t read that file')); }; inp.click();
 }
 async function dfReconnect(){ if(DF.handle) await dfLink(DF.handle, true); if(BKF.handle && BKF.status === 'needs') bkfReconnect(true); }
 async function dfStop(){ await idbSet(null); const n = DF.name; DF.handle = null; DF.name = ''; DF.status = 'off'; renderBackupInd(); renderDfBanner(); toast(`Stopped saving to ${n || 'the data file'} — the board keeps saving in this browser`); }
@@ -8206,6 +8209,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:287, d:'2026-11-25', items:['<b>Open my data file</b> from the start screen now goes straight into your board once the file loads. Before, it loaded the file but just redrew the start screen, so it looked like nothing had happened.']},
   {v:286, d:'2026-11-25', items:['<b>Open my data file…</b> no longer does nothing on computers that won’t let Plexus save back to the file (common on managed hospital computers): it loads a copy of the file instead and tells you so — use 🧳 Take with me before you leave.']},
   {v:285, d:'2026-11-24', items:['Procedure <b>tomorrow</b> → the Diet box shows <b>“NPO @ MN ordered?”</b>. Tap it once the NPO-after-midnight order is in (it turns green ✓). The current diet stays as it is. Until it’s ticked it counts as an open PM item (and shows in outstanding). Not shown if the diet is already NPO.']},
   {v:284, d:'2026-11-24', items:['<b>Revisit / Panic → PM follow-ups.</b> In the AM boxes (Vitals, I/O, FSG, Lab Rev, Imaging…), marking <b>Needs revisit</b> or <b>Panic result</b> now counts as done for pre-charting — you’ve looked and acknowledged it — so pre-charted can tick. It then becomes a <b>PM item</b>: a <b>↻ Revisit</b> column in the PM view (tap a chip to update it), in Rounds’ PM card, in <b>outstanding</b>, and in the PM counts. The bed cell only turns green once it’s set to Complete or N/A.']},
