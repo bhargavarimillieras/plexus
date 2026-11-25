@@ -1480,6 +1480,9 @@ body.touch .daystrip .sd{min-width:50px;padding:6px 4px}
 body.launching .scrim{z-index:300}
 .hubnext{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin:6px 0 -2px;font:600 12px -apple-system,sans-serif;color:#9fb0c8;position:relative;z-index:1}
 .hubnext .btn{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.25);color:#fff}.hubnext .btn.primary{background:#1e8e3e;border-color:#1e8e3e}
+/* questions and messages raised from the start screen (open a data file, restore…) must sit above it, not behind it */
+body:has(#launch:not([hidden])) .scrim{z-index:300}
+.toast{z-index:320 !important}
 #launch{position:fixed;inset:0;z-index:250;background:var(--bg);display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:max(28px,env(safe-area-inset-top)) 16px 28px}
 #launch[hidden]{display:none}
 body.launching .app,body.launching .tbar,body.launching .fab,body.launching .toast{visibility:hidden}
@@ -1765,7 +1768,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '287';
+const APP_VERSION = '288';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -8209,6 +8212,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:288, d:'2026-11-25', items:['Fixed: on the start screen, questions like <b>“Which copy should the board use?”</b> (after Open my data file) appeared <i>behind</i> the start screen, so Plexus seemed to do nothing while it waited for an answer you couldn’t see. They — and messages — now appear on top.']},
   {v:287, d:'2026-11-25', items:['<b>Open my data file</b> from the start screen now goes straight into your board once the file loads. Before, it loaded the file but just redrew the start screen, so it looked like nothing had happened.']},
   {v:286, d:'2026-11-25', items:['<b>Open my data file…</b> no longer does nothing on computers that won’t let Plexus save back to the file (common on managed hospital computers): it loads a copy of the file instead and tells you so — use 🧳 Take with me before you leave.']},
   {v:285, d:'2026-11-24', items:['Procedure <b>tomorrow</b> → the Diet box shows <b>“NPO @ MN ordered?”</b>. Tap it once the NPO-after-midnight order is in (it turns green ✓). The current diet stays as it is. Until it’s ticked it counts as an open PM item (and shows in outstanding). Not shown if the diet is already NPO.']},
