@@ -1768,7 +1768,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '288';
+const APP_VERSION = '289';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -6567,7 +6567,11 @@ async function dfLink(h, viaUser){
     }
     if(perm !== 'granted'){ DF.handle = h; DF.name = h.name; DF.status = 'needs'; renderBackupInd(); renderDfBanner(); return false; }
     const fobj = await h.getFile(), text = await fobj.text(); DF.lastMod = fobj.lastModified;
-    let pkg = null; if(text.trim()){ try{ pkg = JSON.parse(text); }catch(e){} if(!pkg || pkg.kind !== 'wardsMatrixData'){ toast(`${h.name} isn't a Plexus data file`); return false; } }
+    let pkg = null; if(text.trim()){ try{ pkg = JSON.parse(text); }catch(e){}
+      // a one-board backup (⬇ Download a backup, or the automatic one at New Shift): restore that board as a copy — it can't be a live data file
+      if(pkg && pkg.kind !== 'wardsMatrixData' && Array.isArray(pkg.patients)){ if(!viaUser) return false; DF.handle = null; DF.name = ''; DF.status = 'off'; renderBackupInd(); renderDfBanner();
+        await restoreOneBoard(pkg, h.name); return true; }
+      if(!pkg || pkg.kind !== 'wardsMatrixData'){ if(viaUser) await askChoice(`<h3>That isn’t a Plexus data file</h3><p><b>${esc(h.name)}</b> isn’t a Plexus backup or data file. Look for a file named like <b>Plexus backup - … .json</b> (iPad: More → Back up to Files) or <b>Plexus … .json</b> (🧳 Take with me).</p>`, [['OK', 'primary', true]]); else toast(`${h.name} isn't a Plexus data file`); return false; } }
     DF.handle = h; DF.name = h.name; await idbSet(h);
     if(!pkg){ DF.status = 'ok'; await dfWrite(); toast(`Now saving to ${h.name}`); return true; }
     if(pkg.edition && pkg.edition !== EDITION && viaUser){
@@ -7749,6 +7753,7 @@ async function restoreOneBoard(s2, fname){
   const go = await askChoice(`<h3>Restore this board?</h3><p><b>${esc(fname)}</b>${when ? ` — saved ${esc(new Date(when).toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}))}` : ''}</p>
     <p class="muted">One board: <b>${esc(T.label)}</b> · ${(s2.patients || []).length} patient${(s2.patients || []).length === 1 ? '' : 's'} · ${(s2.todos || []).filter(t => !t.done).length} open tasks${s2.boardDate ? ' · on ' + esc(fmtNoYear(s2.boardDate)) : ''}</p>
     ${other ? `<p class="red"><b>⚠ This came from the ${s2.edition === 'sandbox' ? 'Sandbox (test)' : 'Portable (real)'} edition.</b></p>` : ''}
+    ${s2.settings && s2.settings.shiftType && !knownBoard(s2.settings.shiftType) ? `<p class="red"><b>Its rotation isn’t set up on this computer</b>, so the patients go onto <b>${esc(T.label)}</b>. To bring the rotation too, use a <b>full</b> backup instead — iPad: More → Back up to Files (“Plexus backup - … .json”), or 🧳 Take with me.</p>` : ''}
     <p>It <b>replaces ${esc(T.label)}</b> here. Your other boards aren’t touched, and a snapshot is kept first (⚙ → View &amp; restore backups).</p>`, [['Cancel', '', false], ['Replace this board', 'danger', true]]);
   if(!go) return true;
   try{ await autoBackup('before restoring ' + fname, true); }catch(e){}
@@ -8212,6 +8217,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:289, d:'2026-11-25', items:['<b>Open my data file</b> now accepts a <b>one-board backup</b> (e.g. “Plexus backup Bellevue CCU 2026-11-24 1901.json” from ⬇ Download a backup or the automatic New Shift backup) and restores that board — before, it refused it with a message that was easy to miss. A file that isn’t a Plexus backup at all now gets a clear pop-up instead of a passing message.']},
   {v:288, d:'2026-11-25', items:['Fixed: on the start screen, questions like <b>“Which copy should the board use?”</b> (after Open my data file) appeared <i>behind</i> the start screen, so Plexus seemed to do nothing while it waited for an answer you couldn’t see. They — and messages — now appear on top.']},
   {v:287, d:'2026-11-25', items:['<b>Open my data file</b> from the start screen now goes straight into your board once the file loads. Before, it loaded the file but just redrew the start screen, so it looked like nothing had happened.']},
   {v:286, d:'2026-11-25', items:['<b>Open my data file…</b> no longer does nothing on computers that won’t let Plexus save back to the file (common on managed hospital computers): it loads a copy of the file instead and tells you so — use 🧳 Take with me before you leave.']},
