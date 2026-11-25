@@ -154,6 +154,8 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 .grid .tc.tc-na{background:#eef0f3 !important;color:#8a919c !important;box-shadow:none !important}
 .grid .tc.tc-na .box,.grid .tc.tc-na .cn{opacity:.75}
 @media (prefers-color-scheme: dark){ .grid .tc.tc-na{background:#2a2d33 !important;color:#8a919c !important} }
+.grid .tc.tc-old{background:#fde4e4 !important}
+@media (prefers-color-scheme: dark){ .grid .tc.tc-old{background:#4a2326 !important} }
 .plist{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;margin-bottom:6px}
 .prow{display:grid;grid-template-columns:1fr 138px auto;gap:6px;align-items:center}
 .prow input{min-width:0}
@@ -1772,7 +1774,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '291';
+const APP_VERSION = '292';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3146,8 +3148,12 @@ function cellHTML(cell, col, kind, id, ri, ci, ro){
   let h = cellHTML0(cell, col, kind, id, ri, ci, ro);
   if(kind === 'p' && col.k === 'diet'){ const r = rowOf('p', id); if(npoNeeded(r)){ const ok = npoDone(r);
     h = h.replace(/<\/div>$/, `<button type="button" class="npoflag ${ok ? 'ok' : ''}" ${ro ? 'disabled' : `data-npo="${id}"`} title="${ok ? 'NPO after midnight ordered — tap to undo' : 'Procedure tomorrow — is the NPO-after-midnight order in? Tap once it is.'}">${ok ? '✓ NPO @ MN' : 'NPO @ MN?'}</button></div>`); } }
-  return cellIsNA(cell, col) ? h.replace('class="tc ', 'class="tc tc-na ') : h;   // N/A cells are lightly greyed out
+  if(cellIsNA(cell, col)) return h.replace('class="tc ', 'class="tc tc-na ');   // N/A cells are lightly greyed out
+  if(kind === 'p' && cellOverdue(cell, col)) return h.replace('class="tc ', 'class="tc tc-old ');   // v292: old Last BM / expired T&S turn light red
+  return h;
 }
+// v292: Last BM ≥ Settings no-BM days (3 = more than 2 days) ago, or T&S collected ≥ 3 days ago (Settings T&S hours) → light red
+const cellOverdue = (cell, col) => !!cell && isISO(cell.t) && (col.k === 'bm' ? daysBetween(cell.t, state.boardDate) >= (state.settings.bmDays || 3) : col.k === 'ts' ? tsExpired(cell.t) : false);
 function cellHTML0(cell, col, kind, id, ri, ci, ro){
   if(col.type === 'proc'){
     if(cell.t === 'N/A') return `<div class="tc t-proc proc-none ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h)}: N/A — no procedures planned"><span class="txt">N/A</span></div>`;
@@ -8244,6 +8250,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:292, d:'2026-11-25', items:['<b>Last BM</b> turns light red when the last BM was more than 2 days ago, and <b>T&amp;S</b> turns light red once it was collected 3 or more days ago.']},
   {v:291, d:'2026-11-25', items:['<b>The Tasks tab now shows on day shifts too</b> (wards, CCU/MICU days and day shifts in a rotation) — on desktop and in the iPad tab bar. Day boards still open on Census.']},
   {v:290, d:'2026-11-25', items:['<b>Every “Back up” now saves a full backup</b> — rotations (with block and schedule), every board, tasks and settings — named <b>Plexus FULL backup - … .json</b>. That includes ⚙ Settings, the header backup button, the command bar and the automatic New Shift download. (Before, “Back up now” saved only the open board.)', '⚙ Settings has a clearer <b>Save &amp; move your data</b> section: <b>💾 Save full backup</b> and <b>📂 Restore from a backup file…</b> up front; the live data file and the rarer exports (this board only, Excel, settings only) are folded away underneath.']},
   {v:289, d:'2026-11-25', items:['<b>Open my data file</b> now accepts a <b>one-board backup</b> (e.g. “Plexus backup Bellevue CCU 2026-11-24 1901.json” from ⬇ Download a backup or the automatic New Shift backup) and restores that board — before, it refused it with a message that was easy to miss. A file that isn’t a Plexus backup at all now gets a clear pop-up instead of a passing message.']},
