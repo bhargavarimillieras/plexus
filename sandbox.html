@@ -1772,7 +1772,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '290';
+const APP_VERSION = '291';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4093,7 +4093,7 @@ function renderChromeInner(){
     n.innerHTML = `<b>It's ${fmtLong(todayISO())}.</b> The board is still on ${esc(fmtNoYear(state.boardDate))}${isRot(activeType) ? ` — today is ${dayKindTxt(activeType, nsx.date)}` : ''}. <button class="btn sm primary" id="nudgeNewDay">${esc(startLabel(nsx, true))}</button>`;
   } else n.hidden = true;
   renderBackupInd();
-  { const hasTasks = !!typeOf(activeType).tasks; $('#tabs button[data-tab="tasks"]').hidden = !hasTasks; document.body.classList.toggle('has-tasks', hasTasks); if(!hasTasks && ui.tab === 'tasks') ui.tab = typeOf(activeType).tab; }
+  { /* v291: the Tasks tab shows on every board — day shifts too (night-only extras still key off .tasks) */ $('#tabs button[data-tab="tasks"]').hidden = false; document.body.classList.add('has-tasks'); }
   if(ui.tab !== 'tasks' && typeof tkFullOn === 'function' && tkFullOn()) exitTkFull();
   document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === `view-${ui.tab}`));
@@ -8244,6 +8244,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:291, d:'2026-11-25', items:['<b>The Tasks tab now shows on day shifts too</b> (wards, CCU/MICU days and day shifts in a rotation) — on desktop and in the iPad tab bar. Day boards still open on Census.']},
   {v:290, d:'2026-11-25', items:['<b>Every “Back up” now saves a full backup</b> — rotations (with block and schedule), every board, tasks and settings — named <b>Plexus FULL backup - … .json</b>. That includes ⚙ Settings, the header backup button, the command bar and the automatic New Shift download. (Before, “Back up now” saved only the open board.)', '⚙ Settings has a clearer <b>Save &amp; move your data</b> section: <b>💾 Save full backup</b> and <b>📂 Restore from a backup file…</b> up front; the live data file and the rarer exports (this board only, Excel, settings only) are folded away underneath.']},
   {v:289, d:'2026-11-25', items:['<b>Open my data file</b> now accepts a <b>one-board backup</b> (e.g. “Plexus backup Bellevue CCU 2026-11-24 1901.json” from ⬇ Download a backup or the automatic New Shift backup) and restores that board — before, it refused it with a message that was easy to miss. A file that isn’t a Plexus backup at all now gets a clear pop-up instead of a passing message.']},
   {v:288, d:'2026-11-25', items:['Fixed: on the start screen, questions like <b>“Which copy should the board use?”</b> (after Open my data file) appeared <i>behind</i> the start screen, so Plexus seemed to do nothing while it waited for an answer you couldn’t see. They — and messages — now appear on top.']},
