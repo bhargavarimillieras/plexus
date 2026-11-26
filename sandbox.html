@@ -1953,7 +1953,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '320';
+const APP_VERSION = '321';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2146,12 +2146,12 @@ const SMAP = Object.fromEntries(STATES.map(s => [s.k, s]));
 /* v319: each status column has its own short list (keys 1–5) instead of the shared 1–8 legend. Codes keep their meaning (C done, R revisit, P pending, X panic, N N/A, A ALOC). */
 const ST = (k, label, bg, fg, g) => ({k, label, bg, fg, g});
 const ST_C = l => ST('C', l, '#34A853', '#fff', '✓'), ST_X = ST('X', 'Panic', '#EA4335', '#fff', '!'), ST_N = ST('N', 'N/A', '#999999', '#fff', '–');
-const ST_PEND = ST('P', 'Pending / in process', '#E8710A', '#fff', 'P');
+const ST_PEND = ST('P', 'Pending / in process', '#FFB74D', '#1a1a1a', 'P'), ST_REV = ST('R', 'Revisit', '#E8710A', '#fff', 'R');
 const STSETS = {
-  vitals:[ST_C('Reviewed'), ST('R', 'Revisit', '#FBBC04', '#1a1a1a', 'R'), ST_X, ST_N],
-  labrev:[ST_C('Reviewed'), ST('O', 'Ordered', '#FBBC04', '#1a1a1a', 'O'), ST_PEND, ST('R', 'Revisit', '#FFB74D', '#1a1a1a', 'R'), ST_X, ST_N],
+  vitals:[ST_C('Reviewed'), ST_REV, ST_X, ST_N],
+  labrev:[ST_C('Reviewed'), ST('O', 'Ordered', '#FBBC04', '#1a1a1a', 'O'), ST_PEND, ST_REV, ST_X, ST_N],
   note:[ST_C('Complete'), ST_PEND, ST('A', 'ALOC', '#9900FF', '#fff', 'A'), ST_N],
-  _:[ST_C('Complete'), ST_PEND, ST('R', 'Revisit', '#FBBC04', '#1a1a1a', 'R'), ST_X, ST_N]};
+  _:[ST_C('Complete'), ST_PEND, ST_REV, ST_X, ST_N]};
 STSETS.fsg = STSETS.vitals; STSETS.img = STSETS.labrev;
 const stSet = col => STSETS[col] || STSETS._;
 const stOf = (col, k) => !k ? null : (stSet(col).find(x => x.k === k) || SMAP[k] || null);
@@ -2159,6 +2159,8 @@ const stOf = (col, k) => !k ? null : (stSet(col).find(x => x.k === k) || SMAP[k]
 const ST_MAP = {vitals:{P:'R', O:'R', S:'R', A:'R'}, labrev:{S:'R', A:'R'}, note:{R:'P', O:'P', X:'P', S:'P'}, _:{O:'P', S:'R', A:'R'}};
 ST_MAP.fsg = ST_MAP.vitals; ST_MAP.img = ST_MAP.labrev;
 function stMigrate(){ const fix = (k, c) => { if(!c || !c.s || stSet(k).some(x => x.k === c.s)) return; const to = (ST_MAP[k] || ST_MAP._)[c.s]; c.s = to || ''; };
+  try{ const nc = state.settings.columns && state.settings.columns.note; if(nc && Array.isArray(nc.opts)) nc.opts = nc.opts.filter(o => !/^(pending|aloc)$/i.test(o.label));
+    (state.patients || []).forEach(p => { const c = p.cells && p.cells.note; if(!c) return; const m = String(c.t || '').match(/^(pending|aloc)$/i); if(m){ if(!c.s) c.s = /^p/i.test(m[1]) ? 'P' : 'A'; c.t = ''; } }); }catch(e){}
   try{ ALL_COLS.forEach(col => { if(!isStatusType(colCfg(col.k).type)) return; (state.patients || []).forEach(p => p.cells && fix(col.k, p.cells[col.k])); }); }catch(e){} }
 const DONE = new Set(['C','N']);
 
@@ -2196,7 +2198,7 @@ const GROUPS = [
   {k:'daily', label:'Daily', cols:[
     {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'io',fixedType:true},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','HD catheter','Port','IABP','S-G catheter','Foley catheter','NG tube','OG tube','G-tube / PEG','Rectal tube','ETT','Trach','Chest tube','JP drain'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
     {k:'labrev',h:'Lab Rev',type:'status'},{k:'img',h:'Imaging',type:'status'},{k:'vst',h:'Visit',type:'check'},
-    {k:'note',h:'Note',type:'statusChoice',size:'mid',opts:[O('Progress'),O('H&P'),O('Discharge'),O('Pending'),O('ALOC'),O('Transfer')]},
+    {k:'note',h:'Note',type:'statusChoice',size:'mid',opts:[O('Progress'),O('H&P'),O('Discharge'),O('Transfer')]},
     {k:'hc',h:'Hosp Course',type:'check'},
     {k:'attest',h:'Attest',type:'check'},{k:'labord',h:'Lab Ord',type:'checkNote'},{k:'handoff',h:'Handoff',type:'check'},{k:'ordrev',h:'Ord Rev',type:'check'}]},
   {k:'standing', label:'Standing', cols:[
@@ -2433,7 +2435,7 @@ function demoState(){
       mk('7W-12B','Intern C','Hypo Na','Existing',2,{vitals:'C',io:['R','Fluid restrict 1.2L'],avatar:'C',fsg:'N',labrev:['P','Na q6h – 124'],note:['','Progress'],labord:{c:false},bm:['',addDays(d,-2)],diet:['','General'],dvt:['','LMWH'],pt:['',addDays(d,-1)],edd:['',addDays(d,3)],dest:['','Home']}),
       // ---- Intern D ----
       mk('7W-13A','Intern D','Sepsis, UTI','Existing',2,{vitals:['R','Soft BPs overnight'],io:'C',avatar:'C',fsg:'C',labrev:['X','Lactate 4.2'],note:['','Progress'],bm:['',y],ts:['',addDays(d,-2)],diet:['','Diabetic'],dvt:['','SQH'],edd:['',addDays(d,4)],dest:['','Home']}),
-      mk('7W-14B','Intern D','HE, EtOH cirrhosis','Existing',4,{vitals:'C',io:'C',avatar:['A','Grade 2 HE'],fsg:'C',labrev:['C','NH3 trending down'],vst:Y,note:['A','ALOC'],bm:['',d],diet:['','General'],dvt:['','HELD'],sw:['','Family meeting 2pm'],edd:['',addDays(d,3)],dest:['','Home']}),
+      mk('7W-14B','Intern D','HE, EtOH cirrhosis','Existing',4,{vitals:'C',io:'C',avatar:['A','Grade 2 HE'],fsg:'C',labrev:['C','NH3 trending down'],vst:Y,note:['A','Progress'],bm:['',d],diet:['','General'],dvt:['','HELD'],sw:['','Family meeting 2pm'],edd:['',addDays(d,3)],dest:['','Home']}),
       mk('7W-15A','Intern D','PE','Transfer',3,{vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:['C','PTT therapeutic'],vst:Y,note:['','Transfer'],handoff:Y,bm:['',y],diet:['','General'],dvt:['','HELD'],dest:['','Uptriage'],dispo:['','Step-down bed requested']}),
       mk('7W-16B','Intern D','TIA','Existing',2,{hc:Y,vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:'C',vst:Y,note:['','Progress'],attest:Y,bm:['',y],ts:['',addDays(d,-2)],diet:['','Heart Healthy'],dvt:['','LMWH'],pt:['',y],ot:['',y],proc:['','MRI brain done'],edd:['',t1],dest:['','Home'],dcint:['','Incomplete'],dcmdr:['','Pended'],transport:['','Family / friend']}),
     ],
@@ -4438,7 +4440,7 @@ function renderChromeInner(){
   { const allSc = `<a href="#" class="sclink" data-sc-open>⌨ All shortcuts ${scLabel('help') || ''}</a>`, tab = ui.tab;
     const chk = [['Signed','green','S'],['Pended','orange','P'],['Incomplete','red','I'],['N/A','grey','N']];
     $('#legend').innerHTML = tab === 'census'
-      ? `<b style="color:var(--ink)">Status:</b>` + [['#34A853','Reviewed / complete'],['#FBBC04','Ordered'],['#E8710A','Pending'],['#FBBC04','Revisit'],['#EA4335','Panic'],['#9900FF','ALOC'],['#999999','N/A']].map(([c, l]) => `<span class="lg"><i style="background:${c}"></i>${l}</span>`).join('') + `<span class="lg muted">each column’s choices are numbered in its pop-up</span>`
+      ? `<b style="color:var(--ink)">Status:</b>` + [['#34A853','Reviewed / complete'],['#FBBC04','Ordered'],['#FFB74D','Pending'],['#E8710A','Revisit'],['#EA4335','Panic'],['#9900FF','ALOC'],['#999999','N/A']].map(([c, l]) => `<span class="lg"><i style="background:${c}"></i>${l}</span>`).join('') + `<span class="lg muted">each column’s choices are numbered in its pop-up</span>`
         + `<span class="keys">Click a cell to edit · <kbd>Shift</kbd>+click task = Complete · arrows move · <kbd>1</kbd>–<kbd>9</kbd> pick status/option · <kbd>Del</kbd> clear · <kbd>Enter</kbd> edit · <kbd>Ctrl/⌘ Z</kbd> undo · <kbd>Ctrl K</kbd> command bar · ${allSc}</span>`
       : tab === 'admits' || tab === 'discharges'
       ? `<b style="color:var(--ink)">Checklist:</b>` + chk.map(([l, c, k]) => `<span class="lg" title="In a box, type ${k} to pick ${l}"><span class="lgchip oc-${c}">${esc(l)}</span><kbd class="lgk">${k}</kbd></span>`).join('')
@@ -9078,6 +9080,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:321, d:'2026-11-26', items:['Colors: <b>Pending / in process</b> is light orange and <b>Revisit</b> is dark orange (Vitals, FSG, Lab Rev, Imaging).', '<b>Note</b> types are Progress, H&amp;P, Discharge, Transfer — Pending and ALOC are statuses now (a note typed “Pending” or “ALOC” was switched to that status).']},
   {v:320, d:'2026-11-26', items:['<b>Lab Rev / Imaging</b> choices are now 1 Reviewed · 2 Ordered · 3 Pending / in process · 4 Revisit · 5 Panic · 6 N/A.']},
   {v:319, d:'2026-11-26', items:['<b>Simpler status choices</b> — the shared 1–8 legend is gone; each column has its own short list (comments still work): <b>Vitals / FSG</b> 1 Reviewed · 2 Revisit · 3 Panic · 4 N/A. <b>Lab Rev / Imaging</b> 1 Reviewed · 2 Pending / in process · 3 Revisit · 4 Panic · 5 N/A. <b>Note</b> 1 Complete · 2 Pending / in process · 3 ALOC · 4 N/A.', '<b>I/O</b> has an <b>N/A</b> button next to Clear.', 'Old statuses a column no longer has were moved to the nearest one (e.g. Ordered → Pending, See comments → Revisit; the comment is kept).']},
   {v:318, d:'2026-11-26', items:['<b>🏷 Problem chips</b>: the Problem column is now a list of short problems instead of a free-text one-liner — tap it, type an abbreviation (adhf, aki, hypo k, af, dka, J44.1…) and tap to add. ~320 curated problems, each with its ICD-10 code checked against the CMS FY2027 list; browse by system too. First chip is the principal problem ★. Anything not on the list can be added as your own short chip (no identifiers). Same on the census, Admissions and both Rounds views. Older one-liners show as chips split at commas.']},
