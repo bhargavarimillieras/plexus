@@ -842,7 +842,24 @@ body.touch .gttsearch input{font-size:16px;padding:9px 11px}
 .gttlock{display:flex;align-items:center;gap:8px;padding:7px 10px;margin-bottom:6px;border:1px dashed var(--line2);border-radius:8px;background:var(--head);font-size:12.5px}
 .gttlock .muted{flex:1;font-size:11.5px}
 .gttpill small{font-weight:600;opacity:.7}
-.gttrow[hidden],.ldtgrp[hidden]{display:none}
+.gttrow[hidden],.ldtgrp[hidden],.ldtrow[hidden],.consrow[hidden]{display:none}
+.pop:has(.consfol){width:min(440px,94vw)!important;max-width:94vw}
+.consfol{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.consrow{display:grid;grid-template-columns:minmax(92px,1fr) auto auto;align-items:center;gap:6px;padding:4px 8px;border-top:1px solid var(--line);font-size:12.5px;background:var(--info-bg)}
+.consrow:first-child{border-top:0}.consempty{padding:8px 10px}
+.consrow.off{background:color-mix(in srgb,var(--line) 35%,transparent)}.consrow.off .consname b{text-decoration:line-through;opacity:.65}
+.consname{display:flex;align-items:center;gap:6px;cursor:pointer;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.consnote{display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--muted);white-space:nowrap}.consnote input{font-size:12px;padding:1px 3px;width:118px}
+.consoff{border:1px solid var(--line2);background:var(--panel);border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);white-space:nowrap}
+.consoff.on{background:#E6F4EA;border-color:#34A853;color:#137333}
+.conschips{display:flex;flex-wrap:wrap;gap:5px;max-height:170px;overflow:auto}
+.conschip{border:1px solid var(--line2);background:var(--panel);border-radius:12px;padding:3px 9px;font-size:12px;cursor:pointer;color:var(--ink)}
+.conschip:hover{border-color:var(--accent)}.conschip[hidden]{display:none}
+body.touch .consrow{padding:6px 8px}body.touch .consoff{padding:6px 10px;font-size:12.5px}body.touch .consnote input{font-size:15px;width:140px}body.touch .conschip{padding:7px 12px;font-size:14px}body.touch .conschips{max-height:200px}
+.tc.t-cons{justify-content:flex-start;font-weight:600}.tc.cons-on{background:var(--panel);color:var(--ink);box-shadow:inset 3px 0 0 #00897B}
+.conspill{display:inline-flex;align-items:baseline;gap:4px;border-radius:12px;padding:3px 9px;margin:2px 4px 2px 0;background:rgba(0,137,123,.12);font-size:12.5px}
+.conspill small{color:var(--muted);font-size:11px}.conspill.off{background:color-mix(in srgb,var(--line) 45%,transparent)}.conspill.off b{text-decoration:line-through;opacity:.7}
+
 .gttrow{display:grid;grid-template-columns:20px 1fr;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
 .ldtgrp+.gttrow{border-top:0}
 .gttrow.on{background:var(--info-bg)}
@@ -2103,6 +2120,7 @@ const TYPES = {
   proc:         {label:'Procedure + date',      help:'Procedure name and its anticipated date. Grey when empty.'},
   ldt:          {label:'Lines / drains / tubes', help:'Tick each line, drain or tube with the date it went in. Grey when there are none; red once any has been in longer than the limit set in Settings.'},
 };
+// v310: built-in types that aren't offered for other columns (fixed to their own column)
 const FIXED_TYPES = {io:{label:'Intake / output'}, gtt:{label:'Drips (GTT)'}, cons:{label:'Consult services'}};
 const typeInfo = t => TYPES[t] || FIXED_TYPES[t] || {label:t || '—', help:''};
 const isStatusType = t => t === 'status' || t === 'statusChoice';
@@ -2123,7 +2141,7 @@ const GROUPS = [
     {k:'diet',h:'Diet',type:'choice',size:'mid',opts:[O('General'),O('Diabetic'),O('Heart Healthy'),O('Renal'),O('Full Liquid'),O('Clear Liquid'),O('TF'),O('NPO','red')]},
     {k:'dvt',h:'DVT PPx',type:'choice',size:'mid',opts:[O('SQH'),O('HEP GTT'),O('LMWH'),O('DOAC'),O('HELD','red')]},
     {k:'gtt',h:'GTT',type:'gtt',fixedType:true,size:'mid',icu:true},
-    {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'choice',fixedType:true,opts:[O('Complete','green'),O('N/A')]},
+    {k:'proc',h:'Proc',type:'proc',fixedType:true,size:'mid'},{k:'cons',h:'Consults',type:'cons',fixedType:true,size:'mid'},{k:'sw',h:'SW',type:'choice',fixedType:true,opts:[O('Complete','green'),O('N/A')]},
     {k:'pt',h:'PT',type:'choice',fixedType:true,size:'mid',opts:[O('Pending','orange'),O('Home','green'),O('Home w/ services','green'),O('Acute Rehab','blue'),O('SAR','blue'),O('LTACH','blue'),O('Signed off','green'),O('N/A')]},
     {k:'ot',h:'OT',type:'choice',fixedType:true,size:'mid',opts:[O('Pending','orange'),O('Home','green'),O('Home w/ services','green'),O('Acute Rehab','blue'),O('SAR','blue'),O('LTACH','blue'),O('Signed off','green'),O('N/A')]}]},
   {k:'edd', label:'EDD', tab:'fixed', cols:[{k:'edd',h:'EDD',type:'date',fixedType:true}]},
@@ -2286,7 +2304,7 @@ const PTOT = new Set(['pt', 'ot']);   // PT / OT: a recommendation plus a “las
 const tsExpired = t => isISO(t) && daysBetween(t, state.boardDate) * 24 >= (state.settings.tsHours || 72);
 const tsSoon = t => isISO(t) && !tsExpired(t) && (daysBetween(t, state.boardDate) + 1) * 24 >= (state.settings.tsHours || 72);   // v305: expires tomorrow
 const bmCurrent = c => !isISO(c.t) || daysBetween(c.t, state.boardDate) <= 1 || c.ck === state.boardDate;   // BM today / yesterday, or re-checked today
-function isDone(cfg, cell){ if(cfg.type === 'ldt' || cfg.type === 'proc' || cfg.type === 'gtt') return true;
+function isDone(cfg, cell){ if(cfg.type === 'ldt' || cfg.type === 'proc' || cfg.type === 'gtt' || cfg.type === 'cons') return true;
   if(cfg.type === 'date' && cfg.k === 'ts' && tsExpired(cell.t)) return false;    // an expired T&S needs a new one (or N/A)
   if(cfg.type === 'date' && cfg.k === 'bm' && !bmCurrent(cell)) return false;     // an old Last BM needs re-checking each day
   if(cfg.type === 'choice' && /^pending/i.test(cell.t || '')) return false;
@@ -2472,6 +2490,7 @@ function normalize(s){
   if(typeof s.settings.autoBackup !== 'boolean') s.settings.autoBackup = true;
   if(!(s.settings.backupWarnHours > 0)) s.settings.backupWarnHours = 12;
   // v247: new Imaging column sits right after Lab Rev in any saved column order (once)
+  if(!s.settings.consCol){ const co = s.settings.colOrder; if(co && typeof co === 'object') Object.keys(co).forEach(g => { const o = co[g]; if(Array.isArray(o) && o.includes('proc') && !o.includes('cons')) o.splice(o.indexOf('proc') + 1, 0, 'cons'); }); s.settings.consCol = 1; }
   if(!s.settings.imgCol){ const co = s.settings.colOrder; if(co && typeof co === 'object') Object.keys(co).forEach(g => { const o = co[g]; if(Array.isArray(o) && !o.includes('img')){ const i = o.indexOf('labrev'); if(i >= 0) o.splice(i + 1, 0, 'img'); } }); s.settings.imgCol = 1; }
   // v271: “Seen 11/20” (from v265) becomes the Last seen date
   if(!s.settings.ptotSeen){ const yr = +String(s.boardDate || '').slice(0, 4) || new Date().getFullYear();
@@ -2966,11 +2985,11 @@ function flagsFor(p){
    Only changes how columns are shown and counted — what carries over overnight is unchanged. */
 const CHUNKS = [
   {k:'am', label:'AM', g:'daily', name:'AM rounds', keys:['vitals', 'io', 'fsg', 'gtt', 'labrev', 'img', 'bm', 'ts']},
-  {k:'pm', label:'PM', g:'standing', name:'PM rounds', keys:['avatar', 'diet', 'dvt', 'dest', 'vst', 'note', 'hc', 'attest', 'labord', 'handoff', 'ordrev', 'proc']},
+  {k:'pm', label:'PM', g:'standing', name:'PM rounds', keys:['avatar', 'diet', 'dvt', 'dest', 'vst', 'note', 'hc', 'attest', 'labord', 'handoff', 'ordrev', 'proc', 'cons']},
   {k:'dispo', label:'Dispo', g:'dispo', name:'Dispo', keys:['sw', 'pt', 'ot', 'services', 'dispo']}];
 const CHUNK = Object.fromEntries(CHUNKS.map(c => [c.k, c]));
 const chunkKeys = ck => CHUNK[ck].keys.filter(k => COLMAP[k] && !colHidden(k));
-const OPTIONAL_KEYS = new Set(['services', 'dispo']);   // nice-to-have notes: never count as open
+const OPTIONAL_KEYS = new Set(['services', 'dispo', 'cons']);   // nice-to-have notes: never count as open
 const chunkReq = ck => chunkKeys(ck).filter(k => !OPTIONAL_KEYS.has(k));
 /* New admits, on the day they come in: the admission already covered these, so they're greyed out with a “New admit” pill
    and never count as open. From the next day (status → Existing) they're ordinary boxes again. */
@@ -3159,7 +3178,8 @@ function ldtPopHTML(col, cell){
   const rows = n => { const its = items.filter(i => i.k === n); return (LDT_MULTI.has(n) && its.length > 1 ? its : [its[0]]).map(it => ldtRowHTML(n, it)).join(''); };
   const order = names.map((n, i) => ({n, i, g:ldtGroupOf(n)})).sort((a, b) => a.g - b.g || a.i - b.i);
   let html = '', g = -1; order.forEach(o => { if(o.g !== g){ g = o.g; html += `<div class="ldtgrp">${esc(g < LDT_GROUPS.length ? LDT_GROUPS[g][0] : 'Other')}</div>`; } html += rows(o.n); });
-  return `<div class="ldtlist">${html}</div>
+  return `<div class="gttsearch"><input type="search" data-ldtq placeholder="Search lines, drains, tubes (picc, foley, art…)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"></div>
+    <div class="ldtlist">${html}<div class="muted gttnone ldtnone" hidden></div></div>
     <div class="ed ldtaddrow"><input type="text" data-ldtnew placeholder="Add another (e.g. Nephrostomy tube)"><button class="btn sm" data-ldtadd>Add</button></div>
     <div class="ldtgone-list" ${ldtRemoved(cell).length ? '' : 'hidden'}><div class="ldtgrp">Removed</div>${ldtRemoved(cell).map(ldtGoneRowHTML).join('')}</div>
     <div class="muted" style="font-size:11px;margin-top:2px">Tick what's in, with the date it was placed. Red after more than ${state.settings.ldtDays} days. <b>Removed</b> keeps a record; unticking deletes it (for mistakes).</div>`;
@@ -3178,7 +3198,26 @@ function ldtRowHTML(n, it, extra){
       ${LDT_MULTI.has(n) ? `<button type="button" class="ldtmore" data-ldtmore="${esc(n)}" ${dis} title="Add another ${esc(n)}">＋ another</button>` : ''}</span>` : ''}
     <button type="button" class="ldtrmb" data-ldtrmb ${dis} title="Mark ${esc(n)} as removed (keeps a record)">✕ Mark removed</button></label>`;
 }
+const LDT_ALIAS = {'PIV':'peripheral iv', 'Arterial line':'art a-line aline', 'HD catheter':'hd trialysis quinton dialysis', 'Foley catheter':'foley urinary', 'S-G catheter':'swan ganz pa catheter sg', 'CVC':'central line cvc tlc cordis',
+  'ETT':'endotracheal tube intubated vent', 'NG tube':'ng nasogastric', 'OG tube':'og orogastric', 'G-tube':'peg gtube', 'Rectal tube':'flexiseal', 'Chest tube':'ct pigtail', 'JP drain':'jackson pratt', 'IABP':'balloon pump'};
+function wireLdtSearch(el){
+  const q = el.querySelector('[data-ldtq]'), list = el.querySelector('.ldtlist'), none = list && list.querySelector('.ldtnone'); if(!q || !list) return;
+  list.querySelectorAll('.ldtrow').forEach(r => { const n = r.querySelector('[data-ldt]').dataset.ldt; r.dataset.q = (n + ' ' + (LDT_SHORT[n] || '') + ' ' + (LDT_ALIAS[n] || '')).toLowerCase(); });
+  const filter = () => { const t = q.value.trim().toLowerCase(); let shown = 0;
+    list.querySelectorAll('.ldtrow').forEach(r => { if(!r.dataset.q){ const n = r.querySelector('[data-ldt]').dataset.ldt; r.dataset.q = (n + ' ' + (LDT_SHORT[n] || '') + ' ' + (LDT_ALIAS[n] || '')).toLowerCase(); }
+      const ok = !t || t.split(/\s+/).every(w => r.dataset.q.split(/[\s/-]+/).some(x => x.startsWith(w))); r.hidden = !ok; if(ok) shown++; });
+    list.querySelectorAll('.ldtgrp').forEach(h => { let n = h.nextElementSibling, any = false; while(n && !n.classList.contains('ldtgrp')){ if(n.classList.contains('ldtrow') && !n.hidden) any = true; n = n.nextElementSibling; } h.hidden = !any; });
+    if(none){ none.hidden = !t || shown > 0; none.textContent = t ? `Nothing called “${q.value.trim()}” — press Enter to add it.` : ''; } if(t) list.scrollTop = 0; };
+  q.addEventListener('input', filter);
+  q.addEventListener('keydown', e => { if(e.key === 'Escape' && q.value){ e.preventDefault(); e.stopPropagation(); q.value = ''; filter(); return; }
+    if(e.key !== 'Enter') return; e.preventDefault(); e.stopPropagation(); const t = q.value.trim(); if(!t) return;
+    const vis = [...list.querySelectorAll('.ldtrow')].filter(r => !r.hidden), exact = vis.find(r => r.querySelector('[data-ldt]').dataset.ldt.toLowerCase() === t.toLowerCase()), row = exact || vis[0];
+    if(row){ const cb = row.querySelector('[data-ldt]'); if(!cb.checked){ cb.checked = true; cb.dispatchEvent(new Event('change', {bubbles:true})); } q.value = ''; filter(); row.scrollIntoView({block:'nearest'}); toast(`${cb.dataset.ldt} ✓ — set the date placed`); }
+    else { const ni = el.querySelector('[data-ldtnew]'), ab = el.querySelector('[data-ldtadd]'); if(ni && ab){ ni.value = t; ab.click(); q.value = ''; filter(); } } });
+  if(!isTouch()) setTimeout(() => q.focus(), 30);
+}
 function wireLdtPop(el){
+  setTimeout(() => wireLdtSearch(el), 0);
   const refreshRow = lab => { const cb = lab.querySelector('[data-ldt]'), d = lab.querySelector('[data-ldtd]'), ag = lab.querySelector('.ldtage');
     d.disabled = !cb.checked; if(cb.checked && !d.value) d.value = state.boardDate;
     lab.querySelectorAll('.ldtloc select, .ldtloc button, [data-ldtrmb]').forEach(x => x.disabled = !cb.checked);
@@ -3297,6 +3336,62 @@ function commitGtt(p, r, el){
     items.push({k}); });
   if(JSON.stringify(items) !== JSON.stringify(gttItems(r.cells[p.k])) || (items.length && r.cells[p.k].t === 'N/A')) setCell(p.kind, p.id, p.k, {items, s:'', t:''});
 }
+/* v309: Consults — services following the patient, each with the date of their last note and a signed-off date */
+const CONS_LIST = [['Anesthesia', 'Anesthesia', 'anes'], ['Cardiology', 'Cards', 'cards'], ['Critical Care', 'Critical Care', 'icu micu'], ['Endocrinology', 'Endocrine', 'endo'], ['ENT', 'ENT', 'otolaryngology ear nose throat'],
+  ['Gastroenterology', 'GI', 'gi hepatology liver'], ['Geriatrics', 'Geri', 'geri'], ['Hematology', 'Heme', 'heme'], ['Infectious Disease', 'ID', 'id'], ['Nephrology', 'Renal', 'renal'], ['Neurology', 'Neuro', 'neuro stroke'],
+  ['Neurosurgery', 'NSGY', 'nsgy nsx neurosurg'], ['Obstetrics/Gynecology', 'OB/GYN', 'ob gyn obgyn obstetrics gynecology'], ['Oncology', 'Onc', 'onc'], ['Ophthalmology', 'Ophtho', 'ophtho eye'], ['Orthopedics', 'Ortho', 'ortho'],
+  ['Pain Management', 'Pain', 'pain'], ['Palliative Care', 'Pall Care', 'pall palliative pc'], ['Plastic Surgery', 'Plastics', 'plastics'], ['PM&R', 'PM&R', 'pmr physiatry rehab'], ['Podiatry', 'Podiatry', 'pod'],
+  ['Psychiatry', 'Psych', 'psych cl'], ['Pulmonology', 'Pulm', 'pulm'], ['Rheumatology', 'Rheum', 'rheum'], ['Surgery', 'Surg', 'surg gen surg acs'], ['Toxicology', 'Tox', 'tox poison'], ['Urology', 'Uro', 'uro gu']]
+  .sort((a, b) => a[0].localeCompare(b[0]));
+const CONS_SHORT = Object.fromEntries(CONS_LIST.map(c => [c[0], c[1]]));
+const consItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
+const consActive = cell => consItems(cell).filter(i => !i.off);
+const consShort = k => CONS_SHORT[k] || k;
+const consNoteAge = it => isISO(it.d) ? daysBetween(it.d, state.boardDate) : null;
+const consSummary = cell => consItems(cell).map(i => `${i.k}${isISO(i.d) ? ' (note ' + fmtShort(i.d) + ')' : ''}${i.off ? ' — signed off' + (isISO(i.off) ? ' ' + fmtShort(i.off) : '') : ''}`).join('; ');
+const consQ = n => (n + ' ' + consShort(n) + ' ' + ((CONS_LIST.find(c => c[0] === n) || [])[2] || '')).toLowerCase();
+const consRowHTML = (n, it) => `<div class="consrow ${it && it.off ? 'off' : ''}" data-q="${esc(consQ(n))}">
+  <label class="consname" title="${esc(n)}"><input type="checkbox" data-cons="${esc(n)}" checked><b>${esc(consShort(n))}</b></label>
+  <label class="consnote" title="Date of their last note"><span>Last note</span><input type="date" data-consd value="${esc(it && isISO(it.d) ? it.d : '')}" max="${state.boardDate}"></label>
+  <button type="button" class="consoff ${it && it.off ? 'on' : ''}" data-consoff data-offd="${esc(it && it.off ? it.off : '')}" title="${it && it.off ? 'Signed off ' + fmtShort(it.off) + ' — tap to undo' : 'Tap when they sign off'}">${it && it.off ? '✓ Signed off' : 'Signed off'}</button></div>`;
+const consChipHTML = n => `<button type="button" class="conschip" data-conspick="${esc(n)}" data-q="${esc(consQ(n))}" title="${esc(n)}">${esc(consShort(n))}</button>`;
+function consPopHTML(cell){
+  const items = consItems(cell), has = n => items.some(i => i.k.toLowerCase() === n.toLowerCase());
+  return `<div class="gttsearch"><input type="search" data-consq placeholder="Search or add a service (cards, ID, pall…)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button class="btn sm" data-consadd hidden>Add</button></div>
+    <div class="consfol">${items.map(it => consRowHTML(it.k, it)).join('')}<div class="muted small consempty" ${items.length ? 'hidden' : ''}>No consults yet — tap a service below.</div></div>
+    <div class="conschips">${CONS_LIST.map(c => c[0]).filter(n => !has(n)).map(consChipHTML).join('')}<span class="muted small gttnone" hidden></span></div>`;
+}
+function wireConsPop(el){
+  const fol = el.querySelector('.consfol'), chips = el.querySelector('.conschips'), q = el.querySelector('[data-consq]'), addB = el.querySelector('[data-consadd]'), none = chips.querySelector('.gttnone'), empty = fol.querySelector('.consempty');
+  const setOff = (b, d) => { b.dataset.offd = d; b.classList.toggle('on', !!d); b.textContent = d ? '✓ Signed off' : 'Signed off'; b.title = d ? 'Signed off ' + fmtShort(d) + ' — tap to undo' : 'Tap when they sign off'; b.closest('.consrow').classList.toggle('off', !!d); };
+  const pick = n => { const ch = [...chips.querySelectorAll('.conschip')].find(c => c.dataset.conspick.toLowerCase() === n.toLowerCase()); if(ch) ch.remove();
+    if([...fol.querySelectorAll('[data-cons]')].some(c => c.dataset.cons.toLowerCase() === n.toLowerCase())) return;
+    const tmp = document.createElement('div'); tmp.innerHTML = consRowHTML(n); const row = tmp.firstElementChild; fol.insertBefore(row, empty); empty.hidden = true; toast(`${consShort(n)} ✓ — add the date of their last note`); };
+  const unpick = row => { const n = row.querySelector('[data-cons]').dataset.cons; row.remove(); empty.hidden = !!fol.querySelector('.consrow');
+    if(CONS_LIST.some(c => c[0] === n)){ const tmp = document.createElement('div'); tmp.innerHTML = consChipHTML(n); const all = [...chips.querySelectorAll('.conschip')], nx = all.find(c => c.dataset.conspick.localeCompare(n) > 0); chips.insertBefore(tmp.firstElementChild, nx || none); } };
+  fol.addEventListener('change', e => { const cb = e.target.closest('[data-cons]'); if(cb && !cb.checked) unpick(cb.closest('.consrow')); });
+  fol.addEventListener('click', e => { const b = e.target.closest('[data-consoff]'); if(!b) return; e.preventDefault(); setOff(b, b.dataset.offd ? '' : state.boardDate); });
+  chips.addEventListener('click', e => { const c = e.target.closest('[data-conspick]'); if(!c) return; pick(c.dataset.conspick); if(q.value){ q.value = ''; filter(); } });
+  const filter = () => { const t = q.value.trim().toLowerCase(); let shown = 0;
+    chips.querySelectorAll('.conschip').forEach(c => { const ok = !t || t.split(/\s+/).every(w => c.dataset.q.split(/[\s/&-]+/).some(x => x.startsWith(w))); c.hidden = !ok; if(ok) shown++; });
+    none.hidden = !t || shown > 0; none.textContent = t ? `No service called “${q.value.trim()}” — press Enter or Add to add it.` : ''; addB.hidden = !t || shown > 0; };
+  const add = () => { const n = q.value.trim(); if(!n) return; const vis = [...chips.querySelectorAll('.conschip')].filter(c => !c.hidden);
+    const ex = vis.find(c => c.dataset.conspick.toLowerCase() === n.toLowerCase() || consShort(c.dataset.conspick).toLowerCase() === n.toLowerCase()) || vis[0];
+    pick(ex ? ex.dataset.conspick : n.replace(/^./, ch => ch.toUpperCase())); q.value = ''; filter(); if(!isTouch()) q.focus(); };
+  q.addEventListener('input', filter);
+  q.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); add(); } else if(e.key === 'Escape' && q.value){ e.preventDefault(); e.stopPropagation(); q.value = ''; filter(); } });
+  addB.addEventListener('click', e => { e.stopPropagation(); add(); });
+  if(!isTouch()) setTimeout(() => q.focus(), 30);
+}
+function commitCons(p, r, el){
+  const seen = new Set(), items = [];
+  el.querySelectorAll('.consrow').forEach(row => { const cb = row.querySelector('[data-cons]'), k = cb.dataset.cons; if(!cb.checked || seen.has(k.toLowerCase())) return; seen.add(k.toLowerCase());
+    const d = row.querySelector('[data-consd]').value, off = row.querySelector('[data-consoff]').dataset.offd; const it = {k}; if(isISO(d)) it.d = d; if(isISO(off)) it.off = off; items.push(it); });
+  if(JSON.stringify(items) !== JSON.stringify(consItems(r.cells[p.k]))) setCell(p.kind, p.id, p.k, {items, s:'', t:''});
+}
+// Rounds · At a glance: one pill per service — last note date, ✓ when signed off
+const consPills = cell => consItems(cell).map(it => { const a = consNoteAge(it);
+  return `<span class="conspill ${it.off ? 'off' : ''}" title="${esc(it.k)}${isISO(it.d) ? ' — last note ' + fmtShort(it.d) : ''}${it.off ? ' — signed off' : ''}"><b>${esc(consShort(it.k))}</b>${it.off ? ' <small>signed off</small>' : isISO(it.d) ? ` <small>${a === 0 ? 'today' : fmtShort(it.d)}</small>` : ''}</span>`; }).join('');
 // Rounds · At a glance: one pill per drip, full name
 const gttPills = (cell, p) => gttShown(cell, p).map(it => `<span class="gttpill g-${gttCat(it.k)}" ${it.dvt ? 'title="HEP GTT — from DVT PPx"' : ''}><b>${esc(it.k)}</b>${it.dvt ? ' <small>(DVT PPx)</small>' : ''}</span>`).join('');
 
@@ -3345,6 +3440,11 @@ function cellHTML0(cell, col, kind, id, ri, ci, ro){
     if(cell.t === 'N/A' && !hep) return `<div class="tc t-gtt gtt-none ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h)}: N/A — no drips"><span class="txt">N/A</span></div>`;
     const its = gttShown(cell, pr), txt = its.map(it => GTT_SHORT[it.k] || it.k).join(' · '), st = !its.length ? 'none' : its.some(i => gttCat(i.k) === 'press') ? 'press' : 'on';
     return `<div class="tc t-gtt gtt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h + ': ' + (its.length ? its.map(i => i.k + (i.dvt ? ' (HEP GTT, from DVT PPx)' : '')).join('; ') : 'no drips'))}"><span class="txt">${esc(txt)}</span></div>`;
+  }
+  if(col.type === 'cons'){
+    const its = consItems(cell), act = its.filter(i => !i.off), off = its.filter(i => i.off), st = !its.length ? 'none' : 'on';
+    const h = act.map(i => esc(consShort(i.k))).join(' · ') + (act.length && off.length ? ' · ' : '') + off.map(i => `<s class="ldtgone">${esc(consShort(i.k))}</s>`).join(' ');
+    return `<div class="tc t-cons cons-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h + ': ' + (its.length ? consSummary(cell) : 'no consults'))}"><span class="txt">${h}</span></div>`;
   }
   if(col.type === 'ldt'){
     const items = ldtActive(cell), gone = ldtRecentGone(cell), old = items.some(ldtOld), st = !items.length && !gone.length ? 'none' : old ? 'old' : 'ok';
@@ -4308,7 +4408,7 @@ function closePop(commit=true){
   if(commit){
     const ed = p.el.querySelector('[data-ed]');
     const r = rowOf(p.kind,p.id);
-    const cb = p.el.querySelector('[data-cn]'), gl = p.el.querySelector('.gttlist'), lw = p.el.querySelector('.ldtlist:not(.gttlist)'), dm = p.el.querySelector('.dmods');
+    const cb = p.el.querySelector('[data-cn]'), gl = p.el.querySelector('.gttlist'), cl = p.el.querySelector('.consfol'), lw = p.el.querySelector('.ldtlist:not(.gttlist)'), dm = p.el.querySelector('.dmods');
     if(dm && r && dm.dataset.val !== (r.cells[p.k].t || '')) setCell(p.kind, p.id, p.k, {t:dm.dataset.val});
     const ptd = p.el.querySelector('[data-ptd]'); if(ptd && r){ const v = isISO(ptd.value) ? ptd.value : ''; if(v !== (r.cells[p.k].d || '')) setCell(p.kind, p.id, p.k, {d:v}); }
     const pd = p.el.querySelector('[data-procd]');
@@ -4318,6 +4418,7 @@ function closePop(commit=true){
       else if(a !== (ioNum(c.in) ? c.in : null) || b !== (ioNum(c.out) ? c.out : null) || g !== (ioNum(c.goal) ? c.goal : null) || t !== (c.t === 'N/A' ? '' : c.t || '')){
         const patch = {t, s:''}; patch.in = a === null ? undefined : a; patch.out = b === null ? undefined : b; patch.goal = g === null ? undefined : g; setCell(p.kind, p.id, p.k, patch); } }
     else if(gl && r) commitGtt(p, r, p.el);
+    else if(cl && r) commitCons(p, r, p.el);
     else if(lw && r) commitLdt(p, r, p.el);
     else if(pd && r){ const items = [...p.el.querySelectorAll('.plist .prow')].map(x => ({t:x.querySelector('[data-proct]').value.trim(), d:isISO(x.querySelector('[data-procd]').value) ? x.querySelector('[data-procd]').value : ''})).filter(it => it.t || it.d);
       if(JSON.stringify(items) !== JSON.stringify(procSorted(r.cells[p.k]))) setCell(p.kind, p.id, p.k, {items, t:'', d:''}); }
@@ -4372,6 +4473,8 @@ function openPop(cellEl, focusEditor=false){
       <div class="muted" style="font-size:11px;margin-top:5px">mL, or litres with “L” (1.2L). Add amounts with + (800+450).</div>`;
   } else if(col.type === 'gtt'){
     body += gttPopHTML(cell, kind === 'p' ? rowOf('p', id) : null);
+  } else if(col.type === 'cons'){
+    body += consPopHTML(cell);
   } else if(col.type === 'ldt'){
     body += ldtPopHTML(col, cell);
   } else if(col.type === 'proc'){
@@ -4401,6 +4504,7 @@ function openPop(cellEl, focusEditor=false){
   document.body.appendChild(el);
   if(col.type === 'ldt') wireLdtPop(el);
   if(col.type === 'gtt') wireGttPop(el);
+  if(col.type === 'cons') wireConsPop(el);
   if(col.type === 'io'){ const upd = () => { const a = ioParse(el.querySelector('[data-ioin]').value), b = ioParse(el.querySelector('[data-ioout]').value), o = el.querySelector('[data-ionet]');
       const bad = Number.isNaN(a) || Number.isNaN(b); o.textContent = bad ? 'check numbers' : a !== null && b !== null ? ioSigned(a - b) : '—';
       o.className = bad ? 'bad' : a !== null && b !== null ? (a - b < 0 ? 'neg' : a - b > 0 ? 'pos' : '') : '';
@@ -4434,7 +4538,7 @@ function openPop(cellEl, focusEditor=false){
       if(pd) patch.d = isISO(pd.value) ? pd.value : ''; finish(patch); return; }
     if(b.hasAttribute('data-clear')){ finish(edEl ? {s:'', t:edEl.value} : {s:''}); return; }
     if(b.dataset.pday !== undefined) return;
-    if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:'', items:[]} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
+    if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' || col.type === 'cons' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:'', items:[]} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
     if(b.hasAttribute('data-today')){ finish({t:state.boardDate}); return; }
     const labRe = edit => { const box = el.querySelector('.labchips'); if(!box) return; const tmp = document.createElement('div'); tmp.innerHTML = labChipsHTML(edEl.value, edit);
       const row = el.querySelector('.labaddrow'); if(row) row.remove(); box.replaceWith(...tmp.childNodes); const ni = el.querySelector('[data-labnew]'); if(ni){ ni.focus(); ni.addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); ev.stopPropagation(); el.querySelector('[data-labaddgo]').click(); } }); } };
@@ -4708,7 +4812,7 @@ function rdLeaveCard(p){
   return h;
 }
 /* ---------- Rounds · Split view: everyone on the left, one patient on the right ---------- */
-const RS_GLANCE = ['avatar', 'io', 'diet', 'gtt', 'dvt', 'dest'];
+const RS_GLANCE = ['avatar', 'io', 'diet', 'gtt', 'cons', 'dvt', 'dest'];
 const RS_QUICK = ['Labs: ', 'Imaging: ', 'Consult: ', 'Call family: ', 'Med change: '];
 function rsFlagged(p){ return flagsFor(p).some(f => f[0] === 'warn' || f[0] === 'bad'); }
 function renderRoundsSplit(){
@@ -4729,7 +4833,7 @@ function renderRoundsSplit(){
   const tile = k => { const cfg = colCfg(k); return cellHTML(p.cells[k], cfg, 'p', p.id, 0, 0, false) + (cm[k] ? `<div class="rcmt">${esc(cm[k])}</div>` : ''); };
   const ioDet = c => { if(!c) return ''; const parts = [ioNum(c.in) && `<i class="iosym" title="Intake" aria-label="Intake">+</i><b>${esc(ioVol(c.in))}</b>`, ioNum(c.out) && `<i class="iosym" title="Output" aria-label="Output">−</i><b>${esc(ioVol(c.out))}</b>`].filter(Boolean);
     const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
-  const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' ? 'rs-gtt' : ''}">${k === 'gtt' && gttShown(p.cells.gtt, p).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt, p)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
+  const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' || k === 'cons' ? 'rs-gtt' : ''}">${k === 'cons' && consItems(p.cells.cons).length ? `<div class="tc t-cons rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="cons" data-ri="0" data-ci="0" title="Edit consults">${consPills(p.cells.cons)}</div>` : k === 'gtt' && gttShown(p.cells.gtt, p).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt, p)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
   const ckCard = c => { const all = chunkKeys(c.k), show = all.filter(k => !RS_GLANCE.includes(k)); if(!show.length) return '';
     const fk = c.k === 'pm' ? followKeys(p) : [], doneK = k => isDone(colCfg(k), p.cells[k] || {}) || (c.k === 'am' && isFollow(p, k));
     const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(doneK).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
@@ -5761,7 +5865,7 @@ function scRun(a, ctx){
       const cfg = colOf(kind, col), cell = rowOf(kind, id).cells[col];
       scClip = {type:cfg.type, cell:clone(cell), h:cfg.h};
       const st = isStatusType(cfg.type) && SMAP[cell.s];
-      const txt = cfg.type === 'ldt' ? ldtSummary(cell) : cfg.type === 'gtt' ? gttSummary(cell) : cfg.type === 'proc' ? procSummary(cell) : [st && st.label, cfg.type === 'checkNote' ? (cell.c ? '✓' : '') : '', cfg.type === 'check' ? (cell.t ? '✓' : '') : cell.t].filter(Boolean).join(' · ');
+      const txt = cfg.type === 'ldt' ? ldtSummary(cell) : cfg.type === 'gtt' ? gttSummary(cell) : cfg.type === 'cons' ? consSummary(cell) : cfg.type === 'proc' ? procSummary(cell) : [st && st.label, cfg.type === 'checkNote' ? (cell.c ? '✓' : '') : '', cfg.type === 'check' ? (cell.t ? '✓' : '') : cell.t].filter(Boolean).join(' · ');
       try{ navigator.clipboard && navigator.clipboard.writeText(txt).catch(() => {}); }catch(e){}
       toast(`Copied ${cfg.h}${txt ? ': ' + txt : ' (empty)'}`); return; }
     case 'paste': {
@@ -7360,6 +7464,7 @@ function cmdSetPlan(ent, f, vals){
     if(!name && !d) return {err:'Proc: name and optional date — e.g. “proc EGD tomorrow”'}; return done(d ? {t:name || cell.t, d} : {t:name}, `${esc(name || cell.t)}${d ? ' · ' + fmtShort(d) : ''}`); }
   if(cfg.type === 'ldt') return {err:'Lines / drains / tubes: edit the Avatar box on the board'};
   if(cfg.type === 'gtt') return {err:'Drips: edit the GTT box on the board'};
+  if(cfg.type === 'cons') return {err:'Consults: edit the Consults box on the board'};
   if(CMD_NO.has(w0) && vals.length === 1) return done({t:''}, 'cleared');
   if(!raw) return {err:`Type the text for ${esc(h)}`};
   return done({t:raw}, `“${esc(raw)}”`);
@@ -8672,7 +8777,8 @@ function rotExport(){
 }
 
 const CHANGELOG = [
-  {v:310, d:'2026-11-26', items:['Fixed: ⚙ Settings → <b>Columns &amp; options</b> opened blank.']},
+  {v:310, d:'2026-11-26', items:['<b>Consults</b> pop-up is more compact: the services following the patient sit on top (last note date + <b>Signed off</b>); every other service is a small tap-to-add chip underneath.', 'Fixed: ⚙ Settings → <b>Columns &amp; options</b> opened blank.']},
+  {v:309, d:'2026-11-26', items:['<b>Consults</b> — a new column (after Proc): tick each consulting service following the patient (Anesthesia → Urology, A–Z, with search: “cards”, “ID”, “pall”…), add the <b>date of their last note</b>, and tap <b>Sign off</b> when they sign off (they stay listed, struck through). The census shows e.g. “Cards · ID · <s>Renal</s>”; Rounds shows them in At a glance. Doesn’t count toward boxes left.', '<b>Avatar</b>: a search box at the top of the pop-up (“picc”, “foley”, “art”…). Enter ticks the top match, or adds a new one if nothing matches.']},
   {v:308, d:'2026-11-26', items:['Overview: <b>Census</b> and <b>Census cap / Open spots</b> are now one card — the patient count with “/ cap” (or “/ no census cap”) beside it in smaller type; open spots and who’s next up are on the line underneath.', '<b>Settings, reorganised</b> into a side list of sections is now on the real Plexus too.']},
   {v:307, d:'2026-11-26', items:['<b>Disposition</b>: “Floor” is replaced by <b>Telemetry</b>, <b>Med Surg</b> and <b>Pulse Ox</b> (in the same spot in the list). A patient already set to Floor keeps it until you change it.']},
   {v:306, d:'2026-11-26', items:['<b>Settings, reorganised</b> — a side list of sections like Mac System Settings: <b>Team · Flags &amp; timers · Board &amp; columns · Appearance · Backup &amp; data · Privacy · Tools · Reset</b>. Tap a section to see only its settings; Plexus remembers the last one you opened. Nothing was removed.']},
