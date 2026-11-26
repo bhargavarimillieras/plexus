@@ -1907,7 +1907,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '312';
+const APP_VERSION = '313';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7599,6 +7599,7 @@ function cmdParse(input){
   const ent = b.ent, fw = words.slice(b.used);
   if(!fw.length) return {nav:true, html:`Go to <b>${esc(ent.bed)}</b> <span class="muted">${esc(entSub(ent))}</span> — or add a column: visit, medrec, vitals…`, run:() => { cmdJump(ent); return ''; },
     sugg:cmdFieldList(ent).slice(0, 40).map(x => ({label:`${esc(x.label)} <span class="muted">${esc(x.cur)}</span>`, fill:`${ent.bed} ${x.name} `}))};
+  { const ln = ent.p ? cmdLine(ent, fw) : null; if(ln) return ln; }
   const f = cmdField(ent, fw);
   if(!f){ const q = nw(fw[0]); const L = cmdFieldList(ent).filter(x => x.name.startsWith(q) || x.name.includes(q));
     if(ent.a && isHold(ent.a) && !ent.p && ADMIT_COLMAP[CMD_A_ALIAS[q] || q]) return {err:`${esc(ent.bed)} is a moonlighter hold — the admission is already done, so only <b>signout</b>, team and problem apply`};
@@ -7606,6 +7607,56 @@ function cmdParse(input){
   const plan = cmdSetPlan(ent, f, fw.slice(f.used));
   if(plan.opts){ plan.sugg = plan.opts.slice(0, 12).map(o => ({label:esc(o.label), fill:`${words.slice(0, b.used + f.used).join(' ')} ${o.fill}`})); }
   return plan;
+}
+/* v313: lines, drains & tubes from the command bar — "10N62 PIV L forearm 11/23/26", "10N62 picc R 11/20", "10N62 foley out" */
+const LINE_EXTRA = {'central line':'CVC', 'tlc':'CVC', 'cordis':'CVC', 'art line':'Arterial line', 'aline':'Arterial line', 'a line':'Arterial line', 'art':'Arterial line', 'swan':'S-G catheter', 'sg':'S-G catheter', 'pa cath':'S-G catheter',
+  'trialysis':'HD catheter', 'quinton':'HD catheter', 'hd cath':'HD catheter', 'hd line':'HD catheter', 'ett':'ETT', 'tube':'', 'iv':'PIV', 'peripheral':'PIV', 'peg':'G-tube / PEG', 'gtube':'G-tube / PEG', 'g tube':'G-tube / PEG',
+  'ng':'NG tube', 'ngt':'NG tube', 'og':'OG tube', 'ogt':'OG tube', 'jp':'JP drain', 'ct':'Chest tube', 'chest tube':'Chest tube', 'pigtail':'Pigtail drain', 'rectal tube':'Rectal tube', 'flexiseal':'Rectal tube', 'foley':'Foley catheter', 'nephrostomy':'Nephrostomy tube', 'pcn':'Nephrostomy tube'};
+const lineNorm = x => String(x || '').toLowerCase().replace(/[-_.]/g, ' ').replace(/\s+/g, ' ').trim();
+function lineDevices(){ const names = colCfg('avatar') && Array.isArray(colCfg('avatar').opts) ? colCfg('avatar').opts.map(o => o.label) : [];
+  const map = new Map(); const put = (k, n) => { k = lineNorm(k); if(k && !map.has(k)) map.set(k, n); };
+  names.forEach(n => { put(n, n); if(LDT_SHORT[n]) put(LDT_SHORT[n], n); }); Object.entries(LINE_EXTRA).forEach(([k, n]) => { if(n && names.some(x => x === n)) put(k, n); });
+  return map; }
+function lineDate(w){ const x = w.toLowerCase(); if(x === 'today') return state.boardDate; if(x === 'yesterday' || x === 'yday') return addDays(state.boardDate, -1);
+  let m = x.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/); if(m) return `${m[1]}-${pad(+m[2])}-${pad(+m[3])}`;
+  m = x.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2}|\d{4}))?$/); if(!m) return null;
+  let y = m[3] ? +m[3] : +state.boardDate.slice(0, 4); if(y < 100) y += 2000; const d = `${y}-${pad(+m[1])}-${pad(+m[2])}`;
+  if(!m[3] && d > state.boardDate) return `${y - 1}-${pad(+m[1])}-${pad(+m[2])}`; return isISO(d) ? d : null; }
+function cmdLine(ent, fw){
+  const p = ent.p; if(!p || !COLMAP.avatar || colHidden('avatar')) return null;
+  const dev = lineDevices(); let name = null, used = 0;
+  for(let n = Math.min(3, fw.length); n >= 1 && !name; n--){ const k = lineNorm(fw.slice(0, n).join(' ')); if(dev.has(k)){ name = dev.get(k); used = n; } }
+  if(!name) return null;
+  const rest = fw.slice(used); let side = '', site = '', date = '', out = false; const bad = [];
+  const sites = (LDT_SITES[name] || []), siteOf = w => sites.find(x => lineNorm(x) === lineNorm(w) || lineNorm(LDT_SITE_SHORT[x] || '') === lineNorm(w));
+  for(let i = 0; i < rest.length; i++){ const w = rest[i], x = w.toLowerCase();
+    if(/^(r|rt|right)$/.test(x)){ side = 'R'; continue; } if(/^(l|lt|left)$/.test(x)){ side = 'L'; continue; }
+    if(/^(out|removed|remove|rm|dc|dced|d\/c|pulled)$/.test(x)){ out = true; continue; }
+    if(/^(placed|in|on|since)$/.test(x)) continue;
+    const d = lineDate(w); if(d){ date = d; continue; }
+    if(i + 1 < rest.length && siteOf(w + ' ' + rest[i + 1])){ site = siteOf(w + ' ' + rest[i + 1]); i++; continue; }
+    if(siteOf(w)){ site = siteOf(w); continue; }
+    bad.push(w); }
+  if(bad.length) return {err:`${esc(name)}: didn’t understand “${esc(bad.join(' '))}”. Try e.g. <b>${esc(p.bed)} ${esc(LDT_SHORT[name] || name)}${sites.length ? ' L ' + esc(sites[0]) : ''} 11/23</b>${sites.length ? ` · sites: ${sites.map(esc).join(', ')}` : ''}`};
+  if(!sites.length && (side || site)){ /* no sites for this device — ignore side */ side = ''; site = ''; }
+  const items = clone(ldtItems(p.cells.avatar)), act = items.filter(it => !it.rm && it.k === name), loc = [side, site].filter(Boolean).join(' ');
+  if(out){
+    const hit = act.filter(it => (!side || it.side === side) && (!site || it.site === site));
+    if(!hit.length) return {err:`${esc(p.bed)} has no ${esc(name)}${loc ? ' ' + esc(loc) : ''} in to mark removed`};
+    if(hit.length > 1) return {err:`${esc(p.bed)} has ${hit.length} × ${esc(name)} — add the side / site, e.g. <b>${esc(p.bed)} ${esc(LDT_SHORT[name] || name)} ${esc(ldtLoc(hit[0]) || 'L')} out</b>`};
+    const rm = date || state.boardDate, it = hit[0];
+    return {html:`Avatar · <b>${esc(p.bed)}</b> · mark <b>${esc(ldtLabel(it))}</b> removed <span class="muted">${esc(fmtShort(rm))}${isISO(it.d) ? ' · was in ' + daysBetween(it.d, rm) + ' d' : ''}</span>`,
+      run:() => { mutate(() => { const r = rowOf('p', p.id), L = ldtItems(r.cells.avatar), x = L.find(q => !q.rm && q.k === it.k && (q.side || '') === (it.side || '') && (q.site || '') === (it.site || '') && (q.d || '') === (it.d || '')); if(x) x.rm = rm; r.cells.avatar = {...r.cells.avatar, items:L, s:'', t:''}; }, {label:`${p.bed}: ${ldtLabel(it)} removed`}); return `${p.bed}: ${ldtLabel(it)} marked removed`; }};
+  }
+  const d = date || state.boardDate, multi = LDT_MULTI.has(name), upd = !multi && act.length ? act[0] : null, age = daysBetween(d, state.boardDate);
+  if(d > state.boardDate) return {err:`That date (${esc(fmtShort(d))}) is after the board date`};
+  const it = {k:name, d}; if(side) it.side = side; if(site) it.site = site;
+  return {html:`Avatar · <b>${esc(p.bed)}</b> · ${upd ? 'update' : 'add'} <b>${esc(ldtLabel(it))}</b> <span class="muted">placed ${esc(fmtShort(d))}${age > 0 ? ` · day ${age}` : ' · today'}${upd ? ` · replaces ${esc(ldtLabel(upd))}${isISO(upd.d) ? ' ' + fmtShort(upd.d) : ''}` : multi && act.length ? ` · ${act.length} already in` : ''}</span>${sites.length && !site ? ` <span class="muted">— add a site? ${sites.slice(0, 4).map(esc).join(', ')}</span>` : ''}`,
+    sugg:sites.length && !site ? sites.map(x => ({label:`${esc(name)} ${side ? side + ' ' : ''}<b>${esc(x)}</b>`, fill:`${p.bed} ${fw.slice(0, used).join(' ')} ${side ? side + ' ' : ''}${x} ${date ? fmtShort(date) : ''}`.trim() + ' '})) : [],
+    run:() => { mutate(() => { const r = rowOf('p', p.id), L = ldtItems(r.cells.avatar).slice();
+        if(upd){ const x = L.find(q => !q.rm && q.k === name); if(x){ x.d = d; if(side) x.side = side; else delete x.side; if(site) x.site = site; else delete x.site; } } else L.push(it);
+        r.cells.avatar = {...(r.cells.avatar || {}), items:L, s:'', t:''}; }, {label:`${p.bed}: ${upd ? 'updated' : 'added'} ${ldtLabel(it)}`});
+      cmdPulse('p', p.id); return `${p.bed}: ${ldtLabel(it)} ${upd ? 'updated' : 'added'} — placed ${fmtShort(d)}`; }};
 }
 function cmdJump(ent){
   if(ui.tab === 'tasks'){ tkUI.bed = ent.key ? (ent.bed || '').toUpperCase() : ''; renderTasks(); const bi = $('#tkBed'); bi.value = ent.bed; bi.dispatchEvent(new Event('input', {bubbles:true})); $('#tkText').focus(); return; }
@@ -7732,7 +7783,7 @@ function cmdHelp(){
   const ex = [['ED15L visit complete', 'Tick Visit (also: ED15L visit — no word needed)'], ['ED15L visit undo', 'Untick it'], ['ED-21 medrec pended', 'Set an Admissions dropdown — signed, pended, incomplete, N/A, clear'],
     ['ED-21 dvt heparin', 'Diet / DVT PPx — any option, first letters are enough'], ['ED-21 team GM2', 'Admission fields: team, timein, arrived, problem, from'], ['ED-21 bed 14E05/01', 'New bed (ED → floor) — the tasks move with the patient'], ['14E12/02 arrived now', 'Tisch: patient is on the floor (or arrived 21:40)'],
     ['7W05 vitals done', 'Census status — complete, revisit, pending, ordered, panic, N/A, comments, ALOC, or 1–8'], ['7W05 io revisit low UOP', 'Status with a note'], ['7W05 edd tomorrow', 'Dates — today, tomorrow, +2, 10/30'],
-    ['7W05 dest home', 'Census dropdowns'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['pc 7W05', 'Pre-charted ✓ (just “pc” shows who’s left)'], ['outstanding', 'What’s left to check off, patient by patient — or “outstanding am”, “outstanding 7W05”'], ['snooze ED-21 lactate 30', 'Push a task back'],
+    ['7W05 dest home', 'Census dropdowns'], ['10N62 PIV L forearm 11/23/26', 'Add a line / drain / tube to the Avatar (picc, foley, art, cvc R IJ…; no date = today)'], ['10N62 foley out', 'Mark it removed (add a date if it wasn’t today)'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['pc 7W05', 'Pre-charted ✓ (just “pc” shows who’s left)'], ['outstanding', 'What’s left to check off, patient by patient — or “outstanding am”, “outstanding 7W05”'], ['snooze ED-21 lactate 30', 'Push a task back'],
     ['admit ED-14 sepsis', 'New admission'], ['hold ED-30 CAP from Dr K', 'New moonlighter hold'], ['go census', 'Change tab — overview, census, admits, discharges, transfers, tasks, history, analytics, log (just “tasks” or “go adm” works too)']];
   modal(`<h3>Command bar</h3><p class="muted" style="margin-top:-4px">Open with <kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>:</kbd>. Beds can be typed without dashes or slashes (<b>ed15l</b>, <b>14e1202</b>); column names can be shortened (<b>ed</b>, <b>pl</b>, <b>mr</b>, <b>so</b>). You see what will happen before Enter, and <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes it.</p>
     <table class="sctab">${ex.map(([c, d]) => `<tr><td><code class="cmdcode">${esc(c)}</code></td><td>${esc(d)}</td></tr>`).join('')}</table>
@@ -8777,6 +8828,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:313, d:'2026-11-26', items:['<b>Add lines from the command bar</b>: type the bed, the device, side, site and date — e.g. <b>10N62 PIV L forearm 11/23/26</b>, <b>7W05 picc R 11/20</b>, <b>ED15 cvc R IJ</b> (no date = today). <b>7W05 foley out</b> marks it removed. Works with nicknames (art, a-line, swan, trialysis, peg, ngt…).']},
   {v:312, d:'2026-11-26', items:['Consults: <b>EP</b> (electrophysiology) and <b>Heart Failure (HF)</b> added to the list.']},
   {v:311, d:'2026-11-26', items:['The real Plexus now matches the Sandbox: the <b>Consults</b> column (search, last note date, Signed off) and the <b>Avatar</b> search box are live.']},
   {v:310, d:'2026-11-26', items:['<b>Consults</b> pop-up is more compact: the services following the patient sit on top (last note date + <b>Signed off</b>); every other service is a small tap-to-add chip underneath.', 'Fixed: ⚙ Settings → <b>Columns &amp; options</b> opened blank.']},
