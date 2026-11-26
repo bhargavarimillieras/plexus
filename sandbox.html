@@ -1434,6 +1434,9 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 .kpi .kl .dot.amb{background:#f5b83d}.kpi .kl .dot.red{background:#ff5d52}.kpi .kl .dot.off{background:#566479}
 .kpi .kv{font:700 34px/1.05 ui-monospace,"SF Mono",Menlo,Consolas,monospace;color:#fff;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .kpi .kv small{font-size:17px;color:#7f90a8;font-weight:600;margin-left:2px}
+.kpi .kv small.capnote{font:600 13px/1 -apple-system,BlinkMacSystemFont,sans-serif;letter-spacing:0;margin-left:6px}
+.kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:999px){.kpis.k5{grid-template-columns:repeat(2,minmax(0,1fr))!important}.kpis.k5 > .kpi:first-child{grid-column:1/-1}}
 .kpi .ks{font-size:11.5px;color:#9fb0c8;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kpi .ks b{color:#e7ecf4}.kpi .ks .r{color:#ff8a80;font-weight:700}.kpi .ks .a{color:#f7c96b;font-weight:700}
 .kpi .mini{display:flex;gap:2px;margin-top:7px;height:5px}.kpi .mini i{flex:1;border-radius:2px;background:rgba(255,255,255,.1)}
@@ -1482,7 +1485,7 @@ td.pulsetd{animation:pulse 1.6s ease-out}
 .arow .fl span{font-size:11px;font-weight:700;border-radius:6px;padding:1px 6px}
 .arow .fl .bad{background:var(--bad-bg);color:var(--bad-ink)}.arow .fl .warn{background:var(--warn-bg);color:var(--warn-ink)}.arow .fl .info{background:var(--info-bg);color:var(--info-ink)}
 .hpempty{font-size:12px;color:var(--muted);padding:8px 0}
-@media (max-width:1250px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.hp.s8,.hp.s4{grid-column:span 12}.hp.s6{grid-column:span 12}}
+@media (max-width:1250px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}.kpis.k5{grid-template-columns:repeat(5,minmax(0,1fr))}.hp.s8,.hp.s4{grid-column:span 12}.hp.s6{grid-column:span 12}}
 @media (prefers-color-scheme: dark){.hubband{background:linear-gradient(135deg,#0a0e15 0%,#111a28 60%,#142035 100%);border:1px solid #232c3a}.trow .tm.soon{background:#4a3a12;color:#f7d27a}}
 .lanes.l6{grid-template-columns:repeat(6,minmax(0,1fr))}
 .hp.tall .lane{min-height:calc(100vh - 400px)}
@@ -1887,7 +1890,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '307';
+const APP_VERSION = '308';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7852,6 +7855,7 @@ function renderOverview(){
   const end = shiftEndDate(), start = shiftStartDate();
   const pct = Math.max(0, Math.min(100, (now - start) / (end - start) * 100)), left = Math.max(0, end - now);
   const t2 = x => `${pad(x.getHours())}:${pad(x.getMinutes())}`;
+  const band5 = x => band(x).replace('class="kpis"', 'class="kpis k5"');   // v308: Census + cap in one card → five cards
   const kpi = (go, label, dot, val, sub, extra = '') => `<div class="kpi" data-ovgo="${go}"><div class="kl"><i class="dot ${dot}"></i>${label}</div><div class="kv">${val}</div><div class="ks">${sub}</div>${extra}</div>`;
   const censusMini = cap ? `<div class="mini">${Array.from({length:cap}, (_, i) => `<i class="${i < n ? (i >= cap ? 'o' : 'f') : ''}"></i>`).join('')}</div>` : '';
   const spotMini = cap ? `<div class="mini">${Array.from({length:cap}, (_, i) => `<i class="${i < n ? '' : 'n'}"></i>`).join('')}</div>` : '';
@@ -7894,11 +7898,10 @@ function renderOverview(){
     return;
   }
   V.innerHTML = `<div class="hub">
-    ${band(`
-        ${kpi('census', 'Census', cap && n >= cap ? 'red' : cap && n >= cap - 2 ? 'amb' : '', `${n}${cap ? `<small>/${cap}</small>` : ''}`, `<b>${nw}</b> new · <b>${n - nw}</b> existing`, censusMini)}
-        ${ci.mode === 'nocap' ? kpi('census', 'Census cap', 'off', 'None', next ? `No cap on this service · next up: <b>${esc(next.name)}</b>` : 'No cap on this service')
-          : ci.mode === 'varies' && !cap ? `<div class="kpi" data-capset><div class="kl"><i class="dot amb"></i>Today’s cap</div><div class="kv">?</div><div class="ks">Flex rooms — <b>tap to set today’s</b></div></div>`
-          : kpi('census', ci.mode === 'varies' ? 'Open spots (today)' : 'Open spots', spots == null ? 'off' : spots <= 0 ? 'red' : spots <= 2 ? 'amb' : '', spots == null ? '—' : spots < 0 ? `<span style="color:#ff8a80">${spots}</span>` : spots, spots == null ? 'No team cap set' : next ? `Next up: <b>${esc(next.name)}</b>${ci.mode === 'varies' ? ` · cap ${cap} <a href="#" data-capset style="color:#9fb0c8">✎</a>` : ''}` : spots <= 0 ? '<span class="r">At cap</span>' : 'Under cap', spotMini)}
+    ${band5(`
+        ${kpi('census', 'Census', cap && n >= cap ? 'red' : cap && n >= cap - 2 ? 'amb' : '',
+          `${n}${cap ? `<small>/ ${cap}</small>` : ci.mode === 'varies' ? `<small class="capnote">/ <a href="#" data-capset style="color:#9fb0c8">set today’s cap</a></small>` : '<small class="capnote">/ no census cap</small>'}`,
+          `<b>${nw}</b> new · <b>${n - nw}</b> existing${cap ? ` · ${spots <= 0 ? `<span class="r">${spots < 0 ? -spots + ' over cap' : 'at cap'}</span>` : `<b>${spots}</b> open`}` : ''}${next ? ` · next up: <b>${esc(next.name)}</b>` : ''}${ci.mode === 'varies' && cap ? ` <a href="#" data-capset style="color:#9fb0c8" title="Change today’s cap">✎</a>` : ''}`, censusMini)}
         ${kpi('admits', 'Admits in progress', admDot, `${inProg}<small>/${adm.length}</small>`, `<b>${lanes.wait.length}</b> not seen${longest ? ` · longest <span class="${longest > 2*3600e3 ? 'r' : longest > 3600e3 ? 'a' : ''}">${asgHM(longest)}</span>` : ''}${holds.length ? ` · <b>${holds.length}</b> hold${holds.length === 1 ? '' : 's'}` : ''}`)}
         ${kpi('discharges', 'Discharges', dcT.length ? (dcReady === dcT.length ? '' : 'amb') : 'off', `${dcT.length}`, `<b>${dcReady}</b> ready · <b>${dcT.length - dcReady}</b> in progress · <b>${dcTm.length}</b> tmrw${xf.length ? ` · <b>${xf.length}</b> xfer` : ''}`)}
         ${kpi(T.tasks ? 'tasks' : 'census', 'Open tasks', over.length ? 'red' : in1h.length ? 'amb' : '', `${open.length}`, `${over.length ? `<span class="r">${over.length} overdue</span>` : '<b>0</b> overdue'} · <b>${in1h.length}</b> due in 1 h`)}
@@ -8667,6 +8670,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:308, d:'2026-11-26', items:['Overview: <b>Census</b> and <b>Census cap / Open spots</b> are now one card — the patient count with “/ cap” (or “/ no census cap”) beside it in smaller type; open spots and who’s next up are on the line underneath.', '<b>Settings, reorganised</b> into a side list of sections is now on the real Plexus too.']},
   {v:307, d:'2026-11-26', items:['<b>Disposition</b>: “Floor” is replaced by <b>Telemetry</b>, <b>Med Surg</b> and <b>Pulse Ox</b> (in the same spot in the list). A patient already set to Floor keeps it until you change it.']},
   {v:306, d:'2026-11-26', items:['<b>Settings, reorganised</b> — a side list of sections like Mac System Settings: <b>Team · Flags &amp; timers · Board &amp; columns · Appearance · Backup &amp; data · Privacy · Tools · Reset</b>. Tap a section to see only its settings; Plexus remembers the last one you opened. Nothing was removed.']},
   {v:305, d:'2026-11-26', items:['<b>T&amp;S</b> turns <b>light orange</b> the day before it expires, then light red once expired — e.g. collected 11/24: orange on 11/26, red on 11/27 (with the default 72 h).']},
