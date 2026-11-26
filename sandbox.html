@@ -843,18 +843,23 @@ body.touch .gttsearch input{font-size:16px;padding:9px 11px}
 .gttlock .muted{flex:1;font-size:11.5px}
 .gttpill small{font-weight:600;opacity:.7}
 .gttrow[hidden],.ldtgrp[hidden],.ldtrow[hidden],.consrow[hidden]{display:none}
-.pop:has(.conslist){width:min(580px,94vw)!important;max-width:94vw}
-.consrow{display:grid;grid-template-columns:minmax(150px,1fr) auto auto;align-items:center;gap:8px;padding:4px 8px;border-top:1px solid var(--line);font-size:12.5px}
-.consrow.on{background:var(--info-bg)}.consrow.off{background:color-mix(in srgb,var(--line) 35%,transparent)}.consrow.off .consname b{text-decoration:line-through;opacity:.7}
-.consname{display:flex;align-items:center;gap:7px;cursor:pointer;min-width:0}.consname span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.consnote{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}.consnote input{font-size:12px;padding:2px 4px}
-.consoff{border:1px solid var(--line2);background:var(--panel);border-radius:14px;padding:3px 10px;font-size:11.5px;font-weight:600;cursor:pointer;color:var(--ink);white-space:nowrap}
-.consoff.on{background:#E6F4EA;border-color:#34A853;color:#137333}.consoff:disabled{opacity:.35;cursor:default}
-body.touch .consrow{padding:7px 8px}body.touch .consoff{padding:7px 12px;font-size:13px}body.touch .consnote input{font-size:15px}
+.pop:has(.consfol){width:min(440px,94vw)!important;max-width:94vw}
+.consfol{border:1px solid var(--line);border-radius:8px;margin-bottom:8px;overflow:hidden}
+.consrow{display:grid;grid-template-columns:minmax(92px,1fr) auto auto;align-items:center;gap:6px;padding:4px 8px;border-top:1px solid var(--line);font-size:12.5px;background:var(--info-bg)}
+.consrow:first-child{border-top:0}.consempty{padding:8px 10px}
+.consrow.off{background:color-mix(in srgb,var(--line) 35%,transparent)}.consrow.off .consname b{text-decoration:line-through;opacity:.65}
+.consname{display:flex;align-items:center;gap:6px;cursor:pointer;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.consnote{display:flex;align-items:center;gap:4px;font-size:10.5px;color:var(--muted);white-space:nowrap}.consnote input{font-size:12px;padding:1px 3px;width:118px}
+.consoff{border:1px solid var(--line2);background:var(--panel);border-radius:12px;padding:2px 8px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);white-space:nowrap}
+.consoff.on{background:#E6F4EA;border-color:#34A853;color:#137333}
+.conschips{display:flex;flex-wrap:wrap;gap:5px;max-height:170px;overflow:auto}
+.conschip{border:1px solid var(--line2);background:var(--panel);border-radius:12px;padding:3px 9px;font-size:12px;cursor:pointer;color:var(--ink)}
+.conschip:hover{border-color:var(--accent)}.conschip[hidden]{display:none}
+body.touch .consrow{padding:6px 8px}body.touch .consoff{padding:6px 10px;font-size:12.5px}body.touch .consnote input{font-size:15px;width:140px}body.touch .conschip{padding:7px 12px;font-size:14px}body.touch .conschips{max-height:200px}
 .tc.t-cons{justify-content:flex-start;font-weight:600}.tc.cons-on{background:var(--panel);color:var(--ink);box-shadow:inset 3px 0 0 #00897B}
 .conspill{display:inline-flex;align-items:baseline;gap:4px;border-radius:12px;padding:3px 9px;margin:2px 4px 2px 0;background:rgba(0,137,123,.12);font-size:12.5px}
 .conspill small{color:var(--muted);font-size:11px}.conspill.off{background:color-mix(in srgb,var(--line) 45%,transparent)}.conspill.off b{text-decoration:line-through;opacity:.7}
-@media (max-width:719px){.consrow{grid-template-columns:minmax(120px,1fr) auto;}.consrow .consoff{grid-column:2}.consrow .consnote{grid-column:1/-1;justify-self:start;padding-left:26px}}
+
 .gttrow{display:grid;grid-template-columns:20px 1fr;align-items:center;gap:6px;padding:3px 8px;border-top:1px solid var(--line);cursor:pointer;font-size:12.5px}
 .ldtgrp+.gttrow{border-top:0}
 .gttrow.on{background:var(--info-bg)}
@@ -1902,7 +1907,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '309';
+const APP_VERSION = '310';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2113,9 +2118,11 @@ const TYPES = {
   date:         {label:'Date',                 help:'A date, or N/A.'},
   text:         {label:'Free text',            help:'Anything you type.'},
   proc:         {label:'Procedure + date',      help:'Procedure name and its anticipated date. Grey when empty.'},
-  cons:         {label:'Consult services',      help:'Tick each consulting service following the patient, with the date of their last note, and mark when they sign off.'},
   ldt:          {label:'Lines / drains / tubes', help:'Tick each line, drain or tube with the date it went in. Grey when there are none; red once any has been in longer than the limit set in Settings.'},
 };
+// v310: built-in types that aren't offered for other columns (fixed to their own column)
+const FIXED_TYPES = {io:{label:'Intake / output'}, gtt:{label:'Drips (GTT)'}, cons:{label:'Consult services'}};
+const typeInfo = t => TYPES[t] || FIXED_TYPES[t] || {label:t || '—', help:''};
 const isStatusType = t => t === 'status' || t === 'statusChoice';
 const hasOpts = t => t === 'choice' || t === 'statusChoice' || t === 'ldt';
 const O = (label, color='') => ({label, color});
@@ -3342,35 +3349,35 @@ const consActive = cell => consItems(cell).filter(i => !i.off);
 const consShort = k => CONS_SHORT[k] || k;
 const consNoteAge = it => isISO(it.d) ? daysBetween(it.d, state.boardDate) : null;
 const consSummary = cell => consItems(cell).map(i => `${i.k}${isISO(i.d) ? ' (note ' + fmtShort(i.d) + ')' : ''}${i.off ? ' — signed off' + (isISO(i.off) ? ' ' + fmtShort(i.off) : '') : ''}`).join('; ');
-const consRowHTML = (n, it) => `<div class="consrow ${it ? 'on' : ''} ${it && it.off ? 'off' : ''}" data-q="${esc((n + ' ' + consShort(n) + ' ' + ((CONS_LIST.find(c => c[0] === n) || [])[2] || '')).toLowerCase())}">
-  <label class="consname"><input type="checkbox" data-cons="${esc(n)}" ${it ? 'checked' : ''}><span><b>${esc(consShort(n))}</b>${consShort(n) !== n ? ` <span class="muted">${esc(n)}</span>` : ''}</span></label>
-  <label class="consnote" title="Date of their last note"><span>Last note</span><input type="date" data-consd value="${esc(it && isISO(it.d) ? it.d : '')}" max="${state.boardDate}" ${it ? '' : 'disabled'}></label>
-  <button type="button" class="consoff ${it && it.off ? 'on' : ''}" data-consoff ${it ? '' : 'disabled'} data-offd="${esc(it && it.off ? it.off : '')}" title="${it && it.off ? 'Signed off — tap to undo' : 'Mark signed off'}">${it && it.off ? '✓ Signed off' + (isISO(it.off) ? ' ' + fmtShort(it.off) : '') : 'Sign off'}</button></div>`;
+const consQ = n => (n + ' ' + consShort(n) + ' ' + ((CONS_LIST.find(c => c[0] === n) || [])[2] || '')).toLowerCase();
+const consRowHTML = (n, it) => `<div class="consrow ${it && it.off ? 'off' : ''}" data-q="${esc(consQ(n))}">
+  <label class="consname" title="${esc(n)}"><input type="checkbox" data-cons="${esc(n)}" checked><b>${esc(consShort(n))}</b></label>
+  <label class="consnote" title="Date of their last note"><span>Last note</span><input type="date" data-consd value="${esc(it && isISO(it.d) ? it.d : '')}" max="${state.boardDate}"></label>
+  <button type="button" class="consoff ${it && it.off ? 'on' : ''}" data-consoff data-offd="${esc(it && it.off ? it.off : '')}" title="${it && it.off ? 'Signed off ' + fmtShort(it.off) + ' — tap to undo' : 'Tap when they sign off'}">${it && it.off ? '✓ Signed off' : 'Signed off'}</button></div>`;
+const consChipHTML = n => `<button type="button" class="conschip" data-conspick="${esc(n)}" data-q="${esc(consQ(n))}" title="${esc(n)}">${esc(consShort(n))}</button>`;
 function consPopHTML(cell){
-  const items = consItems(cell), find = n => items.find(i => i.k.toLowerCase() === n.toLowerCase());
-  const known = new Set(CONS_LIST.map(c => c[0].toLowerCase())), extra = items.filter(i => !known.has(i.k.toLowerCase()));
-  const on = CONS_LIST.filter(c => find(c[0])).map(c => c[0]), off = CONS_LIST.filter(c => !find(c[0])).map(c => c[0]);
+  const items = consItems(cell), has = n => items.some(i => i.k.toLowerCase() === n.toLowerCase());
   return `<div class="gttsearch"><input type="search" data-consq placeholder="Search or add a service (cards, ID, pall…)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button class="btn sm" data-consadd hidden>Add</button></div>
-    <div class="ldtlist conslist">${on.length || extra.length ? `<div class="ldtgrp">Following</div>${on.map(n => consRowHTML(n, find(n))).join('')}${extra.map(it => consRowHTML(it.k, it)).join('')}` : ''}
-      <div class="ldtgrp consall">${on.length || extra.length ? 'Other services' : 'Services'}</div>${off.map(n => consRowHTML(n)).join('')}<div class="muted gttnone" hidden></div></div>
-    <div class="muted" style="font-size:11px;margin-top:5px">Tick each service following the patient and the date of their last note. <b>Sign off</b> keeps them listed (struck through) until you untick them.</div>`;
+    <div class="consfol">${items.map(it => consRowHTML(it.k, it)).join('')}<div class="muted small consempty" ${items.length ? 'hidden' : ''}>No consults yet — tap a service below.</div></div>
+    <div class="conschips">${CONS_LIST.map(c => c[0]).filter(n => !has(n)).map(consChipHTML).join('')}<span class="muted small gttnone" hidden></span></div>`;
 }
 function wireConsPop(el){
-  const list = el.querySelector('.conslist'), q = el.querySelector('[data-consq]'), addB = el.querySelector('[data-consadd]'), none = list.querySelector('.gttnone');
-  const sync = row => { const cb = row.querySelector('[data-cons]'), d = row.querySelector('[data-consd]'), o = row.querySelector('[data-consoff]');
-    d.disabled = o.disabled = !cb.checked; row.classList.toggle('on', cb.checked); if(!cb.checked){ o.dataset.offd = ''; } row.classList.toggle('off', cb.checked && !!o.dataset.offd);
-    o.classList.toggle('on', !!o.dataset.offd); o.textContent = o.dataset.offd ? '✓ Signed off ' + fmtShort(o.dataset.offd) : 'Sign off'; };
-  list.addEventListener('change', e => { const row = e.target.closest('.consrow'); if(row) sync(row); });
-  list.addEventListener('click', e => { const b = e.target.closest('[data-consoff]'); if(!b || b.disabled) return; e.preventDefault(); b.dataset.offd = b.dataset.offd ? '' : state.boardDate; sync(b.closest('.consrow')); });
-  const rows = () => [...list.querySelectorAll('.consrow')];
+  const fol = el.querySelector('.consfol'), chips = el.querySelector('.conschips'), q = el.querySelector('[data-consq]'), addB = el.querySelector('[data-consadd]'), none = chips.querySelector('.gttnone'), empty = fol.querySelector('.consempty');
+  const setOff = (b, d) => { b.dataset.offd = d; b.classList.toggle('on', !!d); b.textContent = d ? '✓ Signed off' : 'Signed off'; b.title = d ? 'Signed off ' + fmtShort(d) + ' — tap to undo' : 'Tap when they sign off'; b.closest('.consrow').classList.toggle('off', !!d); };
+  const pick = n => { const ch = [...chips.querySelectorAll('.conschip')].find(c => c.dataset.conspick.toLowerCase() === n.toLowerCase()); if(ch) ch.remove();
+    if([...fol.querySelectorAll('[data-cons]')].some(c => c.dataset.cons.toLowerCase() === n.toLowerCase())) return;
+    const tmp = document.createElement('div'); tmp.innerHTML = consRowHTML(n); const row = tmp.firstElementChild; fol.insertBefore(row, empty); empty.hidden = true; toast(`${consShort(n)} ✓ — add the date of their last note`); };
+  const unpick = row => { const n = row.querySelector('[data-cons]').dataset.cons; row.remove(); empty.hidden = !!fol.querySelector('.consrow');
+    if(CONS_LIST.some(c => c[0] === n)){ const tmp = document.createElement('div'); tmp.innerHTML = consChipHTML(n); const all = [...chips.querySelectorAll('.conschip')], nx = all.find(c => c.dataset.conspick.localeCompare(n) > 0); chips.insertBefore(tmp.firstElementChild, nx || none); } };
+  fol.addEventListener('change', e => { const cb = e.target.closest('[data-cons]'); if(cb && !cb.checked) unpick(cb.closest('.consrow')); });
+  fol.addEventListener('click', e => { const b = e.target.closest('[data-consoff]'); if(!b) return; e.preventDefault(); setOff(b, b.dataset.offd ? '' : state.boardDate); });
+  chips.addEventListener('click', e => { const c = e.target.closest('[data-conspick]'); if(!c) return; pick(c.dataset.conspick); if(q.value){ q.value = ''; filter(); } });
   const filter = () => { const t = q.value.trim().toLowerCase(); let shown = 0;
-    rows().forEach(r => { const ok = !t || t.split(/\s+/).every(w => r.dataset.q.split(/[\s/&-]+/).some(x => x.startsWith(w))); r.hidden = !ok; if(ok) shown++; });
-    list.querySelectorAll('.ldtgrp').forEach(h => { let n = h.nextElementSibling, any = false; while(n && !n.classList.contains('ldtgrp')){ if(n.classList.contains('consrow') && !n.hidden) any = true; n = n.nextElementSibling; } h.hidden = !any; });
-    none.hidden = !t || shown > 0; none.textContent = t ? `No service called “${q.value.trim()}” — press Enter or Add to add it.` : ''; addB.hidden = !t || shown > 0; if(t) list.scrollTop = 0; };
-  const add = () => { const n = q.value.trim(); if(!n) return; const vis = rows().filter(r => !r.hidden);
-    let row = rows().find(r => r.querySelector('[data-cons]').dataset.cons.toLowerCase() === n.toLowerCase()) || vis[0];
-    if(!row){ const tmp = document.createElement('div'); tmp.innerHTML = consRowHTML(n.replace(/^./, ch => ch.toUpperCase())); row = tmp.firstElementChild; list.insertBefore(row, list.querySelector('.consall')); }
-    const cb = row.querySelector('[data-cons]'); cb.checked = true; sync(row); q.value = ''; filter(); row.scrollIntoView({block:'nearest'}); toast(`${consShort(cb.dataset.cons)} ✓ — add the date of their last note`); if(!isTouch()) q.focus(); };
+    chips.querySelectorAll('.conschip').forEach(c => { const ok = !t || t.split(/\s+/).every(w => c.dataset.q.split(/[\s/&-]+/).some(x => x.startsWith(w))); c.hidden = !ok; if(ok) shown++; });
+    none.hidden = !t || shown > 0; none.textContent = t ? `No service called “${q.value.trim()}” — press Enter or Add to add it.` : ''; addB.hidden = !t || shown > 0; };
+  const add = () => { const n = q.value.trim(); if(!n) return; const vis = [...chips.querySelectorAll('.conschip')].filter(c => !c.hidden);
+    const ex = vis.find(c => c.dataset.conspick.toLowerCase() === n.toLowerCase() || consShort(c.dataset.conspick).toLowerCase() === n.toLowerCase()) || vis[0];
+    pick(ex ? ex.dataset.conspick : n.replace(/^./, ch => ch.toUpperCase())); q.value = ''; filter(); if(!isTouch()) q.focus(); };
   q.addEventListener('input', filter);
   q.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); add(); } else if(e.key === 'Escape' && q.value){ e.preventDefault(); e.stopPropagation(); q.value = ''; filter(); } });
   addB.addEventListener('click', e => { e.stopPropagation(); add(); });
@@ -4401,7 +4408,7 @@ function closePop(commit=true){
   if(commit){
     const ed = p.el.querySelector('[data-ed]');
     const r = rowOf(p.kind,p.id);
-    const cb = p.el.querySelector('[data-cn]'), gl = p.el.querySelector('.gttlist'), cl = p.el.querySelector('.conslist'), lw = p.el.querySelector('.ldtlist:not(.gttlist):not(.conslist)'), dm = p.el.querySelector('.dmods');
+    const cb = p.el.querySelector('[data-cn]'), gl = p.el.querySelector('.gttlist'), cl = p.el.querySelector('.consfol'), lw = p.el.querySelector('.ldtlist:not(.gttlist)'), dm = p.el.querySelector('.dmods');
     if(dm && r && dm.dataset.val !== (r.cells[p.k].t || '')) setCell(p.kind, p.id, p.k, {t:dm.dataset.val});
     const ptd = p.el.querySelector('[data-ptd]'); if(ptd && r){ const v = isISO(ptd.value) ? ptd.value : ''; if(v !== (r.cells[p.k].d || '')) setCell(p.kind, p.id, p.k, {d:v}); }
     const pd = p.el.querySelector('[data-procd]');
@@ -5585,12 +5592,12 @@ function columnsEditor(selKey){
   function draw(m){
     m.querySelector('#ceList').innerHTML = GROUPS.map(g => `<div class="h">${esc(g.label.split(' —')[0])}</div>` + g.cols.map(c => {
       const cfg = colCfg(c.k);
-      return `<button data-sel="${c.k}" class="${c.k===sel?'on':''}"><span>${esc(cfg.h)}</span><span class="tbadge ${isStatusType(cfg.type)?'st':''}">${esc(TYPES[cfg.type].label)}</span></button>`;
+      return `<button data-sel="${c.k}" class="${c.k===sel?'on':''}"><span>${esc(cfg.h)}</span><span class="tbadge ${isStatusType(cfg.type)?'st':''}">${esc(typeInfo(cfg.type).label)}</span></button>`;
     }).join('')).join('');
     const cfg = colCfg(sel), def = COLMAP[sel], grp = GROUPS.find(g => g.cols.some(c => c.k === sel));
     let h = `<label class="f">Column label</label><input type="text" data-ce="h" value="${esc(cfg.h)}" style="width:100%">
-      <label class="f">Type</label><select data-ce="type" style="width:100%" ${def.fixedType?'disabled':''}>${Object.entries(TYPES).map(([k,t]) => `<option value="${k}" ${k===cfg.type?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
-      <div class="muted" style="font-size:12px;margin-top:4px">${esc(TYPES[cfg.type].help)}</div>`;
+      <label class="f">Type</label><select data-ce="type" style="width:100%" ${def.fixedType?'disabled':''}>${TYPES[cfg.type] ? '' : `<option value="${cfg.type}" selected>${esc(typeInfo(cfg.type).label)}</option>`}${Object.entries(TYPES).map(([k,t]) => `<option value="${k}" ${k===cfg.type?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
+      <div class="muted" style="font-size:12px;margin-top:4px">${esc(typeInfo(cfg.type).help || "Built in — this column keeps its own type.")}</div>`;
     if(hasOpts(cfg.type)){
       h += `<label class="f" style="margin-top:14px">Options <span class="muted" style="font-weight:400">— in order; keys 1–9 pick them on the board</span></label>`;
       h += cfg.opts.map((o,i) => `<div class="optrow">
@@ -8770,6 +8777,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:310, d:'2026-11-26', items:['<b>Consults</b> pop-up is more compact: the services following the patient sit on top (last note date + <b>Signed off</b>); every other service is a small tap-to-add chip underneath.', 'Fixed: ⚙ Settings → <b>Columns &amp; options</b> opened blank.']},
   {v:309, d:'2026-11-26', items:['<b>Consults</b> — a new column (after Proc): tick each consulting service following the patient (Anesthesia → Urology, A–Z, with search: “cards”, “ID”, “pall”…), add the <b>date of their last note</b>, and tap <b>Sign off</b> when they sign off (they stay listed, struck through). The census shows e.g. “Cards · ID · <s>Renal</s>”; Rounds shows them in At a glance. Doesn’t count toward boxes left.', '<b>Avatar</b>: a search box at the top of the pop-up (“picc”, “foley”, “art”…). Enter ticks the top match, or adds a new one if nothing matches.']},
   {v:308, d:'2026-11-26', items:['Overview: <b>Census</b> and <b>Census cap / Open spots</b> are now one card — the patient count with “/ cap” (or “/ no census cap”) beside it in smaller type; open spots and who’s next up are on the line underneath.', '<b>Settings, reorganised</b> into a side list of sections is now on the real Plexus too.']},
   {v:307, d:'2026-11-26', items:['<b>Disposition</b>: “Floor” is replaced by <b>Telemetry</b>, <b>Med Surg</b> and <b>Pulse Ox</b> (in the same spot in the list). A patient already set to Floor keeps it until you change it.']},

@@ -1890,7 +1890,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '308';
+const APP_VERSION = '310';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2103,6 +2103,8 @@ const TYPES = {
   proc:         {label:'Procedure + date',      help:'Procedure name and its anticipated date. Grey when empty.'},
   ldt:          {label:'Lines / drains / tubes', help:'Tick each line, drain or tube with the date it went in. Grey when there are none; red once any has been in longer than the limit set in Settings.'},
 };
+const FIXED_TYPES = {io:{label:'Intake / output'}, gtt:{label:'Drips (GTT)'}, cons:{label:'Consult services'}};
+const typeInfo = t => TYPES[t] || FIXED_TYPES[t] || {label:t || '—', help:''};
 const isStatusType = t => t === 'status' || t === 'statusChoice';
 const hasOpts = t => t === 'choice' || t === 'statusChoice' || t === 'ldt';
 const O = (label, color='') => ({label, color});
@@ -5486,12 +5488,12 @@ function columnsEditor(selKey){
   function draw(m){
     m.querySelector('#ceList').innerHTML = GROUPS.map(g => `<div class="h">${esc(g.label.split(' —')[0])}</div>` + g.cols.map(c => {
       const cfg = colCfg(c.k);
-      return `<button data-sel="${c.k}" class="${c.k===sel?'on':''}"><span>${esc(cfg.h)}</span><span class="tbadge ${isStatusType(cfg.type)?'st':''}">${esc(TYPES[cfg.type].label)}</span></button>`;
+      return `<button data-sel="${c.k}" class="${c.k===sel?'on':''}"><span>${esc(cfg.h)}</span><span class="tbadge ${isStatusType(cfg.type)?'st':''}">${esc(typeInfo(cfg.type).label)}</span></button>`;
     }).join('')).join('');
     const cfg = colCfg(sel), def = COLMAP[sel], grp = GROUPS.find(g => g.cols.some(c => c.k === sel));
     let h = `<label class="f">Column label</label><input type="text" data-ce="h" value="${esc(cfg.h)}" style="width:100%">
-      <label class="f">Type</label><select data-ce="type" style="width:100%" ${def.fixedType?'disabled':''}>${Object.entries(TYPES).map(([k,t]) => `<option value="${k}" ${k===cfg.type?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
-      <div class="muted" style="font-size:12px;margin-top:4px">${esc(TYPES[cfg.type].help)}</div>`;
+      <label class="f">Type</label><select data-ce="type" style="width:100%" ${def.fixedType?'disabled':''}>${TYPES[cfg.type] ? '' : `<option value="${cfg.type}" selected>${esc(typeInfo(cfg.type).label)}</option>`}${Object.entries(TYPES).map(([k,t]) => `<option value="${k}" ${k===cfg.type?'selected':''}>${esc(t.label)}</option>`).join('')}</select>
+      <div class="muted" style="font-size:12px;margin-top:4px">${esc(typeInfo(cfg.type).help || "Built in — this column keeps its own type.")}</div>`;
     if(hasOpts(cfg.type)){
       h += `<label class="f" style="margin-top:14px">Options <span class="muted" style="font-weight:400">— in order; keys 1–9 pick them on the board</span></label>`;
       h += cfg.opts.map((o,i) => `<div class="optrow">
@@ -8670,6 +8672,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:310, d:'2026-11-26', items:['Fixed: ⚙ Settings → <b>Columns &amp; options</b> opened blank.']},
   {v:308, d:'2026-11-26', items:['Overview: <b>Census</b> and <b>Census cap / Open spots</b> are now one card — the patient count with “/ cap” (or “/ no census cap”) beside it in smaller type; open spots and who’s next up are on the line underneath.', '<b>Settings, reorganised</b> into a side list of sections is now on the real Plexus too.']},
   {v:307, d:'2026-11-26', items:['<b>Disposition</b>: “Floor” is replaced by <b>Telemetry</b>, <b>Med Surg</b> and <b>Pulse Ox</b> (in the same spot in the list). A patient already set to Floor keeps it until you change it.']},
   {v:306, d:'2026-11-26', items:['<b>Settings, reorganised</b> — a side list of sections like Mac System Settings: <b>Team · Flags &amp; timers · Board &amp; columns · Appearance · Backup &amp; data · Privacy · Tools · Reset</b>. Tap a section to see only its settings; Plexus remembers the last one you opened. Nothing was removed.']},
