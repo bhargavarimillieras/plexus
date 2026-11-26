@@ -1907,7 +1907,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '314';
+const APP_VERSION = '315';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3338,7 +3338,7 @@ function commitGtt(p, r, el){
 }
 /* v309: Consults — services following the patient, each with the date of their last note and a signed-off date */
 const CONS_LIST = [['Anesthesia', 'Anesthesia', 'anes'], ['Cardiology', 'Cards', 'cards'], ['Cardiothoracic Surgery', 'CT Surg', 'ctsurg cts cardiac surgery thoracic surgery'], ['Critical Care', 'Critical Care', 'icu micu'], ['Endocrinology', 'Endocrine', 'endo'], ['ENT', 'ENT', 'otolaryngology ear nose throat'], ['EP', 'EP', 'electrophysiology cardiology arrhythmia'], ['Heart Failure', 'HF', 'chf advanced heart failure cardiology'],
-  ['Gastroenterology', 'GI', 'gi hepatology liver'], ['Geriatrics', 'Geri', 'geri'], ['Hematology', 'Heme', 'heme'], ['Infectious Disease', 'ID', 'id'], ['Nephrology', 'Renal', 'renal'], ['Neurology', 'Neuro', 'neuro stroke'],
+  ['Gastroenterology', 'GI', 'gi hepatology liver'], ['Geriatrics', 'Geri', 'geri'], ['Hematology', 'Heme', 'heme'], ['Infectious Disease', 'ID', 'id'], ['Interventional Radiology', 'IR', 'ir radiology'], ['Nephrology', 'Renal', 'renal'], ['Neurology', 'Neuro', 'neuro stroke'],
   ['Neurosurgery', 'NSGY', 'nsgy nsx neurosurg'], ['Obstetrics/Gynecology', 'OB/GYN', 'ob gyn obgyn obstetrics gynecology'], ['Oncology', 'Onc', 'onc'], ['Ophthalmology', 'Ophtho', 'ophtho eye'], ['Orthopedics', 'Ortho', 'ortho'],
   ['Pain Management', 'Pain', 'pain'], ['Palliative Care', 'Pall Care', 'pall palliative pc'], ['Plastic Surgery', 'Plastics', 'plastics'], ['PM&R', 'PM&R', 'pmr physiatry rehab'], ['Podiatry', 'Podiatry', 'pod'],
   ['Psychiatry', 'Psych', 'psych cl'], ['Pulmonology', 'Pulm', 'pulm'], ['Rheumatology', 'Rheum', 'rheum'], ['Surgery', 'Surg', 'surg gen surg acs'], ['Toxicology', 'Tox', 'tox poison'], ['Urology', 'Uro', 'uro gu']]
@@ -3346,9 +3346,11 @@ const CONS_LIST = [['Anesthesia', 'Anesthesia', 'anes'], ['Cardiology', 'Cards',
 const CONS_SHORT = Object.fromEntries(CONS_LIST.map(c => [c[0], c[1]]));
 const consItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
 const consActive = cell => consItems(cell).filter(i => !i.off);
+// v315: display order — most recent note first (undated after), signed-off services last
+const consSorted = cell => consItems(cell).map((it, i) => ({it, i})).sort((a, b) => (!!a.it.off - !!b.it.off) || ((isISO(b.it.d) ? b.it.d : '') .localeCompare(isISO(a.it.d) ? a.it.d : '')) || a.i - b.i).map(x => x.it);
 const consShort = k => CONS_SHORT[k] || k;
 const consNoteAge = it => isISO(it.d) ? daysBetween(it.d, state.boardDate) : null;
-const consSummary = cell => consItems(cell).map(i => `${i.k}${isISO(i.d) ? ' (note ' + fmtShort(i.d) + ')' : ''}${i.off ? ' — signed off' + (isISO(i.off) ? ' ' + fmtShort(i.off) : '') : ''}`).join('; ');
+const consSummary = cell => consSorted(cell).map(i => `${i.k}${isISO(i.d) ? ' (note ' + fmtShort(i.d) + ')' : ''}${i.off ? ' — signed off' + (isISO(i.off) ? ' ' + fmtShort(i.off) : '') : ''}`).join('; ');
 const consQ = n => (n + ' ' + consShort(n) + ' ' + ((CONS_LIST.find(c => c[0] === n) || [])[2] || '')).toLowerCase();
 const consRowHTML = (n, it) => `<div class="consrow ${it && it.off ? 'off' : ''}" data-q="${esc(consQ(n))}">
   <label class="consname" title="${esc(n)}"><input type="checkbox" data-cons="${esc(n)}" checked><b>${esc(consShort(n))}</b></label>
@@ -3390,7 +3392,7 @@ function commitCons(p, r, el){
   if(JSON.stringify(items) !== JSON.stringify(consItems(r.cells[p.k]))) setCell(p.kind, p.id, p.k, {items, s:'', t:''});
 }
 // Rounds · At a glance: one pill per service — last note date, ✓ when signed off
-const consPills = cell => consItems(cell).map(it => { const a = consNoteAge(it);
+const consPills = cell => consSorted(cell).map(it => { const a = consNoteAge(it);
   return `<span class="conspill ${it.off ? 'off' : ''}" title="${esc(it.k)}${isISO(it.d) ? ' — last note ' + fmtShort(it.d) : ''}${it.off ? ' — signed off' : ''}"><b>${esc(consShort(it.k))}</b>${it.off ? ' <small>signed off</small>' : isISO(it.d) ? ` <small>${a === 0 ? 'today' : fmtShort(it.d)}</small>` : ''}</span>`; }).join('');
 // Rounds · At a glance: one pill per drip, full name
 const gttPills = (cell, p) => gttShown(cell, p).map(it => `<span class="gttpill g-${gttCat(it.k)}" ${it.dvt ? 'title="HEP GTT — from DVT PPx"' : ''}><b>${esc(it.k)}</b>${it.dvt ? ' <small>(DVT PPx)</small>' : ''}</span>`).join('');
@@ -3442,7 +3444,7 @@ function cellHTML0(cell, col, kind, id, ri, ci, ro){
     return `<div class="tc t-gtt gtt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h + ': ' + (its.length ? its.map(i => i.k + (i.dvt ? ' (HEP GTT, from DVT PPx)' : '')).join('; ') : 'no drips'))}"><span class="txt">${esc(txt)}</span></div>`;
   }
   if(col.type === 'cons'){
-    const its = consItems(cell), act = its.filter(i => !i.off), off = its.filter(i => i.off), st = !its.length ? 'none' : 'on';
+    const its = consSorted(cell), act = its.filter(i => !i.off), off = its.filter(i => i.off), st = !its.length ? 'none' : 'on';
     const h = act.map(i => esc(consShort(i.k))).join(' · ') + (act.length && off.length ? ' · ' : '') + off.map(i => `<s class="ldtgone">${esc(consShort(i.k))}</s>`).join(' ');
     return `<div class="tc t-cons cons-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h + ': ' + (its.length ? consSummary(cell) : 'no consults'))}"><span class="txt">${h}</span></div>`;
   }
@@ -8828,6 +8830,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:315, d:'2026-11-26', items:['Consults: <b>IR</b> (interventional radiology) added. On the census and in Rounds, consults are now listed <b>most recent note first</b> (no date yet → after those; signed off → last).']},
   {v:314, d:'2026-11-26', items:['Consults: <b>CT Surg</b> (cardiothoracic surgery) added to the list.']},
   {v:313, d:'2026-11-26', items:['<b>Add lines from the command bar</b>: type the bed, the device, side, site and date — e.g. <b>10N62 PIV L forearm 11/23/26</b>, <b>7W05 picc R 11/20</b>, <b>ED15 cvc R IJ</b> (no date = today). <b>7W05 foley out</b> marks it removed. Works with nicknames (art, a-line, swan, trialysis, peg, ngt…).']},
   {v:312, d:'2026-11-26', items:['Consults: <b>EP</b> (electrophysiology) and <b>Heart Failure (HF)</b> added to the list.']},
