@@ -609,6 +609,47 @@ body.tkfull #hclocks{margin-right:4px}
 .tlline{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
 .tlline.mid{background:var(--line2);width:2px}
 .tllab{box-shadow:-14px 0 0 var(--panel)}.tlline.sub{opacity:.45}
+/* v302 iPad pack */
+.labchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.labchip{border:1px solid var(--line2);background:var(--panel);border-radius:16px;padding:5px 11px;font:600 13px ui-monospace,Menlo,monospace;cursor:pointer;color:var(--ink)}
+.labchip.on{background:#E8F0FE;border-color:#4285F4;color:#174ea6}
+@media (prefers-color-scheme: dark){.labchip.on{background:#1d3357;color:#a8c7fa}}
+body.touch .labchip{padding:9px 14px;font-size:15px}
+.actsheet{display:flex;flex-direction:column;gap:8px;min-width:min(420px,80vw)}
+.actsheet .btn{justify-content:flex-start;text-align:left;font-size:16px;padding:12px 14px}
+.actsheet .btn.warnish{color:#b3261e}
+#censusGrid tr.lpr td{background:color-mix(in srgb,var(--accent) 12%,transparent);transition:background .5s}
+body.touch #censusGrid td.stk{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+body.touch #censusGrid .tc{height:46px}
+body.touch.kbd .tc:focus{outline:3px solid #4285F4;outline-offset:-3px;z-index:2}
+body.touch:not(.kbd) .tc:focus{outline:none}
+#rounds .rs-main.swl .rs-body,#rounds .rs-main.swl .rs-hd2{animation:swl .22s ease-out}
+#rounds .rs-main.swr .rs-body,#rounds .rs-main.swr .rs-hd2{animation:swr .22s ease-out}
+@keyframes swl{from{transform:translateX(36px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes swr{from{transform:translateX(-36px);opacity:.4}to{transform:none;opacity:1}}
+@media (max-width:719px){
+  body.touch .tbar{grid-template-columns:none!important;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+  body.touch .tbar button{min-width:0;font-size:10px;overflow:hidden}
+  body.touch .tbar button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  body.touch header.top{flex-wrap:wrap!important;row-gap:6px}
+  body.touch header.top .hgroup{margin-left:auto}
+}
+/* narrow (Split View / slide-over): Split Rounds puts the patients in a strip across the top */
+@media (max-width:719px){
+  #rounds .rs{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  #rounds .rs-rail{height:auto;border-right:0;border-bottom:1px solid var(--line)}
+  #rounds .rs-railhd{height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:8px 10px;gap:6px 10px}
+  #rounds .rs-railhd .rs-row{gap:8px}.rs-railhd .seg{flex:0 0 auto}
+  #rounds .rs-list{display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;padding:6px 8px;flex:none;scrollbar-width:none}
+  #rounds .rs-pi{display:flex;width:auto;flex:none;gap:5px;padding:8px 12px;border:1px solid var(--line);margin:0}
+  #rounds .rs-pi.on{box-shadow:inset 0 -3px 0 var(--accent)}
+  #rounds .rs-pi .rs-one,#rounds .rs-pi .rs-int,#rounds .rs-pi .rs-hd,#rounds .rs-grp,#rounds .rs-key{display:none}
+  #rounds .rs-hd2{height:auto;flex-wrap:wrap;padding:10px 12px;gap:8px 12px}
+  #rounds .rs-bigbed{font-size:26px}
+  #rounds .rs-body{padding:10px !important}
+  #rounds .rs-foot{padding:0 10px;gap:8px}.rs-nx{display:none}
+}
+
 .rs-leave{border-left:4px solid #34A853}.rs-leave.rs-xf{border-left-color:#7B61FF}
 .rs-lvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px 10px;margin-top:6px}
 .rs-lvf{display:flex;flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:var(--muted);min-width:0}
@@ -1758,7 +1799,7 @@ body.touch .lrow{padding:14px 16px}
             <select id="tkBedSel" title="Which patient — from the census and tonight’s admissions, or Other for a bed that isn’t on the board"></select>
             <input id="tkBed" list="tkBeds" placeholder="Bed" title="Bed or patient identifier (avoid names)" autocomplete="off" hidden><datalist id="tkBeds"></datalist>
             <input id="tkTeam" list="tkTeams" placeholder="Team" autocomplete="off"><datalist id="tkTeams"></datalist>
-            <input id="tkText" placeholder="Task — e.g. f/u 9pm labs, UOP check at 4am" autocomplete="off">
+            <input id="tkText" placeholder="Task — e.g. f/u 9pm labs, UOP check at 4am" autocomplete="off" list="tkRecent" enterkeyhint="done">
             <input id="tkTime" class="hhmm" placeholder="HH:MM" inputmode="numeric" maxlength="5" title="Time, 24-hour (HH:MM) — e.g. 21:00, 04:30. Leave blank to use a time written in the task (e.g. “f/u 9pm labs”)." autocomplete="off">
             <select id="tkRep" title="Repeat — until the end of the shift, or as many times as you set"><option value="0">Once</option><option value="0.5">q30min</option><option value="1">q1h</option><option value="2">q2h</option><option value="3">q3h</option><option value="4">q4h</option><option value="6">q6h</option><option value="8">q8h</option><option value="12">q12h</option></select><input id="tkCount" class="tkcount" placeholder="×" inputmode="numeric" maxlength="2" title="How many times (blank = until the end of the shift)" hidden autocomplete="off">
             <div class="seg tkpri" id="tkPri" title="Priority — or start the task with ! (urgent) or !! (emergent)"><button type="button" data-p="" class="on">Routine</button><button type="button" data-p="urgent">Urgent</button><button type="button" data-p="emergent">Emergent</button></div>
@@ -1803,7 +1844,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '301';
+const APP_VERSION = '302';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3378,6 +3419,7 @@ const STK = [ {k:'seq',w:62},{k:'bed',w:130},{k:'intern',w:96},{k:'hd',w:44},{k:
 function stkStyle(i){ let left = 0; for(let j=0;j<i;j++) left += STK[j].w; return `left:${left}px;min-width:${STK[i].w}px;max-width:${STK[i].w}px`; }
 
 function gridHTML(patients, {ro=false} = {}){
+  try{ narrowWas = narrowFit(); }catch(e){}
   const ck = !ro && CHUNK[ui.chunk] ? CHUNK[ui.chunk] : null;
   const rvCol = ck && ck.k === 'pm' && patients.some(p => followKeys(p).length) ? [{k:'_rv'}] : [];
   const visGroups = ck ? [{k:ck.g, label:ck.name, cols:[...rvCol, ...chunkKeys(ck.k).map(k => COLMAP[k])]}].filter(g => g.cols.length)
@@ -4288,13 +4330,14 @@ function openPop(cellEl, focusEditor=false){
   } else if(col.type === 'checkNote'){
     body += `<label class="cnrow"><input type="checkbox" data-cn ${cell.c ? 'checked' : ''}> Done</label>
       <div class="ed"><input type="text" data-ed value="${esc(cell.t)}" placeholder="Times, e.g. 9 am, 9 pm"><button class="btn sm" data-now title="Add the current time">+ Now</button></div>
-      <div class="muted" style="font-size:11px;margin-top:5px">Separate rounds with commas. Typing a time ticks the box.</div>${col.k === 'labord' ? `<button class="btn sm ${cell.c && cell.t === 'Lab holiday' ? 'primary' : ''}" data-labhol style="margin-top:8px;width:100%">🏖 Lab holiday${cell.c && cell.t === 'Lab holiday' ? ' ✓' : ''}</button>` : ''}`;
+      ${col.k === 'labord' ? labChipsHTML(cell.t) : ''}<div class="muted" style="font-size:11px;margin-top:5px">Separate rounds with commas. Typing a time ticks the box.${col.k === 'labord' ? ' Tap a time to add or remove it.' : ''}</div>${col.k === 'labord' ? `<button class="btn sm ${cell.c && cell.t === 'Lab holiday' ? 'primary' : ''}" data-labhol style="margin-top:8px;width:100%">🏖 Lab holiday${cell.c && cell.t === 'Lab holiday' ? ' ✓' : ''}</button>` : ''}`;
   } else if(col.type === 'date'){
     body += `<div class="ed"><input type="date" data-ed value="${esc(isISO(cell.t)?cell.t:'')}" ${cell.t==='N/A'?'disabled':''}><button class="btn sm" data-today>Today</button><button class="btn sm ${cell.t==='N/A'?'primary':''}" data-na>N/A</button></div>`;
     if(col.k === 'bm' && isISO(cell.t) && daysBetween(cell.t, state.boardDate) > 1) body += `<button class="btn sm ${cell.ck === state.boardDate ? 'primary' : ''}" data-bmck style="margin-top:8px;width:100%">${cell.ck === state.boardDate ? '✓ Checked today — still no BM since ' : 'Still no BM since '}${esc(fmtShort(cell.t))} — mark checked</button>`;
     if(col.k === 'ts' && tsExpired(cell.t)) body += `<div class="muted" style="font-size:11.5px;margin-top:6px">This T&amp;S has expired — enter the new one, or N/A if none is needed.</div>`;
   } else {
-    body += `<div class="ed"><input type="text" data-ed value="${esc(cell.t)}" placeholder="${statusy?'Comment (optional)':'Type here'}"></div>`;
+    const rv = statusy ? [] : recentVals(col.k).filter(v => v !== cell.t);
+    body += `<div class="ed"><input type="text" data-ed value="${esc(cell.t)}" placeholder="${statusy?'Comment (optional)':'Type here'}" enterkeyhint="done" ${rv.length ? 'list="edRecent"' : ''}>${rv.length ? `<datalist id="edRecent">${rv.map(v => `<option value="${esc(v)}">`).join('')}</datalist>` : ''}</div>`;
   }
   const left = statusy ? `<button class="btn sm" data-clear>Clear status</button>` : `<button class="btn sm" data-clearval>Clear</button>`;
   const editLink = (hasOpts(col.type) && optKey) ? `<button class="linkbtn" data-editopts="${optKey}">Edit options…</button>` : '';
@@ -4338,6 +4381,9 @@ function openPop(cellEl, focusEditor=false){
     if(b.dataset.pday !== undefined) return;
     if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:'', items:[]} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
     if(b.hasAttribute('data-today')){ finish({t:state.boardDate}); return; }
+    if(b.dataset.labchip){ const hm = b.dataset.labchip; let ts = labToks(edEl.value === 'Lab holiday' ? '' : edEl.value); const i = ts.findIndex(x => labTokHM(x) === hm);
+      if(i >= 0) ts.splice(i, 1); else { ts.push(hm); ts.sort((a, c) => (labTokHM(a) || '99').localeCompare(labTokHM(c) || '99')); }
+      edEl.value = ts.join(', '); b.classList.toggle('on', i < 0); const cb = el.querySelector('[data-cn]'); if(cb) cb.checked = !!ts.length; return; }
     if(b.hasAttribute('data-now')){
       const d = new Date(), h = d.getHours(), now = `${h % 12 || 12}:${pad(d.getMinutes())} ${h < 12 ? 'am' : 'pm'}`;
       edEl.value = edEl.value.trim() ? `${edEl.value.trim().replace(/,\s*$/,'')}, ${now}` : now;
@@ -6215,7 +6261,7 @@ function renderTasks(){
   const chips = state.settings.taskChips || DEFAULT_CHIPS;
   $('#tkChips').innerHTML = chips.map(c => `<button type="button" class="tkchip" data-chip="${esc(c)}">${esc(c)}</button>`).join('') + `<button type="button" class="tkchip edit" id="tkChipEdit" title="Edit these quick tasks">✎</button>`;
   const beds = [...new Set([...state.patients.map(p => p.bed).filter(Boolean), ...state.admits.filter(a => a.date === state.boardDate).map(a => a.bed).filter(Boolean), ...taskList().map(t => todoWhere(t)).filter(Boolean)])].sort((a, b) => a.localeCompare(b, undefined, {numeric:true}));
-  fillBedSel();
+  fillBedSel(); try{ taskSuggest(); }catch(e){}
   $('#tkBeds').innerHTML = beds.map(b => { const p = censusByBed(b), a = !p && admitByBed(b); return `<option value="${esc(b)}"${p ? ` label="On census · ${esc([p.intern, p.problem].filter(Boolean).join(' · '))}"` : a ? ` label="${esc(admLabel(a))}"` : ''}>`; }).join('');
   $('#tkBulk').hidden = !!typeOf(activeType).admitOnly;
   const boardTeam = (state.settings.team || '').trim(), tmIn = $('#tkTeam');
@@ -6277,7 +6323,7 @@ function setTlZoom(z, anchorFrac){ const L = $('#tkList'), before = L ? (L.scrol
 const tlZoomStep = dir => { const i = TL_ZOOMS.indexOf(tkUI.zoom), j = Math.max(0, Math.min(TL_ZOOMS.length - 1, (i < 0 ? 0 : i) + dir)); return TL_ZOOMS[j]; };
 /* v293: ✎ Edit a task — patient, text, priority, date + time, team, result; repeats can take the same change */
 function editTaskModal(id, back){
-  const t = state.todos.find(x => x.id === id); if(!t) return;
+  const t = state.todos.find(x => x.id === id); if(!t) return; try{ taskSuggest(); }catch(e){}
   const cur = todoWhere(t), curP = todoPatient(t), noPt = !curP && !t.aid && !(t.bed || '').trim();
   const pts = state.patients.filter(p => p.bed).slice().sort((a, b) => a.bed.localeCompare(b.bed, undefined, {numeric:true}));
   const ads = state.admits.filter(a => a.date === state.boardDate && a.bed && !admitClosed(a) && !censusByBed(a.bed));
@@ -6292,7 +6338,7 @@ function editTaskModal(id, back){
       <select id="teBed">${pts.length ? `<optgroup label="Census">${pts.map(p => opt(p.bed, `${esc(p.bed)}${p.intern ? ' — ' + esc(p.intern) : ''}${p.problem ? ' · ' + esc(p.problem.slice(0, 40)) : ''}`)).join('')}</optgroup>` : ''}
         ${ads.length ? `<optgroup label="Admissions">${ads.map(a => opt(a.bed, `${esc(a.bed)} · ${esc(admLabel(a))}`)).join('')}</optgroup>` : ''}${opt('__other', 'Other bed / not on the board…')}${opt('__none', 'No patient (general task)')}</select>
       <input type="text" id="teOther" placeholder="Bed" value="${selV === '__other' ? esc(cur) : ''}" ${selV === '__other' ? '' : 'hidden'}>
-      <label class="f">Task</label><input type="text" id="teText" value="${esc(t.text)}">
+      <label class="f">Task</label><input type="text" id="teText" value="${esc(t.text)}" list="tkRecent" enterkeyhint="done">
       <label class="f">Priority</label><div class="seg tkpri" id="tePri">${['', 'urgent', 'emergent'].map(k => `<button type="button" data-ppri="${k}" class="${(t.pri || '') === k ? 'on' : ''}">${PRI[k].label}</button>`).join('')}</div>
       <label class="f">Due</label><div style="display:flex;gap:8px;align-items:center"><input type="date" id="teDate" value="${dDate}"><input type="text" id="teTime" class="hhmm" inputmode="numeric" maxlength="5" placeholder="HH:MM" value="${dTime}" style="width:90px"><button type="button" class="btn sm" id="teNoTime">No time</button></div>
       <label class="f">Team</label><input type="text" id="teTeam" value="${esc(t.team || '')}" placeholder="Team (optional)">
@@ -7943,12 +7989,12 @@ function downloadedNote(name){
     <p class="muted">On iPad it lands in <b>Files → Downloads</b>, which is usually in <b>iCloud Drive</b>. Move it to <b>On My iPad → Plexus Backups</b> in the Files app, so patient details stay off non-NYU clouds. To bring it back: More → <b>Restore from Files…</b>. Delete old backups you no longer need.</p>`, [['OK', 'primary']]);
 }
 // iPad: once per session when a backup is due — on opening a board, and when wrapping up
-let bkNudged = false;
+let bkNudged = false, bkNudgedAt = 0;
 function backupNudge(when){
-  if(!isTouch() || !filesBackupDue() || (bkNudged && when !== 'wrap')) return false; bkNudged = true;
+  if(!isTouch() || !filesBackupDue() || (bkNudged && when !== 'wrap')) return false; bkNudged = true; bkNudgedAt = Date.now();
   const at = filesBackupAt();
   modal(`<h3>⬆ Time for a backup</h3><p>${at ? `Last backup <b>${esc(agoText(at))}</b>.` : 'No backup from this iPad yet.'} Everything lives inside the Plexus app — a backup file means nothing is lost if the app’s data is ever cleared.</p>
-    <p class="muted">Tap <b>Back up now</b> → <b>Save to Files</b> → <b>On My iPad</b> → <b>Plexus Backups</b> → <b>Save</b>. Not iCloud Drive: keep patient details off non-NYU clouds.</p>`,
+    <p class="muted">Tap <b>Back up now</b> → <b>Save to Files</b> → your <b>NYU OneDrive</b> (or <b>On My iPad</b>) → <b>Save</b>. Not iCloud Drive: keep patient details off non-NYU clouds.</p>`,
     [['Later'], ['⬆ Back up now', 'primary', () => { filesBackup(); }]]);
   return true;
 }
@@ -8009,10 +8055,91 @@ function moreSheet(){
     <h5>This ${/iPad|Macintosh/.test(navigator.userAgent) ? 'iPad' : 'device'}</h5>
     <button class="row" data-do="files"><span class="ic">⬆</span>Back up to Files<span class="sub ${due ? 'due' : ''}">${at ? 'last ' + agoText(at) : 'not yet'}</span></button>
     <button class="row" data-do="restore"><span class="ic">↺</span>Restore from Files…</button>
+    <button class="row" data-do="kept" id="moreKept"><span class="ic">🔒</span>Data kept on this iPad<span class="sub">checking…</span></button>
+    <button class="row" data-do="keys"><span class="ic">⌨</span>Keyboard shortcuts<span class="sub">with a keyboard attached</span></button>
     <button class="row" data-do="privBtn"><span class="ic">👁</span>Hide screen</button>
     <button class="row" data-do="settingsBtn"><span class="ic">⚙</span>Settings</button>`,
-  d => { if(d.startsWith('tab:')) touchTab(d.slice(4)); else if(d === 'outstanding') showOutstanding(); else if(d === 'cmdbar') cmdOpen(); else if(d === 'files') filesBackup(); else if(d === 'restore') filesRestorePick(); else if(d === 'switch') switchBoardFlow(); else if(d === 'sched') showRotSetup({edit:activeType}); else { const b = document.getElementById(d); if(b) b.click(); } });
+  d => { if(d.startsWith('tab:')) touchTab(d.slice(4)); else if(d === 'outstanding') showOutstanding(); else if(d === 'cmdbar') cmdOpen(); else if(d === 'files') filesBackup(); else if(d === 'restore') filesRestorePick(); else if(d === 'keys') shortcutSheet(); else if(d === 'kept') keptInfo(); else if(d === 'switch') switchBoardFlow(); else if(d === 'sched') showRotSetup({edit:activeType}); else { const b = document.getElementById(d); if(b) b.click(); } });
+  storageKept().then(k => { const r = $('#moreKept'); if(!r) return; r.querySelector('.sub').textContent = k ? '✓ protected' : 'may be cleared'; r.querySelector('.sub').classList.toggle('due', !k); });
 }
+
+/* ================= v302: iPad pack — data safety, less typing, touch navigation, keyboard, narrow layouts ================= */
+// ---- 1 · data safety ----
+// works offline: a tiny service worker (network first, so updates still arrive — the last copy is used only when there's no connection)
+try{ if('serviceWorker' in navigator && window.isSecureContext && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js').catch(() => {}); }catch(e){}
+async function storageKept(){ try{ return !!(navigator.storage && navigator.storage.persisted && await navigator.storage.persisted()); }catch(e){ return false; } }
+// end of shift: once per shift, from 45 min before the shift ends until 4 h after, if you haven't backed up since then
+const BKSHIFT_KEY = `${KEY_PREFIX}.bkShiftNudge`;
+function shiftEndNudge(){
+  if(!isTouch() || !state || modalEl || launching || tabLocked) return;
+  let end; try{ end = shiftEndDate(); }catch(e){ return; } const from = end.getTime() - 45 * 60e3, now = Date.now();
+  if(now < from || now > end.getTime() + 4 * 3600e3) return;
+  const tag = `${activeType}|${state.boardDate}`; try{ if(localStorage.getItem(BKSHIFT_KEY) === tag) return; }catch(e){}
+  const at = filesBackupAt(); if(at && Date.parse(at) >= from) return;
+  if(Date.now() - bkNudgedAt < 2 * 3600e3) return;   // the ‘Time for a backup’ prompt just asked
+  if(!state.patients.length && !(state.todos || []).length) return;
+  try{ localStorage.setItem(BKSHIFT_KEY, tag); }catch(e){}
+  modal(`<h3>🌅 Shift's almost over — back up?</h3><p>${at ? `Last backup <b>${esc(agoText(at))}</b>.` : 'No backup from this iPad yet.'} One tap saves <b>everything</b> (every board, tasks, your rotation setup) to a file, so nothing is lost if the app's data is ever cleared.</p>
+    <p class="muted">Tap <b>Back up now</b> → <b>Save to Files</b> → your <b>NYU OneDrive</b> (or <b>On My iPad</b>) → <b>Save</b>. Not iCloud Drive.</p>`,
+    [['Later'], ['⬆ Back up now', 'primary', () => { filesBackup(); }]]);
+}
+setInterval(shiftEndNudge, 60e3); document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(shiftEndNudge, 1500); });
+
+function keptInfo(){ storageKept().then(k => modal(`<h3>🔒 ${k ? 'Your data is protected on this iPad' : 'This iPad may clear Plexus data'}</h3>
+  ${k ? '<p>iPadOS has agreed to keep Plexus\'s saved data — it won\'t be cleared to free up space. Deleting the Home Screen app, or erasing the iPad, still removes it, so keep backing up.</p>'
+      : '<p>iPadOS hasn\'t promised to keep Plexus\'s data. Open Plexus from its <b>Home Screen icon</b> (not a Safari tab) — that\'s what makes iPadOS keep it — and back up at the end of every shift.</p>'}
+  <p class="muted">Backups: More → <b>Back up to Files</b> → Save to Files → your <b>NYU OneDrive</b> (or On My iPad).</p>`, [['OK', 'primary']])); }
+// ---- 2 · less typing ----
+const LAB_CHIPS = ['04:00', '05:00', '11:00', '17:00', '21:00'];
+function labChipsHTML(t){ const on = new Set(labToks(t === 'Lab holiday' ? '' : t).map(labTokHM)); return `<div class="labchips">${LAB_CHIPS.map(h => `<button type="button" class="labchip ${on.has(h) ? 'on' : ''}" data-labchip="${h}">${h}</button>`).join('')}</div>`; }
+// what you've typed before in this column (this board + recently discharged), most recent first
+function recentVals(col, max = 12){ const seen = new Map(), add = v => { v = String(v || '').trim(); if(v && v !== 'N/A' && v.length <= 80 && !seen.has(v.toLowerCase())) seen.set(v.toLowerCase(), v); };
+  (state.patients || []).forEach(p => add(p.cells && p.cells[col] && p.cells[col].t)); (state.archive || []).slice(-60).reverse().forEach(p => add(p.cells && p.cells[col] && p.cells[col].t));
+  return [...seen.values()].slice(0, max); }
+function recentTasks(max = 20){ const n = new Map(); (state.todos || []).slice().reverse().forEach(t => { const v = String(t.text || '').trim(); if(!v || t.lab) return; const k = v.toLowerCase(); n.set(k, {v, c:(n.get(k) || {c:0}).c + 1}); });
+  return [...n.values()].sort((a, b) => b.c - a.c).slice(0, max).map(x => x.v); }
+function taskSuggest(){ let dl = $('#tkRecent'); if(!dl){ dl = document.createElement('datalist'); dl.id = 'tkRecent'; document.body.appendChild(dl); }
+  const chips = state.settings.taskChips || DEFAULT_CHIPS; dl.innerHTML = [...new Set([...recentTasks(), ...chips])].map(v => `<option value="${esc(v)}">`).join(''); }
+
+// ---- 3 · touch navigation ----
+// Split Rounds: swipe left / right on the patient to go to the next / previous one
+(() => { let sw = null;
+  document.addEventListener('touchstart', e => { const main = e.target.closest && e.target.closest('#rounds.rsplit .rs-main'); if(!main || !rounds.open || pop || modalEl || e.touches.length !== 1) { sw = null; return; }
+    if(e.target.closest('input,select,textarea,.pop,.tl,[data-noswipe]')){ sw = null; return; }
+    const t = e.touches[0]; sw = {x:t.clientX, y:t.clientY, at:Date.now()}; }, {passive:true});
+  document.addEventListener('touchend', e => { if(!sw) return; const t = e.changedTouches[0], dx = t.clientX - sw.x, dy = t.clientY - sw.y, dt = Date.now() - sw.at; sw = null;
+    if(Math.abs(dx) < 80 || Math.abs(dy) > 50 || Math.abs(dx) < Math.abs(dy) * 2 || dt > 700) return;
+    roundsGo(dx < 0 ? 1 : -1, true);
+    const m = document.querySelector('#rounds .rs-main'); if(m){ m.classList.remove('swl', 'swr'); void m.offsetWidth; m.classList.add(dx < 0 ? 'swl' : 'swr'); } }, {passive:true});
+})();
+// Census: long-press a row (its # or HD cell, or the space around the problem) for its actions
+function rowActionSheet(id){
+  const p = rowOf('p', id); if(!p) return;
+  if(!rowSel.has(id)){ rowSel.clear(); rowSel.add(id); renderCensus(); } else syncSelBar();
+  const sel = $('#selAct'), n = rowSel.size, opts = [...sel.options].filter(o => o.value && !o.disabled);
+  modal(`<h3>${n === 1 ? esc(p.bed || 'Patient') + (p.problem ? ` <span class="muted" style="font-weight:500">· ${esc(p.problem.slice(0, 50))}</span>` : '') : `${n} patients selected`}</h3>
+    <div class="actsheet">${opts.map(o => `<button type="button" class="btn ${/^(remove|left|leftsvc)$/.test(o.value) ? 'warnish' : ''}" data-asv="${esc(o.value)}">${esc(o.textContent)}</button>`).join('')}</div>`,
+    [['Cancel', '', () => { rowSel.clear(); renderCensus(); }]], m => {
+      m.querySelector('.actsheet').addEventListener('click', e => { const b = e.target.closest('[data-asv]'); if(!b) return; closeModal(); selAction(b.dataset.asv); }); });
+}
+(() => { let lp = null, swallow = false;
+  document.addEventListener('pointerdown', e => { if(e.pointerType === 'mouse' || !isTouch()) return; const td = e.target.closest && e.target.closest('#censusGrid tbody tr[data-id] td.stk');
+    if(!td || e.target.closest('.bedbox,.rsel,select,input,textarea')) return; const tr = td.closest('tr'); tr.classList.add('lpr');
+    lp = {tr, x:e.clientX, y:e.clientY, t:setTimeout(() => { tr.classList.remove('lpr'); lp = null; swallow = true; setTimeout(() => { swallow = false; }, 800); try{ navigator.vibrate && navigator.vibrate(15); }catch(err){} rowActionSheet(tr.dataset.id); }, 550)}; });
+  const end = e => { if(!lp) return; if(e.type === 'pointermove' && Math.hypot(e.clientX - lp.x, e.clientY - lp.y) < 8) return; clearTimeout(lp.t); lp.tr.classList.remove('lpr'); lp = null; };
+  ['pointerup', 'pointercancel', 'pointermove'].forEach(t => document.addEventListener(t, end));
+  document.addEventListener('click', e => { if(swallow && e.target.closest && e.target.closest('#censusGrid')){ swallow = false; e.preventDefault(); e.stopPropagation(); } }, true);
+  document.addEventListener('contextmenu', e => { if(isTouch() && e.target.closest && e.target.closest('#censusGrid td.stk')) e.preventDefault(); });
+})();
+
+// ---- 4 · a keyboard on the iPad: show where you are ----
+document.addEventListener('keydown', e => { if(!isTouch() || e.isComposing || !/^(Arrow|Tab|Enter|Escape)/.test(e.key || '')) return; document.body.classList.add('kbd'); }, true);
+document.addEventListener('pointerdown', e => { if(e.pointerType !== 'mouse') document.body.classList.remove('kbd'); }, true);
+
+// ---- 5 · narrow screens (portrait / Split View next to Epic): slimmer frozen columns on the census ----
+let narrowWas = null;
+function narrowFit(){ const n = window.innerWidth < 900; STK[1].w = n ? 92 : 130; STK[2].w = n ? 76 : 96; STK[4].w = n ? 150 : 230; document.body.classList.toggle('narrow', window.innerWidth < 720); return n; }
+window.addEventListener('resize', () => { const n = narrowFit(); if(n !== narrowWas){ narrowWas = n; try{ if(state && ui.tab === 'census') renderCensus(); }catch(e){} } });
 // ---- command bar: tappable starters ----
 function cmdChips(){
   const box = document.querySelector('#cmdbar .cmdbox'); if(!box || box.querySelector('.cmdchips')) return;
@@ -8428,6 +8555,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:302, d:'2026-11-25', items:['<b>iPad pack.</b> <b>Data safety:</b> a “Shift’s almost over — back up?” prompt near the end of each shift (once per shift, only if you haven’t backed up); More shows whether iPadOS is protecting Plexus’s data; Plexus now opens and works with no network.', '<b>Less typing:</b> Lab Ord has one-tap time chips (04:00 · 05:00 · 11:00 · 17:00 · 21:00); task boxes suggest tasks you’ve used before; text cells suggest what you’ve typed before in that column.', '<b>Touch:</b> swipe left/right in Split Rounds for the next/previous patient; long-press a census row (#, HD or Problem) for its actions; bigger census cells to tap.', '<b>Keyboard on the iPad:</b> a focus ring shows where the arrow keys are; More → Keyboard shortcuts.', '<b>Narrow screens</b> (portrait, or Split View beside Epic): slimmer frozen census columns, and Split Rounds puts the patients in a strip across the top.']},
   {v:301, d:'2026-11-25', items:['Census: the <b>Avatar</b> column is narrower — lines wrap onto two lines instead of stretching the column. Hover (or open the cell / body map) for the full list.']},
   {v:300, d:'2026-11-25', items:['<b>Last BM</b> now turns light red (and gets the “No BM” flag) once the last BM was <b>2 or more days</b> ago — e.g. 11/23 on 11/25. Boards still on the old default of 3 days were moved to 2; change it in ⚙ Settings → Flag no BM after (days).']},
   {v:299, d:'2026-11-25', items:['The light-red <b>Last BM</b> / <b>T&amp;S</b> cells now also show in <b>Rounds</b> (Classic and Split) — before, the red only appeared on the Census grid.']},
