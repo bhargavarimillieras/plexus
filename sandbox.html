@@ -1973,7 +1973,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '323';
+const APP_VERSION = '324';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3051,6 +3051,7 @@ function flagsFor(p){
   if(isISO(c.edd.t)){ const n = daysBetween(c.edd.t, d); if(n > 0) f.push(['bad',`EDD passed ${fmtShort(c.edd.t)}`]); else if(n === 0) f.push(['info','EDD today']); else if(n === -1) f.push(['info','EDD tomorrow']); }
   if(isISO(c.ts.t) && daysBetween(c.ts.t, d)*24 >= s.tsHours) f.push(['warn','T&S expired']);
   if(!c.dvt.t) f.push(['warn','No DVT ppx']);
+  if(c.diet && COLMAP.diet && !colHidden('diet') && /^\s*npo\b/i.test(String(c.diet.t || ''))) f.push(['warn','NPO']);   // v324
   if(isISO(c.bm.t)){ const n = daysBetween(c.bm.t, d); if(n >= s.bmDays) f.push(['warn',`No BM ${n}d`]); }
   const dcDay = p.status === 'Discharge' || c.edd.t === d;
   if(dcSigned(p) === DC_KEYS.length) f.unshift(['ready','Ready for DC']);
@@ -9124,6 +9125,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:324, d:'2026-11-26', items:['Patients whose diet is <b>NPO</b> get an <b>NPO</b> flag beside the bed (like T&amp;S expired) — on the census, in Rounds, on the Overview’s Needs attention and in the Flagged filter.']},
   {v:323, d:'2026-11-26', items:['Rounds: the <b>🗣 Present</b> button is gone.', 'Rounds · Split: <b>At a glance</b> can be collapsed — tap its title (▾). It’s open by default and stays the way you left it on this device.']},
   {v:322, d:'2026-11-26', items:['<b>✓ Work done</b> — see at a glance when AM rounds, PM rounds and Dispo are all accounted for.', '<b>Rounds</b>: AM · PM · Dispo pills at the top (patients done / total — orange when 1–2 are left, green when done; tap one to focus on it) turn into a green <b>✓ All work done</b> when everything is accounted for. Each patient shows the same: what’s left in AM / PM / Dispo, or <b>✓ All done</b>.', '<b>Overview</b>: a <b>Work done today</b> panel with a progress bar for each, plus the beds still open (tap one to jump to it in Rounds).']},
   {v:321, d:'2026-11-26', items:['Colors: <b>Pending / in process</b> is light orange and <b>Revisit</b> is dark orange (Vitals, FSG, Lab Rev, Imaging).', '<b>Note</b> types are Progress, H&amp;P, Discharge, Transfer — Pending and ALOC are statuses now (a note typed “Pending” or “ALOC” was switched to that status).']},
