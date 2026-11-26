@@ -1907,7 +1907,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '310';
+const APP_VERSION = '311';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -8777,6 +8777,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:311, d:'2026-11-26', items:['The real Plexus now matches the Sandbox: the <b>Consults</b> column (search, last note date, Signed off) and the <b>Avatar</b> search box are live.']},
   {v:310, d:'2026-11-26', items:['<b>Consults</b> pop-up is more compact: the services following the patient sit on top (last note date + <b>Signed off</b>); every other service is a small tap-to-add chip underneath.', 'Fixed: ⚙ Settings → <b>Columns &amp; options</b> opened blank.']},
   {v:309, d:'2026-11-26', items:['<b>Consults</b> — a new column (after Proc): tick each consulting service following the patient (Anesthesia → Urology, A–Z, with search: “cards”, “ID”, “pall”…), add the <b>date of their last note</b>, and tap <b>Sign off</b> when they sign off (they stay listed, struck through). The census shows e.g. “Cards · ID · <s>Renal</s>”; Rounds shows them in At a glance. Doesn’t count toward boxes left.', '<b>Avatar</b>: a search box at the top of the pop-up (“picc”, “foley”, “art”…). Enter ticks the top match, or adds a new one if nothing matches.']},
   {v:308, d:'2026-11-26', items:['Overview: <b>Census</b> and <b>Census cap / Open spots</b> are now one card — the patient count with “/ cap” (or “/ no census cap”) beside it in smaller type; open spots and who’s next up are on the line underneath.', '<b>Settings, reorganised</b> into a side list of sections is now on the real Plexus too.']},
