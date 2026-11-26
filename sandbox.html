@@ -1953,7 +1953,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '319';
+const APP_VERSION = '320';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2149,14 +2149,14 @@ const ST_C = l => ST('C', l, '#34A853', '#fff', '✓'), ST_X = ST('X', 'Panic', 
 const ST_PEND = ST('P', 'Pending / in process', '#E8710A', '#fff', 'P');
 const STSETS = {
   vitals:[ST_C('Reviewed'), ST('R', 'Revisit', '#FBBC04', '#1a1a1a', 'R'), ST_X, ST_N],
-  labrev:[ST_C('Reviewed'), ST_PEND, ST('R', 'Revisit', '#FFB74D', '#1a1a1a', 'R'), ST_X, ST_N],
+  labrev:[ST_C('Reviewed'), ST('O', 'Ordered', '#FBBC04', '#1a1a1a', 'O'), ST_PEND, ST('R', 'Revisit', '#FFB74D', '#1a1a1a', 'R'), ST_X, ST_N],
   note:[ST_C('Complete'), ST_PEND, ST('A', 'ALOC', '#9900FF', '#fff', 'A'), ST_N],
   _:[ST_C('Complete'), ST_PEND, ST('R', 'Revisit', '#FBBC04', '#1a1a1a', 'R'), ST_X, ST_N]};
 STSETS.fsg = STSETS.vitals; STSETS.img = STSETS.labrev;
 const stSet = col => STSETS[col] || STSETS._;
 const stOf = (col, k) => !k ? null : (stSet(col).find(x => x.k === k) || SMAP[k] || null);
 // old codes that a column no longer offers → the nearest one it does
-const ST_MAP = {vitals:{P:'R', O:'R', S:'R', A:'R'}, labrev:{O:'P', S:'R', A:'R'}, note:{R:'P', O:'P', X:'P', S:'P'}, _:{O:'P', S:'R', A:'R'}};
+const ST_MAP = {vitals:{P:'R', O:'R', S:'R', A:'R'}, labrev:{S:'R', A:'R'}, note:{R:'P', O:'P', X:'P', S:'P'}, _:{O:'P', S:'R', A:'R'}};
 ST_MAP.fsg = ST_MAP.vitals; ST_MAP.img = ST_MAP.labrev;
 function stMigrate(){ const fix = (k, c) => { if(!c || !c.s || stSet(k).some(x => x.k === c.s)) return; const to = (ST_MAP[k] || ST_MAP._)[c.s]; c.s = to || ''; };
   try{ ALL_COLS.forEach(col => { if(!isStatusType(colCfg(col.k).type)) return; (state.patients || []).forEach(p => p.cells && fix(col.k, p.cells[col.k])); }); }catch(e){} }
@@ -4438,7 +4438,7 @@ function renderChromeInner(){
   { const allSc = `<a href="#" class="sclink" data-sc-open>⌨ All shortcuts ${scLabel('help') || ''}</a>`, tab = ui.tab;
     const chk = [['Signed','green','S'],['Pended','orange','P'],['Incomplete','red','I'],['N/A','grey','N']];
     $('#legend').innerHTML = tab === 'census'
-      ? `<b style="color:var(--ink)">Status:</b>` + [['#34A853','Reviewed / complete'],['#E8710A','Pending'],['#FBBC04','Revisit'],['#EA4335','Panic'],['#9900FF','ALOC'],['#999999','N/A']].map(([c, l]) => `<span class="lg"><i style="background:${c}"></i>${l}</span>`).join('') + `<span class="lg muted">each column’s choices are numbered in its pop-up</span>`
+      ? `<b style="color:var(--ink)">Status:</b>` + [['#34A853','Reviewed / complete'],['#FBBC04','Ordered'],['#E8710A','Pending'],['#FBBC04','Revisit'],['#EA4335','Panic'],['#9900FF','ALOC'],['#999999','N/A']].map(([c, l]) => `<span class="lg"><i style="background:${c}"></i>${l}</span>`).join('') + `<span class="lg muted">each column’s choices are numbered in its pop-up</span>`
         + `<span class="keys">Click a cell to edit · <kbd>Shift</kbd>+click task = Complete · arrows move · <kbd>1</kbd>–<kbd>9</kbd> pick status/option · <kbd>Del</kbd> clear · <kbd>Enter</kbd> edit · <kbd>Ctrl/⌘ Z</kbd> undo · <kbd>Ctrl K</kbd> command bar · ${allSc}</span>`
       : tab === 'admits' || tab === 'discharges'
       ? `<b style="color:var(--ink)">Checklist:</b>` + chk.map(([l, c, k]) => `<span class="lg" title="In a box, type ${k} to pick ${l}"><span class="lgchip oc-${c}">${esc(l)}</span><kbd class="lgk">${k}</kbd></span>`).join('')
@@ -9078,6 +9078,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:320, d:'2026-11-26', items:['<b>Lab Rev / Imaging</b> choices are now 1 Reviewed · 2 Ordered · 3 Pending / in process · 4 Revisit · 5 Panic · 6 N/A.']},
   {v:319, d:'2026-11-26', items:['<b>Simpler status choices</b> — the shared 1–8 legend is gone; each column has its own short list (comments still work): <b>Vitals / FSG</b> 1 Reviewed · 2 Revisit · 3 Panic · 4 N/A. <b>Lab Rev / Imaging</b> 1 Reviewed · 2 Pending / in process · 3 Revisit · 4 Panic · 5 N/A. <b>Note</b> 1 Complete · 2 Pending / in process · 3 ALOC · 4 N/A.', '<b>I/O</b> has an <b>N/A</b> button next to Clear.', 'Old statuses a column no longer has were moved to the nearest one (e.g. Ordered → Pending, See comments → Revisit; the comment is kept).']},
   {v:318, d:'2026-11-26', items:['<b>🏷 Problem chips</b>: the Problem column is now a list of short problems instead of a free-text one-liner — tap it, type an abbreviation (adhf, aki, hypo k, af, dka, J44.1…) and tap to add. ~320 curated problems, each with its ICD-10 code checked against the CMS FY2027 list; browse by system too. First chip is the principal problem ★. Anything not on the list can be added as your own short chip (no identifiers). Same on the census, Admissions and both Rounds views. Older one-liners show as chips split at commas.']},
   {v:317, d:'2026-11-26', items:['<b>🌙 Overnight events</b> (night boards): a log on each patient in Rounds — type what happened and press Enter; it’s stamped with the time (start with 02:10 to backdate). 🌙 count beside the bed on the census; also in 🗣 Present.', 'Command bar: <b>10N62 event hypotensive → 500 LR</b>; <b>events</b> shows every patient’s overnight events with <b>📋 Copy for handoff</b> (also in ✓ Wrap up).']},
