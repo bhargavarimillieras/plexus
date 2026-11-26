@@ -626,6 +626,14 @@ body.tkfull #hclocks{margin-right:4px}
 .setmodal .actions{margin:0;padding:12px 20px;border-top:1px solid var(--line)}
 body.touch .setnavb{padding:11px 10px}
 @media (max-width:719px){.setwrap{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}.setnav{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.setnavb{width:auto;flex:none;margin:0 4px 0 0}.setnavb .snt span{display:none}.modal.setmodal{height:92vh}}
+/* v317 overnight events */
+.rs-evcard{border-left:4px solid #5C6BC0}.evlist{display:flex;flex-direction:column;gap:4px;margin:4px 0 8px}
+.evrow{display:grid;grid-template-columns:46px 1fr auto;gap:8px;align-items:baseline;font-size:14px}.evrow b{font:700 13px ui-monospace,Menlo,monospace;color:#3949AB}
+.evrow .ib{opacity:.5}.evrow:hover .ib{opacity:1}
+.evin{width:100%;box-sizing:border-box;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;font:14px inherit;font-family:inherit;background:var(--panel);color:var(--ink)}
+.stev{font-style:normal;font-size:10px;margin-left:3px}
+.evall{border-top:1px solid var(--line);padding:8px 0}.evall:first-of-type{border-top:0}.evbed{margin-bottom:4px}
+@media (prefers-color-scheme: dark){.evrow b{color:#9fa8da}}
 /* v316 */
 .conschipw{display:inline-flex;position:relative}.conschipw[hidden]{display:none}.conschip.mine{border-style:dashed}
 .conschipx{position:absolute;top:-6px;right:-6px;width:17px;height:17px;border-radius:50%;border:0;background:#d93025;color:#fff;font-size:9px;line-height:17px;padding:0;cursor:pointer;display:none}
@@ -1926,7 +1934,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '316';
+const APP_VERSION = '317';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3668,7 +3676,7 @@ const pcCount = () => { const L = pcPool(); return {n:L.filter(isPc).length, of:
 const NA_NEW = 'New admit — not needed on the day they come in';
 const pcBtn = (p, ro) => ro ? '' : p.status === 'New' ? `<button type="button" class="pcchk off" disabled title="${NA_NEW}" aria-label="Pre-charted: not needed for a new admit">✓</button>` : `<button type="button" class="pcchk ${isPc(p) ? 'on' : ''}" data-pc="${p.id}" title="${isPc(p) ? 'Pre-charted' : 'Mark pre-charted'} for ${esc(fmtNoYear(state.boardDate))} — clears when the next day starts" aria-label="${isPc(p) ? 'Pre-charted' : 'Not pre-charted'}: ${esc(p.bed || 'patient')}" aria-pressed="${isPc(p)}">✓</button>`;
 // census bed cell: quiet marks only (change them from the selection menu, or in Rounds)
-const stMarks = p => `<span class="stmarks">${isPc(p) ? '<i class="stpc" title="Pre-charted today"></i>' : ''}${rdSeen(p) ? '<i class="strd" title="Discussed on rounds today">💬</i>' : ''}</span>`;
+const stMarks = p => `<span class="stmarks">${isPc(p) ? '<i class="stpc" title="Pre-charted today"></i>' : ''}${rdSeen(p) ? '<i class="strd" title="Discussed on rounds today">💬</i>' : ''}${evOn() && evList(p).length ? `<i class="stev" title="${evList(p).length} overnight event${evList(p).length === 1 ? '' : 's'}">🌙${evList(p).length}</i>` : ''}</span>`;
 function togglePc(id){ const p = rowOf('p', id); if(!p) return; const on = !isPc(p);
   mutate(() => { const q = rowOf('p', id); delete q.pcAuto; if(on){ q.pc = state.boardDate; delete q.pcOff; } else { delete q.pc; q.pcOff = state.boardDate; } }, {label:`${p.bed || 'Patient'}: ${on ? 'pre-charted ✓' : 'pre-charted tick removed'} (${fmtNoYear(state.boardDate)})`, cat:'census'}); }
 // 💬 discussed on rounds — the same mark as Rounds mode's “Mark discussed”, resets each day
@@ -4754,6 +4762,24 @@ const rLeft = p => { const f = rFocus(); return f === 'all' ? openCount(p) : chu
 const rLeftBadge = p => { if(p.status === 'New') return '<span class="rs-left new" title="New admit">new</span>'; const n = rLeft(p), f = rFocus();
   return `<span class="rs-left ${!n ? 'ok' : n <= 2 ? 'near' : ''}" title="${n ? n + ' box' + (n === 1 ? '' : 'es') + ' left' : 'All done'}${f === 'all' ? '' : ' in ' + (CHUNK[f] ? CHUNK[f].name : f)}">${n ? n : '✓'}</span>`; };
 let talkT = null;
+/* v317: 🌙 Overnight events — a timestamped log per patient on night boards, collected into one list for the morning handoff */
+const evOn = () => !!typeOf(activeType).night;
+function evWindow(){ let a, b; try{ a = shiftStartDate(); b = shiftEndDate(); }catch(e){ return null; } return [new Date(a.getTime() - 3 * 3600e3), new Date(b.getTime() + 4 * 3600e3)]; }
+const evList = p => { const w = evWindow(); return (p.events || []).filter(e => !w || (new Date(e.t) >= w[0] && new Date(e.t) <= w[1])).sort((x, y) => String(x.t).localeCompare(String(y.t))); };
+function evParse(txt){ let t = new Date(), m = String(txt).match(/^(\d{1,2}:\d{2}|\d{4}|\d{1,2}(?::\d{2})?\s?(?:am|pm|a|p))\s+/i);
+  if(m){ const d = parseTimeInput(m[1].replace(/^(\d{2})(\d{2})$/, '$1:$2')); if(d){ t = d; txt = txt.slice(m[0].length); } } return {t:localISO(t), txt:String(txt).trim()}; }
+function evAdd(pid, raw){ const {t, txt} = evParse(raw); if(!txt) return false; const p = rowOf('p', pid); if(!p) return false;
+  mutate(() => { const q = rowOf('p', pid); const cut = addDays(state.boardDate, -7); q.events = [...(q.events || []).filter(e => String(e.t).slice(0, 10) >= cut), {id:uid(), t, txt}]; }, {label:`${p.bed || 'Patient'}: overnight event — ${txt}`, cat:'rounds'}); return true; }
+function evDel(pid, eid){ const p = rowOf('p', pid); if(!p) return; mutate(() => { const q = rowOf('p', pid); q.events = (q.events || []).filter(e => e.id !== eid); }, {label:`${p.bed || 'Patient'}: overnight event removed`, cat:'rounds'}); }
+const evCardHTML = p => !evOn() ? '' : `<div class="rs-card rs-evcard"><div class="rs-cardh"><span>🌙 Overnight events</span><span class="rs-cnt">${evList(p).length || ''}</span></div>
+  <div class="evlist">${evList(p).map(e => `<div class="evrow"><b>${esc(hhmmOf(e.t))}</b><span>${esc(e.txt)}</span><button type="button" class="ib" data-evdel="${p.id}|${e.id}" title="Remove">✕</button></div>`).join('') || '<div class="muted small">Nothing yet tonight.</div>'}</div>
+  <input type="text" class="evin" data-evadd="${p.id}" placeholder="What happened? Enter logs it now (start with 02:10 to backdate)" enterkeyhint="done" autocomplete="off"></div>`;
+function evAllText(){ const ps = state.patients.filter(p => evList(p).length);
+  if(!ps.length) return '';
+  return `Overnight events — ${typeOf(activeType).label} · ${fmtNoYear(state.boardDate)}\n` + ps.map(p => `${p.bed || '—'}${p.problem ? ' — ' + p.problem : ''}\n` + evList(p).map(e => `  ${hhmmOf(e.t)}  ${e.txt}`).join('\n')).join('\n'); }
+function evShowAll(){ const ps = state.patients.filter(p => evList(p).length);
+  modal(`<h3>🌙 Overnight events</h3>${ps.length ? ps.map(p => `<div class="evall"><div class="evbed"><b>${esc(p.bed || '—')}</b> <span class="muted">${esc(p.problem || '')}</span></div>${evList(p).map(e => `<div class="evrow"><b>${esc(hhmmOf(e.t))}</b><span>${esc(e.txt)}</span></div>`).join('')}</div>`).join('') : '<p class="muted">No overnight events logged on this board yet.</p>'}`,
+    [['Close'], ...(ps.length ? [['📋 Copy for handoff', 'primary', () => { copyText(evAllText()); toast('Overnight events copied'); return false; }]] : [])]); }
 /* v316: Present — the patient laid out the way you'd present them, read-only, big type */
 function presentHTML(p){
   const hd = hospDay(p), sec = (t, b) => b ? `<section class="pz-sec"><h4>${t}</h4>${b}</section>` : '';
@@ -4771,6 +4797,7 @@ function presentHTML(p){
       ${sec('🩺 Lines, drains &amp; tubes', lines.length ? `<ul>${lines.join('')}</ul>` : '')}
       ${sec('👥 Consults', cons.length ? `<ul>${cons.join('')}</ul>` : '')}
       ${sec('📋 Basics', basics.length ? `<dl>${basics.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : '')}
+      ${evOn() ? sec('🌙 Overnight', evList(p).length ? `<ul>${evList(p).map(e => `<li><b>${esc(hhmmOf(e.t))}</b> ${esc(e.txt)}</li>`).join('')}</ul>` : '') : ''}
       ${sec('📝 Talking points', p.talk ? `<div class="pz-talk">${esc(p.talk).replace(/\n/g, '<br>')}</div>` : '')}
       ${sec('☐ Still open', open.length ? `<ul>${open.join('')}</ul>` : '')}
       ${sec('⏰ Tasks', tasks.length ? `<ul>${tasks.join('')}</ul>` : '')}
@@ -4858,7 +4885,7 @@ function renderRounds(){
     ${fl.length || n !== null ? `<div class="rflags">${hdPill(p, true)}${fl.map(([l,t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="rtodos ${patientTodos(p.id).length ? '' : 'empty'}" id="rTodos"><h4><span>⏰ To-dos${patientTodos(p.id).length ? '' : ' <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">— none for this patient</span>'}</span><button class="btn sm" data-tdedit="${p.id}">+ Add / edit ${scLabel('todo')}</button></h4>
       ${patientTodos(p.id).map(t => todoRowHTML(t, false)).join('')}</div>
-    <div class="rtalk"><button type="button" class="btn sm" data-present="${p.id}" style="margin-bottom:8px">🗣 Present this patient</button>${talkHTML(p)}</div>
+    <div class="rtalk"><button type="button" class="btn sm" data-present="${p.id}" style="margin-bottom:8px">🗣 Present this patient</button>${evCardHTML(p)}${talkHTML(p)}</div>
     ${rdLeaveCard(p) ? `<div class="rleave">${rdLeaveCard(p)}</div>` : ''}
     ${sections}
     <div class="rnav"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
@@ -4927,7 +4954,7 @@ function renderRoundsSplit(){
       ${rdLeaveCard(p)}
       ${(() => { const f = rFocus(), fc = CHUNKS.find(c => c.k === f); return (fc ? ckCard(fc) : '') + `<div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>` + CHUNKS.filter(c => c !== fc).map(ckCard).join(''); })()}
     </div>
-    <div class="rs-plancol">${talkHTML(p)}<div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
+    <div class="rs-plancol">${evCardHTML(p)}${talkHTML(p)}<div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
       <div class="rs-todos" id="rTodos">${todos.map(t => todoRowHTML(t, false)).join('') || '<div class="muted small" style="padding:6px 2px">Nothing yet.</div>'}</div>
       <div class="rs-quick">${RS_QUICK.map(q => `<button type="button" data-rsq="${esc(q)}">+ ${esc(q.replace(': ', ''))}</button>`).join('')}</div>
       <textarea id="rsAdd" data-pid="${p.id}" rows="2" placeholder="Type a to-do (e.g. “echo today”, “cards recs 2pm”) — Enter adds it"></textarea>
@@ -4944,11 +4971,14 @@ function rsAddTodo(pid, text){ text = (text || '').trim(); const p = rowOf('p', 
   renderRounds(); const t = $('#rsAdd'); if(t) t.focus(); }
 $('#roundsBody').addEventListener('input', e => { const t = e.target.closest && e.target.closest('[data-talk]'); if(t){ t.style.height = 'auto'; t.style.height = Math.min(320, t.scrollHeight + 2) + 'px'; talkSave(t.dataset.talk, t.value); } });
 $('#roundsBody').addEventListener('focusout', e => { const t = e.target.closest && e.target.closest('[data-talk]'); if(t){ clearTimeout(talkT); talkT = null; const p = rowOf('p', t.dataset.talk); if(p && (p.talk || '') !== t.value) { mutate(() => { p.talk = t.value; p.talkAt = t.value ? localISO() : ''; }, {render:false, label:`Talking points — ${p.bed || 'patient'}`, cat:'rounds'}); } } });
+$('#roundsBody').addEventListener('keydown', e => { const ei = e.target.closest && e.target.closest('[data-evadd]');
+  if(ei && e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); const pid = ei.dataset.evadd; if(evAdd(pid, ei.value)){ renderRounds(); const n = document.querySelector(`#roundsBody [data-evadd="${pid}"]`); if(n) n.focus(); toast('Event logged'); } return; } }, true);
 $('#roundsBody').addEventListener('keydown', e => { if(e.target.id === 'rsAdd' && e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); rsAddTodo(e.target.dataset.pid, e.target.value); } });
 $('#roundsBtn').addEventListener('click', () => openRounds());
 $('#roundsBody').addEventListener('click', e => {
   const g = e.target.closest('[data-rgo]'); if(g){ roundsTo(g.dataset.rgo); return; }
   const pz = e.target.closest('[data-present]'); if(pz){ openPresent(pz.dataset.present); return; }
+  const ed = e.target.closest('[data-evdel]'); if(ed){ const [pid, eid] = ed.dataset.evdel.split('|'); evDel(pid, eid); renderRounds(); return; }
   const fo = e.target.closest('[data-rfocus]'); if(fo){ try{ localStorage.setItem(RFOCUS_KEY, fo.dataset.rfocus); }catch(err){} rounds.cx = {}; renderRounds(); return; }
   const rf = e.target.closest('[data-rfilt]'); if(rf){ try{ localStorage.setItem(RFILT_KEY, rf.dataset.rfilt); }catch(err){} renderRounds(); return; }
   const cx = !e.target.closest('.tc,button:not([data-rcx]),select,input,textarea') && e.target.closest('[data-rcx]'); if(cx){ const k = cx.dataset.rcx; rounds.cx[k] = !cx.classList.contains('rs-col'); renderRounds(); return; }
@@ -7582,11 +7612,11 @@ function cmdParse(input){
     full:['Tasks full screen on / off', () => { if(ui.tab !== 'tasks' && !scGoTab('tasks')) return ''; tkFullOn() ? exitTkFull() : enterTkFull(); return ''; }],
     rounds:['Start Rounds', () => { if(!state.patients.length) return 'No patients on the census'; openRounds(); return ''; }],
     backup:['Save a full backup (everything) + automatic copy', () => { backupNow(); autoBackup('manual', true); return ''; }],
-    print:['Print the sign-out sheet', () => { printSheet(); return ''; }], take:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], leaving:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], hide:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }], lock:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }],
+    print:['Print the sign-out sheet', () => { printSheet(); return ''; }], events:['🌙 Overnight events — all patients, ready to copy', () => { if(!evOn()) return 'Overnight events are for night boards'; evShowAll(); return ''; }], take:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], leaving:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], hide:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }], lock:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }],
     whatsnew:['What’s new in this version', () => { whatsNew(null); return ''; }], changes:['What’s new in this version', () => { whatsNew(null); return ''; }],
     newshift:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], start:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], precharting:['Start pre-charting for the next day…', () => { newDay(); return ''; }],
     endshift:['Wrap up — sign-out, print, backup', () => { wrapUp(); return ''; }], wrapup:['Wrap up — sign-out, print, backup', () => { wrapUp(); return ''; }], schedule:['Edit this rotation’s schedule', () => { if(!isRot(activeType)) return 'This board has no schedule'; showRotSetup({edit:activeType}); return ''; }]};
-  if(simple[v] && !rest.length) return {html:simple[v][0], run:simple[v][1], nav:['validate','full','rounds','newshift','endshift','start','precharting','wrapup','schedule','print','hide','lock','whatsnew','changes','take','leaving','tidy'].includes(v)};
+  if(simple[v] && !rest.length) return {html:simple[v][0], run:simple[v][1], nav:['events','validate','full','rounds','newshift','endshift','start','precharting','wrapup','schedule','print','hide','lock','whatsnew','changes','take','leaving','tidy'].includes(v)};
   if(v === 'admit' || v === 'hold'){
     const hold = v === 'hold';
     if(hold && !typeOf(activeType).holds) return {err:'Moonlighter holds are for Bellevue Night Admitting'};
@@ -7671,6 +7701,9 @@ function cmdParse(input){
   const ent = b.ent, fw = words.slice(b.used);
   if(!fw.length) return {nav:true, html:`Go to <b>${esc(ent.bed)}</b> <span class="muted">${esc(entSub(ent))}</span> — or add a column: visit, medrec, vitals…`, run:() => { cmdJump(ent); return ''; },
     sugg:cmdFieldList(ent).slice(0, 40).map(x => ({label:`${esc(x.label)} <span class="muted">${esc(x.cur)}</span>`, fill:`${ent.bed} ${x.name} `}))};
+  if(ent.p && /^(event|ev|evt|overnight)$/i.test(fw[0])){ if(!evOn()) return {err:'Overnight events are for night boards'};
+    const raw = fw.slice(1).join(' '), pe = evParse(raw); if(!pe.txt) return {err:`What happened? e.g. <b>${esc(ent.p.bed)} event hypotensive → 500 LR</b> (or start with a time: 02:10 …)`};
+    return {html:`🌙 <b>${esc(ent.p.bed)}</b> · <b>${esc(hhmmOf(pe.t))}</b> ${esc(pe.txt)}`, run:() => { evAdd(ent.p.id, raw); cmdPulse('p', ent.p.id); return `${ent.p.bed}: event logged`; }}; }
   { const ln = ent.p ? (cmdGtt(ent, fw) || cmdLine(ent, fw) || cmdCons(ent, fw)) : null; if(ln) return ln; }
   const f = cmdField(ent, fw);
   if(!f){ const q = nw(fw[0]); const L = cmdFieldList(ent).filter(x => x.name.startsWith(q) || x.name.includes(q));
@@ -7896,7 +7929,7 @@ function cmdHelp(){
   const ex = [['ED15L visit complete', 'Tick Visit (also: ED15L visit — no word needed)'], ['ED15L visit undo', 'Untick it'], ['ED-21 medrec pended', 'Set an Admissions dropdown — signed, pended, incomplete, N/A, clear'],
     ['ED-21 dvt heparin', 'Diet / DVT PPx — any option, first letters are enough'], ['ED-21 team GM2', 'Admission fields: team, timein, arrived, problem, from'], ['ED-21 bed 14E05/01', 'New bed (ED → floor) — the tasks move with the patient'], ['14E12/02 arrived now', 'Tisch: patient is on the floor (or arrived 21:40)'],
     ['7W05 vitals done', 'Census status — complete, revisit, pending, ordered, panic, N/A, comments, ALOC, or 1–8'], ['7W05 io revisit low UOP', 'Status with a note'], ['7W05 edd tomorrow', 'Dates — today, tomorrow, +2, 10/30'],
-    ['7W05 dest home', 'Census dropdowns'], ['10N62 PIV L forearm 11/23/26', 'Add a line / drain / tube to the Avatar (picc, foley, art, cvc R IJ…; no date = today)'], ['10N62 foley out', 'Mark it removed (add a date if it wasn’t today)'], ['10N62 cards 11/25', 'Consults: add or update the last note date (no date = today)'], ['10N62 renal off', 'Consult signed off (… on to undo, … remove to delete)'], ['10N62 gtt levo', 'Start a drip (… off to stop it)'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['pc 7W05', 'Pre-charted ✓ (just “pc” shows who’s left)'], ['outstanding', 'What’s left to check off, patient by patient — or “outstanding am”, “outstanding 7W05”'], ['snooze ED-21 lactate 30', 'Push a task back'],
+    ['7W05 dest home', 'Census dropdowns'], ['10N62 PIV L forearm 11/23/26', 'Add a line / drain / tube to the Avatar (picc, foley, art, cvc R IJ…; no date = today)'], ['10N62 foley out', 'Mark it removed (add a date if it wasn’t today)'], ['10N62 cards 11/25', 'Consults: add or update the last note date (no date = today)'], ['10N62 renal off', 'Consult signed off (… on to undo, … remove to delete)'], ['10N62 gtt levo', 'Start a drip (… off to stop it)'], ['10N62 event hypotensive → 500 LR', 'Night boards: log an overnight event (stamped now; start with 02:10 for another time)'], ['events', 'All overnight events, ready to copy for handoff'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['pc 7W05', 'Pre-charted ✓ (just “pc” shows who’s left)'], ['outstanding', 'What’s left to check off, patient by patient — or “outstanding am”, “outstanding 7W05”'], ['snooze ED-21 lactate 30', 'Push a task back'],
     ['admit ED-14 sepsis', 'New admission'], ['hold ED-30 CAP from Dr K', 'New moonlighter hold'], ['go census', 'Change tab — overview, census, admits, discharges, transfers, tasks, history, analytics, log (just “tasks” or “go adm” works too)']];
   modal(`<h3>Command bar</h3><p class="muted" style="margin-top:-4px">Open with <kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>:</kbd>. Beds can be typed without dashes or slashes (<b>ed15l</b>, <b>14e1202</b>); column names can be shortened (<b>ed</b>, <b>pl</b>, <b>mr</b>, <b>so</b>). You see what will happen before Enter, and <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes it.</p>
     <table class="sctab">${ex.map(([c, d]) => `<tr><td><code class="cmdcode">${esc(c)}</code></td><td>${esc(d)}</td></tr>`).join('')}</table>
@@ -8756,6 +8789,7 @@ function wrapUp(){
     <p class="muted">Nothing is ended or locked — you can keep charting here, at home, or tomorrow morning. The board moves on when you start the next day.</p>
     <div class="wubtns">
       ${T.tasks ? '<button class="btn" data-wu="sb">📋 Copy the night-task sign-back</button>' : ''}
+      ${evOn() ? `<button class="btn" data-wu="ev">🌙 Overnight events${state.patients.some(p => evList(p).length) ? ` <span class="muted small">· ${state.patients.reduce((n, p) => n + evList(p).length, 0)} logged</span>` : ''}</button>` : ''}
       ${state.admits.some(a => a.date === state.boardDate) ? '<button class="btn" data-wu="so">📋 Copy the admissions sign-out</button>' : ''}
       <button class="btn" data-wu="pr">🖨 Print the board</button>
       ${isTouch() ? `<button class="btn ${filesBackupDue() ? 'primary' : ''}" data-wu="fb">⬆ Back up to Files${filesBackupAt() ? ` <span class="muted small">· last ${esc(agoText(filesBackupAt()))}</span>` : ''}</button>` : `<button class="btn" data-wu="bk">⬇ Download a backup</button>
@@ -8763,6 +8797,7 @@ function wrapUp(){
     </div>`, [['Done', 'primary', () => logAdd([{cat:'shift', msg:`Wrapped up ${fmtNoYear(state.boardDate)}`}])]], m => {
     m.addEventListener('click', e => { const b = e.target.closest('[data-wu]'); if(!b) return; const w = b.dataset.wu;
       if(w === 'sb'){ copyText(signBackText()); toast('Sign-back copied'); }
+      else if(w === 'ev'){ closeModal(); setTimeout(evShowAll, 0); }
       else if(w === 'so'){ copyText(soText(state.boardDate)); toast('Sign-out copied'); }
       else if(w === 'pr'){ closeModal(); setTimeout(() => window.print(), 50); }
       else if(w === 'bk'){ backupNow(); }
@@ -8948,6 +8983,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:317, d:'2026-11-26', items:['<b>🌙 Overnight events</b> (night boards): a log on each patient in Rounds — type what happened and press Enter; it’s stamped with the time (start with 02:10 to backdate). 🌙 count beside the bed on the census; also in 🗣 Present.', 'Command bar: <b>10N62 event hypotensive → 500 LR</b>; <b>events</b> shows every patient’s overnight events with <b>📋 Copy for handoff</b> (also in ✓ Wrap up).']},
   {v:316, d:'2026-11-26', items:['<b>Add to the lists yourself</b>: a new consult service or drip you type in now stays in the list for every patient (✕ on a dashed chip removes your own); dropdown columns like Disposition have <b>＋ Add a choice to this list</b>.', '<b>Stale consult notes</b>: an active consult with no note for 2+ days shows orange on the census and in Rounds.', '<b>Command bar</b>: consults — <b>10N62 cards 11/25</b>, <b>10N62 renal off</b> (… on / … remove); drips — <b>10N62 gtt levo</b>, <b>10N62 gtt levo off</b>.', '<b>🗣 Present</b> (Rounds): the patient laid out to present — one-liner, drips, lines with day counts, consults, basics, talking points, what’s still open and tasks — with ← → through the list.', '<b>Safer restores</b>: if a backup is older than the data already on this device, Plexus says so (with both times) before replacing anything.']},
   {v:315, d:'2026-11-26', items:['Consults: <b>IR</b> (interventional radiology) added. On the census and in Rounds, consults are now listed <b>most recent note first</b> (no date yet → after those; signed off → last).']},
   {v:314, d:'2026-11-26', items:['Consults: <b>CT Surg</b> (cardiothoracic surgery) added to the list.']},
