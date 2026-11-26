@@ -1907,7 +1907,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '311';
+const APP_VERSION = '312';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3337,7 +3337,7 @@ function commitGtt(p, r, el){
   if(JSON.stringify(items) !== JSON.stringify(gttItems(r.cells[p.k])) || (items.length && r.cells[p.k].t === 'N/A')) setCell(p.kind, p.id, p.k, {items, s:'', t:''});
 }
 /* v309: Consults — services following the patient, each with the date of their last note and a signed-off date */
-const CONS_LIST = [['Anesthesia', 'Anesthesia', 'anes'], ['Cardiology', 'Cards', 'cards'], ['Critical Care', 'Critical Care', 'icu micu'], ['Endocrinology', 'Endocrine', 'endo'], ['ENT', 'ENT', 'otolaryngology ear nose throat'],
+const CONS_LIST = [['Anesthesia', 'Anesthesia', 'anes'], ['Cardiology', 'Cards', 'cards'], ['Critical Care', 'Critical Care', 'icu micu'], ['Endocrinology', 'Endocrine', 'endo'], ['ENT', 'ENT', 'otolaryngology ear nose throat'], ['EP', 'EP', 'electrophysiology cardiology arrhythmia'], ['Heart Failure', 'HF', 'chf advanced heart failure cardiology'],
   ['Gastroenterology', 'GI', 'gi hepatology liver'], ['Geriatrics', 'Geri', 'geri'], ['Hematology', 'Heme', 'heme'], ['Infectious Disease', 'ID', 'id'], ['Nephrology', 'Renal', 'renal'], ['Neurology', 'Neuro', 'neuro stroke'],
   ['Neurosurgery', 'NSGY', 'nsgy nsx neurosurg'], ['Obstetrics/Gynecology', 'OB/GYN', 'ob gyn obgyn obstetrics gynecology'], ['Oncology', 'Onc', 'onc'], ['Ophthalmology', 'Ophtho', 'ophtho eye'], ['Orthopedics', 'Ortho', 'ortho'],
   ['Pain Management', 'Pain', 'pain'], ['Palliative Care', 'Pall Care', 'pall palliative pc'], ['Plastic Surgery', 'Plastics', 'plastics'], ['PM&R', 'PM&R', 'pmr physiatry rehab'], ['Podiatry', 'Podiatry', 'pod'],
@@ -8777,6 +8777,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:312, d:'2026-11-26', items:['Consults: <b>EP</b> (electrophysiology) and <b>Heart Failure (HF)</b> added to the list.']},
   {v:311, d:'2026-11-26', items:['The real Plexus now matches the Sandbox: the <b>Consults</b> column (search, last note date, Signed off) and the <b>Avatar</b> search box are live.']},
   {v:310, d:'2026-11-26', items:['<b>Consults</b> pop-up is more compact: the services following the patient sit on top (last note date + <b>Signed off</b>); every other service is a small tap-to-add chip underneath.', 'Fixed: ⚙ Settings → <b>Columns &amp; options</b> opened blank.']},
   {v:309, d:'2026-11-26', items:['<b>Consults</b> — a new column (after Proc): tick each consulting service following the patient (Anesthesia → Urology, A–Z, with search: “cards”, “ID”, “pall”…), add the <b>date of their last note</b>, and tap <b>Sign off</b> when they sign off (they stay listed, struck through). The census shows e.g. “Cards · ID · <s>Renal</s>”; Rounds shows them in At a glance. Doesn’t count toward boxes left.', '<b>Avatar</b>: a search box at the top of the pop-up (“picc”, “foley”, “art”…). Enter ticks the top match, or adds a new one if nothing matches.']},
