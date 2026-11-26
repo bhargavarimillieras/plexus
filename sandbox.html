@@ -609,6 +609,29 @@ body.tkfull #hclocks{margin-right:4px}
 .tlline{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
 .tlline.mid{background:var(--line2);width:2px}
 .tllab{box-shadow:-14px 0 0 var(--panel)}.tlline.sub{opacity:.45}
+/* v304 Rounds */
+.rs-left{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:#eef0f4;color:#3c4452;font:800 11.5px/1 -apple-system,BlinkMacSystemFont,sans-serif;box-sizing:border-box}
+.rs-left.near{background:#FFE8C7;color:#8a4b00}.rs-left.ok{background:#DDF3E3;color:#137333}.rs-left.new{background:#E8F0FE;color:#174ea6;font-size:10px}
+@media (prefers-color-scheme: dark){.rs-left{background:rgba(255,255,255,.1);color:#c3cad6}.rs-left.near{background:#4a3313;color:#ffcf8a}.rs-left.ok{background:#173a22;color:#8fd6a4}.rs-left.new{background:#1d3357;color:#a8c7fa}}
+.rs-talk{font-style:normal;font-size:12px;margin-left:4px}.rs-talk[hidden]{display:none}
+.rs-filtrow{padding:8px 12px 4px;flex:none}.rs-filtrow .seg{display:flex}.rs-filtrow .seg button{flex:1;font-size:12px;padding:5px 4px}
+body.touch .rs-filtrow .seg button{padding:8px 4px;font-size:13px}
+@media (max-width:719px){#rounds .rs-filtrow{padding:6px 10px 0}}
+.rs-focus{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.rs-focus .seg button{padding:5px 11px}
+body.touch .rs-focus .seg button{padding:8px 13px}
+.rs-cardh .rs-cxh,.rs-col .rs-cardh > span:first-child{cursor:pointer}
+.rs-col{cursor:pointer;padding-top:10px;padding-bottom:10px}.rs-col .rs-cardh{margin-bottom:4px}
+.rs-colsum{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs-plancol{display:flex;flex-direction:column;gap:14px;position:sticky;top:0;min-width:0}
+.rs-plancol .rs-plan{position:static;min-height:300px}
+.rs-talkta{width:100%;box-sizing:border-box;border:1px solid var(--line2);border-radius:10px;padding:9px 10px;font:14px/1.4 inherit;font-family:inherit;resize:vertical;background:#FFFBEA;color:var(--ink);min-height:64px}
+@media (prefers-color-scheme: dark){.rs-talkta{background:#2b2717}}
+.rtalk{margin:10px 0}.rtalk .rs-card{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.rmini{position:sticky;top:0;z-index:6;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 12px;margin-bottom:8px;box-shadow:0 4px 12px rgba(0,0,0,.08);visibility:hidden;height:0;padding-top:0;padding-bottom:0;overflow:hidden;border-width:0;margin:0}
+.rmini.show{visibility:visible;height:auto;padding:6px 12px;border-width:1px;margin-bottom:8px}
+.rmini b{font:800 18px ui-monospace,Menlo,monospace}.rmini-one{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.rmb{border:1px solid var(--line2);border-radius:18px;background:var(--panel);padding:6px 12px;font:600 13px/1.2 -apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;color:var(--ink);white-space:nowrap}.rmb.on{background:#1a73e8;border-color:#1a73e8;color:#fff}.rmb.pc.on{background:#34A853;border-color:#34A853}.rmb:disabled{opacity:.45}
+@media (max-width:900px){.rs-plancol{position:static}}
 /* v302 iPad pack */
 .labchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .labchip{border:1px solid var(--line2);background:var(--panel);border-radius:16px;padding:5px 11px;font:600 13px ui-monospace,Menlo,monospace;cursor:pointer;color:var(--ink)}
@@ -639,14 +662,14 @@ body.touch:not(.kbd) .tc:focus{outline:none}
 }
 /* narrow (Split View / slide-over): Split Rounds puts the patients in a strip across the top */
 @media (max-width:719px){
-  #rounds .rs{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  #rounds .rs{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}
   #rounds .rs-rail{height:auto;border-right:0;border-bottom:1px solid var(--line)}
   #rounds .rs-railhd{height:auto;flex-direction:row;flex-wrap:wrap;align-items:center;padding:8px 10px;gap:6px 10px}
   #rounds .rs-railhd .rs-row{gap:8px}.rs-railhd .seg{flex:0 0 auto}
   #rounds .rs-list{display:flex;flex-direction:row;overflow-x:auto;overflow-y:hidden;gap:6px;padding:6px 8px;flex:none;scrollbar-width:none}
   #rounds .rs-pi{display:flex;width:auto;flex:none;gap:5px;padding:8px 12px;border:1px solid var(--line);margin:0}
   #rounds .rs-pi.on{box-shadow:inset 0 -3px 0 var(--accent)}
-  #rounds .rs-pi .rs-one,#rounds .rs-pi .rs-int,#rounds .rs-pi .rs-hd,#rounds .rs-grp,#rounds .rs-key{display:none}
+  #rounds .rs-pi .rs-one,#rounds .rs-pi .rs-int,#rounds .rs-grp,#rounds .rs-key{display:none}
   #rounds .rs-hd2{height:auto;flex-wrap:wrap;padding:10px 12px;gap:8px 12px}
   #rounds .rs-bigbed{font-size:26px}
   #rounds .rs-body{padding:10px !important}
@@ -1847,7 +1870,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '303';
+const APP_VERSION = '304';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4544,7 +4567,21 @@ function onCellKey(e){
 });
 
 /* ---------- rounds mode: one patient at a time ---------- */
-const rounds = {open:false, id:null};
+const rounds = {open:false, id:null, cx:{}};
+/* v304: Rounds focus (AM / PM / Dispo / All, or Auto by time of day), strip filter, talking points */
+const RFOCUS_KEY = `${KEY_PREFIX}.rFocus`, RFILT_KEY = `${KEY_PREFIX}.rFilter`;
+const rFocusPref = () => { try{ return localStorage.getItem(RFOCUS_KEY) || 'auto'; }catch(e){ return 'auto'; } };
+const rFilter = () => { try{ return localStorage.getItem(RFILT_KEY) || 'all'; }catch(e){ return 'all'; } };
+function rFocus(){ const f = rFocusPref(); if(f !== 'auto') return f; if(typeOf(activeType).night) return 'all'; return new Date().getHours() < 12 ? 'am' : 'pm'; }
+const rLeft = p => { const f = rFocus(); return f === 'all' ? openCount(p) : chunkOpen(p, f); };
+const rLeftBadge = p => { if(p.status === 'New') return '<span class="rs-left new" title="New admit">new</span>'; const n = rLeft(p), f = rFocus();
+  return `<span class="rs-left ${!n ? 'ok' : n <= 2 ? 'near' : ''}" title="${n ? n + ' box' + (n === 1 ? '' : 'es') + ' left' : 'All done'}${f === 'all' ? '' : ' in ' + (CHUNK[f] ? CHUNK[f].name : f)}">${n ? n : '✓'}</span>`; };
+let talkT = null;
+function talkSave(id, v){ clearTimeout(talkT); talkT = setTimeout(() => { const p = rowOf('p', id); if(!p || (p.talk || '') === v) return;
+  mutate(() => { const q = rowOf('p', id); q.talk = v; q.talkAt = v ? localISO() : ''; }, {render:false, label:`Talking points — ${p.bed || 'patient'}`, cat:'rounds'});
+  document.querySelectorAll(`#roundsBody [data-rgo="${id}"] .rs-talk`).forEach(x => x.hidden = !v); }, 500); }
+const talkHTML = p => `<div class="rs-card rs-talkcard"><div class="rs-cardh"><span>📝 Talking points</span>${p.talk ? `<button type="button" class="linkbtn" data-talkclr="${p.id}">Clear</button>` : ''}</div>
+  <textarea class="rs-talkta" data-talk="${p.id}" rows="3" placeholder="What you want to bring up on rounds — not a task, no names. Saved with this patient until you clear it.">${esc(p.talk || '')}</textarea>${p.talkAt ? `<div class="muted small">Edited ${esc(agoText(p.talkAt))}</div>` : ''}</div>`;
 /* Rounds order: by intern (each intern's patients together), by bed, or as listed on the Census.
    Each patient you leave with Next is marked ✓ seen for the day; Next then goes to the next one not yet seen, so after jumping out of
    order (tap a bed in the strip) you pick up where you left off. ← → keys still step one by one. */
@@ -4555,6 +4592,7 @@ const rdNext = (list, i) => list.slice(i + 1).find(q => !rdSeen(q)) || list.slic
 function rdMark(p, on){ if(!p || rdSeen(p) === on) return; if(on) p.rd = state.boardDate; else delete p.rd; save(); }
 function roundsList(){
   let list = filteredPatients();
+  { const rf = rFilter(); if(rf !== 'all') list = list.filter(p => p.id === rounds.id || (rf === 'notd' ? p.status !== 'New' && !rdSeen(p) : p.status !== 'New' && rLeft(p) > 0)); }
   if(roundsOrder() === 'bed') return list.slice().sort(bedCmp);
   if(roundsOrder() === 'intern'){
     const order = [...state.settings.interns, ...new Set(list.map(p => p.intern).filter(i => i && !state.settings.interns.includes(i)))];
@@ -4600,6 +4638,9 @@ function renderRounds(){
     <div class="rsec"><h4 style="background:var(--g-${g.k})">${esc(g.label.split(' —')[0])}</h4><div class="rtiles">${cols.map((c, ci) => { const cfg = colCfg(c.k);
       return `<div class="rtile"><div class="rlab" title="${esc(cfg.h)}">${esc(cfg.h)}</div>${cellHTML(p.cells[c.k], cfg, 'p', p.id, 0, ci, false)}${cm[c.k] ? `<div class="rcmt">${esc(cm[c.k])}</div>` : ''}</div>`; }).join('')}</div></div>`).join('');
   body.innerHTML = bar + `<div class="rbody">
+    <div class="rmini" aria-hidden="true"><b>${esc(p.bed || '—')}</b><span class="rmini-one">${esc(p.problem || '')}</span>
+      <button type="button" class="rmb pc ${isPc(p) ? 'on' : ''}" ${p.status === 'New' ? 'disabled' : ''} data-rpc="${p.id}">${isPc(p) ? '✓ Pre-charted' : '○ Pre-charted'}</button>
+      <button type="button" class="rmb ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? 'disabled' : ''} data-rseen="${p.id}">${rdSeen(p) ? '💬 Discussed' : '💬 Mark discussed'}</button></div>
     <div class="rhead">
       <div class="rbed">${esc(p.bed || '(no bed)')}<button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds. Next skips patients already discussed. Separate from the Visit box.'}">${rdSeen(p) ? '✓ Discussed' : 'Mark discussed'}</button><small>${n === null ? 'No admission date' : `Hospital day ${n}`}${adm ? ` · admission ${admitSigned(adm)}/${ADMIT_ITEMS.length} signed` : ''}</small></div>
       <div class="rfields">
@@ -4613,6 +4654,7 @@ function renderRounds(){
     ${fl.length || n !== null ? `<div class="rflags">${hdPill(p, true)}${fl.map(([l,t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="rtodos ${patientTodos(p.id).length ? '' : 'empty'}" id="rTodos"><h4><span>⏰ To-dos${patientTodos(p.id).length ? '' : ' <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">— none for this patient</span>'}</span><button class="btn sm" data-tdedit="${p.id}">+ Add / edit ${scLabel('todo')}</button></h4>
       ${patientTodos(p.id).map(t => todoRowHTML(t, false)).join('')}</div>
+    <div class="rtalk">${talkHTML(p)}</div>
     ${rdLeaveCard(p) ? `<div class="rleave">${rdLeaveCard(p)}</div>` : ''}
     ${sections}
     <div class="rnav"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
@@ -4647,10 +4689,11 @@ function renderRoundsSplit(){
   const rail = `<aside class="rs-rail"><div class="rs-railhd"><div class="rs-row"><b>Rounds</b><span class="rseen" title="New admits aren't counted">✓ ${seenN}/${dTot} discussed</span></div>
       <span class="seg rord" role="group" aria-label="Order">${[['intern', 'Intern'], ['bed', 'Bed'], ['list', 'List']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
       <span class="seg rview" role="group" aria-label="Layout"><button type="button" data-rview="classic">Classic</button><button type="button" data-rview="split" class="on">Split</button></span></div>
+    <div class="rs-filtrow"><span class="seg rfilt" role="group" aria-label="Show">${[['all', 'All'], ['notd', 'To discuss'], ['open', 'Open boxes']].map(([k, l]) => `<button type="button" data-rfilt="${k}" class="${rFilter() === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
     <div class="rs-list">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<div class="rs-grp">${esc(q.intern || 'Unassigned')} · ${list.filter(x => x.intern === q.intern).length}</div>` : ''}
-      <button type="button" class="rs-pi ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'dsc' : ''}" data-rgo="${q.id}"><span class="rs-bed">${esc(q.bed || '—')}${rdSeen(q) ? ' <i class="rs-ck" title="Discussed">💬</i>' : ''}</span>
-        <span class="rs-dots">${isPc(q) ? '<i class="rs-d pc" title="Pre-charted"></i>' : ''}${rsFlagged(q) ? '<i class="rs-d fl" title="Flagged"></i>' : ''}</span><span class="rs-hd">${hospDay(q) !== null ? 'HD' + hospDay(q) : ''}</span>
-        <span class="rs-one">${esc(q.problem || '')}</span><span class="rs-int">${esc(q.intern || '')}</span></button>`).join('')}</div>
+      <button type="button" class="rs-pi ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'dsc' : ''}" data-rgo="${q.id}"><span class="rs-bed">${esc(q.bed || '—')}${rdSeen(q) ? ' <i class="rs-ck" title="Discussed">💬</i>' : ''}<i class="rs-talk" title="Has talking points" ${q.talk ? '' : 'hidden'}>📝</i></span>
+        <span class="rs-dots">${isPc(q) ? '<i class="rs-d pc" title="Pre-charted"></i>' : ''}${rsFlagged(q) ? '<i class="rs-d fl" title="Flagged"></i>' : ''}</span><span class="rs-hd">${rLeftBadge(q)}</span>
+        <span class="rs-one">${esc(q.problem || '')}</span><span class="rs-int">${hospDay(q) !== null ? 'HD' + hospDay(q) + ' · ' : ''}${esc(q.intern || '')}</span></button>`).join('')}</div>
     <div class="rs-key"><i class="rs-d pc"></i> pre-charted &nbsp;<i class="rs-d fl"></i> flag &nbsp;💬 discussed</div></aside>`;
   if(!list.length){ body.innerHTML = `<div class="rs">${rail}<section class="rs-main"><div class="rempty">No patients in this view.</div><div class="rs-foot"><span style="flex:1"></span><button class="btn" data-r="close">✕ Close</button></div></section></div>`; return; }
   const p = list[i], fl = flagsFor(p), n = hospDay(p), cm = p.comments || {};
@@ -4663,7 +4706,11 @@ function renderRoundsSplit(){
     const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(doneK).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
     const tot = req.length + fk.length, left = tot - done, cntCls = !left ? 'ok' : left <= 2 ? 'near' : '';
     const cnt = `<span class="rs-cnt ${cntCls}" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length + fk.length} done</span>`;
-    return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh">${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''} ${cnt}</div><div class="rs-chk">${fk.map(k => `<div class="rs-ck2 rv"><span>${esc(rvLabel(k))}</span>${tile(k)}</div>`).join('')}${show.map(k => `<div class="rs-ck2 ${!OPTIONAL_KEYS.has(k) && doneK(k) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
+    const f = rFocus(), key = p.id + ':' + c.k, auto = !left || (f !== 'all' && c.k !== f), col = key in rounds.cx ? rounds.cx[key] : auto;
+    if(col){ const ok = openKeys(p, c.k).map(k => keyLabel(p, k, c.k));
+      return `<div class="rs-card rs-chunk rs-${c.k} rs-col" data-rcx="${key}" role="button" tabindex="0" title="Tap to open"><div class="rs-cardh"><span>▸ ${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''}</span> ${cnt}</div>
+        <div class="rs-colsum">${left ? `Left: ${ok.slice(0, 6).map(esc).join(', ')}${ok.length > 6 ? ` +${ok.length - 6}` : ''}` : '✓ All done'}</div></div>`; }
+    return `<div class="rs-card rs-chunk rs-${c.k}"><div class="rs-cardh"><span class="rs-cxh" data-rcx="${key}" role="button" title="Collapse">▾ ${esc(c.name)}${c.k === 'am' && isPc(p) ? ' <span class="rs-pcok">✓ pre-charted</span>' : ''}</span> ${cnt}</div><div class="rs-chk">${fk.map(k => `<div class="rs-ck2 rv"><span>${esc(rvLabel(k))}</span>${tile(k)}</div>`).join('')}${show.map(k => `<div class="rs-ck2 ${!OPTIONAL_KEYS.has(k) && doneK(k) ? 'ok' : ''}"><span>${esc(colCfg(k).h)}</span>${tile(k)}</div>`).join('')}</div></div>`; };
   const nx = rdNext(list, i) || (i < list.length - 1 ? list[i + 1] : null);
   const todos = patientTodos(p.id);
   body.innerHTML = `<div class="rs">${rail}<section class="rs-main">
@@ -4672,15 +4719,15 @@ function renderRoundsSplit(){
         ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
       <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
+      <div class="rs-focus" role="group" aria-label="Focus"><span class="muted small">Focus</span><span class="seg">${[['auto', `Auto${rFocusPref() === 'auto' ? ' · ' + (rFocus() === 'all' ? 'All' : CHUNK[rFocus()].name.replace(/ rounds/i, '')) : ''}`], ['am', 'AM'], ['pm', 'PM'], ['dispo', 'Dispo'], ['all', 'All']].map(([k, l]) => `<button type="button" data-rfocus="${k}" class="${rFocusPref() === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</span></div>
       ${rdLeaveCard(p)}
-      <div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>
-      ${CHUNKS.map(ckCard).join('')}
+      ${(() => { const f = rFocus(), fc = CHUNKS.find(c => c.k === f); return (fc ? ckCard(fc) : '') + `<div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>` + CHUNKS.filter(c => c !== fc).map(ckCard).join(''); })()}
     </div>
-    <div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
+    <div class="rs-plancol">${talkHTML(p)}<div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
       <div class="rs-todos" id="rTodos">${todos.map(t => todoRowHTML(t, false)).join('') || '<div class="muted small" style="padding:6px 2px">Nothing yet.</div>'}</div>
       <div class="rs-quick">${RS_QUICK.map(q => `<button type="button" data-rsq="${esc(q)}">+ ${esc(q.replace(': ', ''))}</button>`).join('')}</div>
       <textarea id="rsAdd" data-pid="${p.id}" rows="2" placeholder="Type a to-do (e.g. “echo today”, “cards recs 2pm”) — Enter adds it"></textarea>
-      <div class="muted small" style="margin-top:auto">Goes on the Tasks tab under ${esc(p.bed || 'this patient')}. Add a time with the clock box if it’s due at a set time.</div></div>
+      <div class="muted small" style="margin-top:auto">Goes on the Tasks tab under ${esc(p.bed || 'this patient')}. Add a time with the clock box if it’s due at a set time.</div></div></div>
     </div>
     <div class="rs-foot"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
       <span class="rs-nx">${nx ? `Next not yet discussed: <b>${esc(nx.bed || '—')}</b>` : '✓ Everyone discussed'}</span>
@@ -4691,10 +4738,16 @@ function rsAddTodo(pid, text){ text = (text || '').trim(); const p = rowOf('p', 
   mutate(() => state.todos.push({id:uid(), pid, aid:'', bed:'', team:'', text, due:'', done:false, doneAt:'', result:'', series:'', every:0, src:'rounds', pri:'', createdAt:localISO()}),
     {label:`Task added on rounds — ${p.bed || 'patient'}: “${text}”`, cat:'tasks'});
   renderRounds(); const t = $('#rsAdd'); if(t) t.focus(); }
+$('#roundsBody').addEventListener('input', e => { const t = e.target.closest && e.target.closest('[data-talk]'); if(t){ t.style.height = 'auto'; t.style.height = Math.min(320, t.scrollHeight + 2) + 'px'; talkSave(t.dataset.talk, t.value); } });
+$('#roundsBody').addEventListener('focusout', e => { const t = e.target.closest && e.target.closest('[data-talk]'); if(t){ clearTimeout(talkT); talkT = null; const p = rowOf('p', t.dataset.talk); if(p && (p.talk || '') !== t.value) { mutate(() => { p.talk = t.value; p.talkAt = t.value ? localISO() : ''; }, {render:false, label:`Talking points — ${p.bed || 'patient'}`, cat:'rounds'}); } } });
 $('#roundsBody').addEventListener('keydown', e => { if(e.target.id === 'rsAdd' && e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); rsAddTodo(e.target.dataset.pid, e.target.value); } });
 $('#roundsBtn').addEventListener('click', () => openRounds());
 $('#roundsBody').addEventListener('click', e => {
   const g = e.target.closest('[data-rgo]'); if(g){ roundsTo(g.dataset.rgo); return; }
+  const fo = e.target.closest('[data-rfocus]'); if(fo){ try{ localStorage.setItem(RFOCUS_KEY, fo.dataset.rfocus); }catch(err){} rounds.cx = {}; renderRounds(); return; }
+  const rf = e.target.closest('[data-rfilt]'); if(rf){ try{ localStorage.setItem(RFILT_KEY, rf.dataset.rfilt); }catch(err){} renderRounds(); return; }
+  const cx = !e.target.closest('.tc,button:not([data-rcx]),select,input,textarea') && e.target.closest('[data-rcx]'); if(cx){ const k = cx.dataset.rcx; rounds.cx[k] = !cx.classList.contains('rs-col'); renderRounds(); return; }
+  const tc = e.target.closest('[data-talkclr]'); if(tc){ const q = rowOf('p', tc.dataset.talkclr); if(q){ clearTimeout(talkT); mutate(() => { q.talk = ''; q.talkAt = ''; }, {label:`Cleared talking points — ${q.bed || 'patient'}`, cat:'rounds'}); renderRounds(); } return; }
   const v = e.target.closest('[data-rview]'); if(v){ ui.roundsView = v.dataset.rview; saveUI(); closePop(); renderRounds(); return; }
   const q = e.target.closest('[data-rsq]'); if(q){ const t = $('#rsAdd'); if(t){ t.value = q.dataset.rsq; t.focus(); t.setSelectionRange(t.value.length, t.value.length); } return; }
   const o = e.target.closest('[data-rord]'); if(o){ ui.roundsOrder = o.dataset.rord; saveUI(); renderRounds(); const c = document.querySelector('#roundsBody .rchip.on'); if(c) c.scrollIntoView({block:'nearest', inline:'center'}); return; }
@@ -8150,6 +8203,10 @@ function rowActionSheet(id){
   document.addEventListener('contextmenu', e => { if(isTouch() && e.target.closest && e.target.closest('#censusGrid td.stk')) e.preventDefault(); });
 })();
 
+// v304: Classic Rounds — a slim header sticks to the top once the patient header scrolls away
+document.addEventListener('scroll', e => { const sc = e.target; if(!sc || !sc.querySelector) return; const mini = sc.querySelector(':scope .rmini'), head = sc.querySelector(':scope .rhead'); if(!mini || !head) return;
+  const bar = sc.querySelector(':scope > .rbar'), bh = bar && getComputedStyle(bar).position === 'sticky' ? bar.offsetHeight : 0; mini.style.top = bh + 'px';
+  mini.classList.toggle('show', head.getBoundingClientRect().bottom < sc.getBoundingClientRect().top + bh + 4); }, true);
 // ---- 4 · a keyboard on the iPad: show where you are ----
 document.addEventListener('keydown', e => { if(!isTouch() || e.isComposing || !/^(Arrow|Tab|Enter|Escape)/.test(e.key || '')) return; document.body.classList.add('kbd'); }, true);
 document.addEventListener('pointerdown', e => { if(e.pointerType !== 'mouse') document.body.classList.remove('kbd'); }, true);
@@ -8573,6 +8630,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:304, d:'2026-11-25', items:['<b>Rounds: Focus.</b> AM · PM · Dispo · All, or <b>Auto</b> (AM before noon, PM after; All on nights). The focus section comes first; the others fold to one line listing what’s left.', '<b>Finished sections fold away</b> to “✓ All done” — tap any folded section to open it (tap its title to fold it again).', '<b>Progress in the patient list:</b> each bed shows how many boxes are left (orange when 1–2, ✓ when done), and a <b>All · To discuss · Open boxes</b> filter.', '<b>Talking points:</b> a 📝 notepad per patient for what you want to bring up on rounds (saved until you clear it; 📝 shows in the list).', '<b>Classic Rounds:</b> a slim header with the bed, one-liner, Pre-charted and Discussed stays at the top as you scroll. (Split Rounds already keeps its header pinned.)']},
   {v:303, d:'2026-11-25', items:['Lab Ord time chips are now <b>5 am · 9 am · 5 pm · 9 pm</b>, plus <b>＋</b> to add your own time — once, or kept as a chip (✕ removes a kept chip while ＋ is open).']},
   {v:302, d:'2026-11-25', items:['<b>iPad pack.</b> <b>Data safety:</b> a “Shift’s almost over — back up?” prompt near the end of each shift (once per shift, only if you haven’t backed up); More shows whether iPadOS is protecting Plexus’s data; Plexus now opens and works with no network.', '<b>Less typing:</b> Lab Ord has one-tap time chips (04:00 · 05:00 · 11:00 · 17:00 · 21:00); task boxes suggest tasks you’ve used before; text cells suggest what you’ve typed before in that column.', '<b>Touch:</b> swipe left/right in Split Rounds for the next/previous patient; long-press a census row (#, HD or Problem) for its actions; bigger census cells to tap.', '<b>Keyboard on the iPad:</b> a focus ring shows where the arrow keys are; More → Keyboard shortcuts.', '<b>Narrow screens</b> (portrait, or Split View beside Epic): slimmer frozen census columns, and Split Rounds puts the patients in a strip across the top.']},
   {v:301, d:'2026-11-25', items:['Census: the <b>Avatar</b> column is narrower — lines wrap onto two lines instead of stretching the column. Hover (or open the cell / body map) for the full list.']},
