@@ -1887,7 +1887,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '306';
+const APP_VERSION = '307';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2129,7 +2129,7 @@ const GROUPS = [
     {k:'dcord',h:'DC Order',type:'choice',size:'mid',opts:DC_OPTS()},
     {k:'transport',h:'Transportation',type:'choice',size:'mid',opts:['Family / friend','Taxi / rideshare','Medical transport','Ambulance (BLS)','Ambulance (ALS)','Facility transport','Public transit'].map(x=>O(x))}]},
   {k:'dispo', label:'Dispo', cols:[
-    {k:'dest',h:'Disposition',type:'choice',size:'mid',opts:['Home','SAR/SNF','LTACH','Nursing Home','Hospice','ALF','Shelter','Acute Rehab','Safe Haven','LOH','Floor','SDU','cSDU','MICU','CCU','ALOC'].map(x=>O(x))},
+    {k:'dest',h:'Disposition',type:'choice',size:'mid',opts:['Home','SAR/SNF','LTACH','Nursing Home','Hospice','ALF','Shelter','Acute Rehab','Safe Haven','LOH','Telemetry','Med Surg','Pulse Ox','SDU','cSDU','MICU','CCU','ALOC'].map(x=>O(x))},
     {k:'services',h:'Services',type:'text',size:'mid'},
     {k:'dispo',h:'Dispo notes',type:'text',size:'wide'}]},
 ];
@@ -2236,7 +2236,7 @@ function newPatientFromAdmit(a){
 /* Diet and DVT PPx are one value shared by a new admit's Admissions row and its census row:
    whichever side was just edited wins and is copied to the other. */
 const LINKED_KEYS = ['diet','dvt'];
-const DISPO_IN = ['MICU', 'CCU', 'SDU', 'cSDU', 'Floor', 'ALOC', 'Uptriage', 'Tele', 'PACU', 'OR', 'ED'];
+const DISPO_IN = ['MICU', 'CCU', 'SDU', 'cSDU', 'Floor', 'Telemetry', 'Med Surg', 'Pulse Ox', 'ALOC', 'Uptriage', 'Tele', 'PACU', 'OR', 'ED'];
 const isDispoIn = l => DISPO_IN.some(x => x.toLowerCase() === String(l || '').trim().toLowerCase());
 // Diet = one core diet + any modifiers, saved as e.g. “Heart Healthy + Kosher + Fluid Restriction”
 const DIET_MODS = ['Kosher', 'Halal', 'Mod Con', 'Fluid Restriction'];
@@ -2485,8 +2485,13 @@ function normalize(s){
   // v237: Destination → Disposition, with in-hospital choices (once)
   if(!s.settings.dispoIn){ const dc = s.settings.columns.dest;
     if(dc){ if(dc.h === 'Destination') delete dc.h;
-      if(Array.isArray(dc.opts)){ const has = l => dc.opts.some(o => (o.label || '').toLowerCase() === l.toLowerCase()); ['Floor', 'SDU', 'cSDU', 'MICU', 'CCU', 'ALOC'].forEach(l => { if(!has(l)) dc.opts.push({label:l}); }); } }
-    s.settings.dispoIn = 1; }
+      if(Array.isArray(dc.opts)){ const has = l => dc.opts.some(o => (o.label || '').toLowerCase() === l.toLowerCase()); ['Telemetry', 'Med Surg', 'Pulse Ox', 'SDU', 'cSDU', 'MICU', 'CCU', 'ALOC'].forEach(l => { if(!has(l)) dc.opts.push({label:l}); }); } }
+    s.settings.dispoIn = 1; s.settings.dispoFloor3 = 1; }
+  // v307: Disposition “Floor” → Telemetry · Med Surg · Pulse Ox (in its place, once). Patients already set to Floor keep it.
+  if(!s.settings.dispoFloor3){ const dc = s.settings.columns.dest;
+    if(dc && Array.isArray(dc.opts)){ const has = l => dc.opts.some(o => (o.label || '').toLowerCase() === l.toLowerCase()), add = ['Telemetry', 'Med Surg', 'Pulse Ox'].filter(l => !has(l)).map(l => ({label:l}));
+      const i = dc.opts.findIndex(o => (o.label || '').toLowerCase() === 'floor'); if(i >= 0) dc.opts.splice(i, 1, ...add); else dc.opts.push(...add); }
+    s.settings.dispoFloor3 = 1; }
   // v219: TF (tube feeds) joins the core diets, before NPO (once)
   if(!s.settings.dietTF){ const dl = s.settings.columns.diet;
     if(dl && Array.isArray(dl.opts) && !dl.opts.some(o => (o.label || '').toLowerCase() === 'tf')){ const i = dl.opts.findIndex(o => (o.label || '').toLowerCase() === 'npo'); dl.opts.splice(i < 0 ? dl.opts.length : i, 0, {label:'TF'}); }
@@ -8662,6 +8667,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:307, d:'2026-11-26', items:['<b>Disposition</b>: “Floor” is replaced by <b>Telemetry</b>, <b>Med Surg</b> and <b>Pulse Ox</b> (in the same spot in the list). A patient already set to Floor keeps it until you change it.']},
   {v:306, d:'2026-11-26', items:['<b>Settings, reorganised</b> — a side list of sections like Mac System Settings: <b>Team · Flags &amp; timers · Board &amp; columns · Appearance · Backup &amp; data · Privacy · Tools · Reset</b>. Tap a section to see only its settings; Plexus remembers the last one you opened. Nothing was removed.']},
   {v:305, d:'2026-11-26', items:['<b>T&amp;S</b> turns <b>light orange</b> the day before it expires, then light red once expired — e.g. collected 11/24: orange on 11/26, red on 11/27 (with the default 72 h).']},
   {v:304, d:'2026-11-25', items:['<b>Rounds: Focus.</b> AM · PM · Dispo · All, or <b>Auto</b> (AM before noon, PM after; All on nights). The focus section comes first; the others fold to one line listing what’s left.', '<b>Finished sections fold away</b> to “✓ All done” — tap any folded section to open it (tap its title to fold it again).', '<b>Progress in the patient list:</b> each bed shows how many boxes are left (orange when 1–2, ✓ when done), and a <b>All · To discuss · Open boxes</b> filter.', '<b>Talking points:</b> a 📝 notepad per patient for what you want to bring up on rounds (saved until you clear it; 📝 shows in the list).', '<b>Classic Rounds:</b> a slim header with the bed, one-liner, Pre-charted and Discussed stays at the top as you scroll. (Split Rounds already keeps its header pinned.)']},
