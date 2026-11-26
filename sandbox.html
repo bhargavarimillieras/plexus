@@ -611,6 +611,21 @@ body.tkfull #hclocks{margin-right:4px}
 .tlline{position:absolute;top:0;bottom:0;width:1px;background:var(--line)}
 .tlline.mid{background:var(--line2);width:2px}
 .tllab{box-shadow:-14px 0 0 var(--panel)}.tlline.sub{opacity:.45}
+/* v306 Settings: sidebar + sections */
+.modal.setmodal{max-width:980px;padding:0;display:flex;flex-direction:column;height:min(86vh,760px);overflow:hidden}
+.setmodal .sethead{display:flex;align-items:baseline;gap:12px;padding:16px 20px 12px;border-bottom:1px solid var(--line)}.setmodal .sethead h3{margin:0}
+.setwrap{display:grid;grid-template-columns:232px minmax(0,1fr);flex:1;min-height:0}
+.setnav{border-right:1px solid var(--line);padding:10px 8px;overflow:auto;background:color-mix(in srgb,var(--line) 25%,transparent)}
+.setnavb{display:flex;gap:10px;align-items:center;width:100%;text-align:left;border:0;background:none;border-radius:9px;padding:8px 10px;cursor:pointer;color:var(--ink);margin-bottom:2px}
+.setnavb:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.setnavb.on{background:var(--accent);color:#fff}.setnavb.on .snt span{color:rgba(255,255,255,.85)}
+.setnavb .sni{font-size:18px;width:24px;text-align:center}.setnavb .snt{display:flex;flex-direction:column;min-width:0}.setnavb .snt b{font-size:13.5px}.setnavb .snt span{font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.setpanes{overflow:auto;padding:16px 22px}
+.setpane h4{margin:0 0 6px;font-size:17px}.setpane h5{margin:18px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.setpane[hidden]{display:none}
+.setmodal .actions{margin:0;padding:12px 20px;border-top:1px solid var(--line)}
+body.touch .setnavb{padding:11px 10px}
+@media (max-width:719px){.setwrap{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}.setnav{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.setnavb{width:auto;flex:none;margin:0 4px 0 0}.setnavb .snt span{display:none}.modal.setmodal{height:92vh}}
 /* v304 Rounds */
 .rs-left{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:#eef0f4;color:#3c4452;font:800 11.5px/1 -apple-system,BlinkMacSystemFont,sans-serif;box-sizing:border-box}
 .rs-left.near{background:#FFE8C7;color:#8a4b00}.rs-left.ok{background:#DDF3E3;color:#137333}.rs-left.new{background:#E8F0FE;color:#174ea6;font-size:10px}
@@ -1872,7 +1887,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '305';
+const APP_VERSION = '306';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -5076,7 +5091,9 @@ function renderBackupIndInner(){
 const internRowHTML = (name, cap) => `<div class="irow" data-orig="${esc(name)}"><input type="text" data-iname value="${esc(name)}" placeholder="Intern name"><label class="icap">Cap <input type="number" data-icap min="0" value="${cap > 0 ? cap : ''}" placeholder="—"></label><button class="ib" type="button" data-irm title="Remove this intern">✕</button></div>`;
 function settings(){
   const s = state.settings;
-  modal(`<h3>Settings &amp; backup</h3>
+  modal(`<div class="sethead"><h3>Settings</h3><span class="muted small">${typeOf(activeType).icon} ${esc(typeOf(activeType).label)}</span></div>
+    <div class="setwrap"><nav class="setnav" aria-label="Settings sections"><button type="button" class="setnavb" data-spane="team"><span class="sni">👥</span><span class="snt"><b>Team</b><span>Name, caps, interns</span></span></button><button type="button" class="setnavb" data-spane="flags"><span class="sni">🚩</span><span class="snt"><b>Flags &amp; timers</b><span>T&amp;S, BM, lines, long stay</span></span></button><button type="button" class="setnavb" data-spane="board"><span class="sni">📋</span><span class="snt"><b>Board &amp; columns</b><span>Rotation, columns, older shifts</span></span></button><button type="button" class="setnavb" data-spane="look"><span class="sni">🎨</span><span class="snt"><b>Appearance</b><span>Layout, theme, command bar</span></span></button><button type="button" class="setnavb" data-spane="data"><span class="sni">💾</span><span class="snt"><b>Backup &amp; data</b><span>Back up, restore, move devices</span></span></button><button type="button" class="setnavb" data-spane="privacy"><span class="sni">🔒</span><span class="snt"><b>Privacy</b><span>Hide screen, PIN</span></span></button><button type="button" class="setnavb" data-spane="tools"><span class="sni">🛠</span><span class="snt"><b>Tools</b><span>Shortcuts, self-check, print</span></span></button><button type="button" class="setnavb" data-spane="reset"><span class="sni">⚠️</span><span class="snt"><b>Reset</b><span>Start empty</span></span></button></nav><div class="setpanes">
+<section class="setpane" data-pane="team" hidden><h4>👥 Team</h4><p class="muted small">For this board. Interns appear in the Intern column and Rounds.</p>
     <div style="display:flex;gap:10px">
       <div style="flex:2"><label class="f">Team name</label><input type="text" id="sTeam" value="${esc(s.team)}"></div>
       <div style="flex:1"><label class="f">Team cap (max patients)</label>${typeOf(activeType).nocap ? '<div class="muted small" style="padding:6px 0">No census cap on this service.</div><input type="hidden" id="sCap" value="0">' : typeOf(activeType).capVaries ? '<div class="muted small" style="padding:6px 0">Varies with the flex rooms — set it each day from the Overview or the Census panel.</div><input type="hidden" id="sCap" value="0">' : `<input type="number" id="sCap" min="0" placeholder="e.g. 16" value="${s.cap || ''}">`}</div>
@@ -5085,6 +5102,7 @@ function settings(){
     <label class="f">Interns <span class="muted" style="font-weight:400">— cap = max patients for that intern (e.g. lower for a sub-intern); leave blank for no cap</span></label>
     <div id="sInternList" class="ilist">${s.interns.map(n => internRowHTML(n, (s.internCaps || {})[n])).join('')}</div>
     <button class="btn sm" id="sAddIntern" type="button">+ Add intern</button>
+</section><section class="setpane" data-pane="flags" hidden><h4>🚩 Flags &amp; timers</h4><p class="muted small">When cells turn orange or red and when flags appear. T&amp;S turns orange the day before it expires and red once expired; Last BM turns red after the “no BM” days.</p>
     <div style="display:flex;gap:10px">
       <div style="flex:1"><label class="f">T&amp;S valid (hours)</label><input type="number" id="sTs" min="1" value="${s.tsHours}"></div>
       <div style="flex:1"><label class="f">Flag no BM after (days)</label><input type="number" id="sBm" min="1" value="${s.bmDays}"></div>
@@ -5094,22 +5112,22 @@ function settings(){
       <div style="flex:1"><label class="f">Flag long stay from hospital day</label><input type="number" id="sLos" min="2" value="${s.losDays}"></div>
       <div style="flex:1"><label class="f">Line/drain/tube red after (days)</label><input type="number" id="sLdt" min="1" value="${s.ldtDays}"></div>
     </div>
-    <div style="margin-top:12px;display:flex;gap:8px;align-items:center"><button class="btn" id="bKeys">⌨ Keyboard shortcuts…</button><span class="muted">See and change every shortcut (press <kbd>?</kbd> on the board to view them).</span></div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button class="btn" id="bDiag">🩺 Run self-check</button><span class="muted">Checks storage, saved boards, data integrity, backups and shortcuts.</span></div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Command bar <select id="sCmdDock"><option value="bottom" ${CMDDOCK.side === 'bottom' ? 'selected' : ''}>Strip along the bottom</option><option value="right" ${CMDDOCK.side === 'right' ? 'selected' : ''}>Panel on the right</option></select></label><span class="muted" id="cmdDockNote">Switch any time with ⇆ in the bar. The side panel can be resized by dragging its left edge, and it moves to the bottom when the window is too narrow. Saved on this computer.</span></div>
+</section><section class="setpane" data-pane="board" hidden><h4>📋 Board &amp; columns</h4>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span>Board: ${typeOf(activeType).icon} <b>${esc(typeOf(activeType).label)}</b> <span class="muted">· ${esc(siteOf(activeType).label)}</span></span><button class="btn sm" id="bSwitchBoard">⇆ Switch board…</button>${isRot(activeType) ? '<button class="btn sm" id="bSched">🗓 Edit schedule…</button>' : ''}<button class="btn sm" id="bRotExp" ${Object.keys(ROTS).length ? '' : 'hidden'}>Save rotation schedules…</button><span class="muted">Opens the launch screen. Plexus also shows it every time it opens.</span></div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Layout <select id="sLayout"><option value="auto" ${LAYOUT === 'auto' ? 'selected' : ''}>Automatic (${touchMQ.matches ? 'touch on this device' : 'desktop on this device'})</option><option value="touch" ${LAYOUT === 'touch' ? 'selected' : ''}>Touch — iPad style</option><option value="desktop" ${LAYOUT === 'desktop' ? 'selected' : ''}>Desktop</option></select></label><span class="muted">Touch: tab bar at the bottom, swipe tasks, long-press a bed to change it.</span></div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Older shifts: move out anything older than <select id="sTidyDays">${TIDY_DAYS.map(d => `<option value="${d}" ${TIDY.days === d ? 'selected' : ''}>${d} days</option>`).join('')}</select></label><button class="btn sm" id="bTidy">🗄 Move older shifts out…</button><span class="muted">Keeps the data file small. Plexus also offers this when you start a new shift.</span></div>
-    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Appearance <select id="sTheme"><option value="auto" ${themeGet() === 'auto' ? 'selected' : ''}>Automatic (follow this device)</option><option value="light" ${themeGet() === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${themeGet() === 'dark' ? 'selected' : ''}>Dark</option></select></label><span class="muted small">— saved on this device</span></div>
-    <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="sShowHC" ${showHC() ? 'checked' : ''}> Show the <b>Hosp Course</b> column <span class="muted small">— on every board and rotation; hidden by default</span></label>
-    <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
-    <hr>
-    <b>This board</b>
+<h5>This board</h5>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0 12px"><span>This board is <b>${esc(typeOf(activeType).label)}</b>.</span>
       <label class="muted">Move it to <select id="mvTo">${SITES.map(x => `<optgroup label="${esc(x.label)}">${SHIFT_TYPES.filter(t => t.site === x.k && t.k !== activeType).map(t => `<option value="${t.k}">${esc(t.label)}${boardCount(t.k) ? ' (has a board)' : ''}</option>`).join('')}</optgroup>`).join('')}</select></label>
       <button class="btn sm" id="mvGo">Move board</button><span class="muted small">For when a board was filed under the wrong shift type — patients, tasks, history and log all move.</span></div>
-    <hr>
-    <b>Save &amp; move your data</b>
+<h5>Columns</h5>
+    <div style="margin-top:8px"><button class="btn" id="bCols">Columns &amp; options…</button> <span class="muted">Set each column's type and edit dropdown lists (Diet, DVT PPx, Med Rec, Destination, Note).</span></div>
+    <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="sShowHC" ${showHC() ? 'checked' : ''}> Show the <b>Hosp Course</b> column <span class="muted small">— on every board and rotation; hidden by default</span></label>
+<h5>Older shifts</h5>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Appearance <select id="sTheme"><option value="auto" ${themeGet() === 'auto' ? 'selected' : ''}>Automatic (follow this device)</option><option value="light" ${themeGet() === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${themeGet() === 'dark' ? 'selected' : ''}>Dark</option></select></label><span class="muted small">— saved on this device</span></div>
+</section><section class="setpane" data-pane="look" hidden><h4>🎨 Appearance</h4>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Older shifts: move out anything older than <select id="sTidyDays">${TIDY_DAYS.map(d => `<option value="${d}" ${TIDY.days === d ? 'selected' : ''}>${d} days</option>`).join('')}</select></label><button class="btn sm" id="bTidy">🗄 Move older shifts out…</button><span class="muted">Keeps the data file small. Plexus also offers this when you start a new shift.</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Layout <select id="sLayout"><option value="auto" ${LAYOUT === 'auto' ? 'selected' : ''}>Automatic (${touchMQ.matches ? 'touch on this device' : 'desktop on this device'})</option><option value="touch" ${LAYOUT === 'touch' ? 'selected' : ''}>Touch — iPad style</option><option value="desktop" ${LAYOUT === 'desktop' ? 'selected' : ''}>Desktop</option></select></label><span class="muted">Touch: tab bar at the bottom, swipe tasks, long-press a bed to change it.</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Command bar <select id="sCmdDock"><option value="bottom" ${CMDDOCK.side === 'bottom' ? 'selected' : ''}>Strip along the bottom</option><option value="right" ${CMDDOCK.side === 'right' ? 'selected' : ''}>Panel on the right</option></select></label><span class="muted" id="cmdDockNote">Switch any time with ⇆ in the bar. The side panel can be resized by dragging its left edge, and it moves to the bottom when the window is too narrow. Saved on this computer.</span></div>
+</section><section class="setpane" data-pane="data" hidden><h4>💾 Backup &amp; data</h4>
     <div class="savebox">
       <p style="margin:0 0 8px"><b>💾 Full backup</b> = <b>everything</b>: your rotations (name, block, schedule), every board, tasks, settings and shortcuts. Use it to move between the iPad and a computer, or to keep a safe copy. Files are named <b>Plexus FULL backup - … .json</b>.</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -5118,20 +5136,11 @@ function settings(){
       </div>
       <p class="muted small" style="margin:8px 0 0">Restore takes a full backup, or an older <i>one-board</i> file (named like “Plexus backup Bellevue CCU 2026-11-24 1901.json”) — but that kind only brings back the one board, not the rotation. On the iPad the same buttons are <b>More → Back up to Files</b> and <b>More → Restore from Files</b>.</p>
     </div>
-    <details class="setdet"><summary><b>Live data file</b> <span class="muted">— Chrome / Edge: keep working in one file that saves as you go</span></summary>
-    <p class="muted" style="margin:4px 0 8px">Keep everything (your rotations and boards, settings and shortcuts) in one file you carry with you. Every change saves to it automatically. On another computer, open this board and choose <b>Open my data file</b>. Works in Chrome and Edge. Use an encrypted, hospital-approved drive or folder.</p>
-    <div class="dfstat ${DF.handle ? DF.status : 'off'}">${esc(dfStatusText())}</div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${dfSupported() ? `
-      ${DF.handle && DF.status === 'needs' ? '<button class="btn primary" data-df="reconnect">Reconnect</button>' : ''}
-      <button class="btn primary" data-df="new">✚ Start a new file…</button>
-      <button class="btn" data-df="take" title="Leaving this computer: save an up-to-date copy to Downloads to carry to the next one">🧳 Take with me</button>
-      <button class="btn" data-df="open">Open my data file…</button>
-      <button class="btn" data-df="create" title="Save everything on this computer now into a new file">${DF.handle ? 'Save a copy to a different file…' : 'Save this board to a file…'}</button>
-      ${DF.handle ? '<button class="btn danger" data-df="stop">Stop using the file</button>' : ''}` : ''}
-    </div>
-    </details>
-    <hr>
-    <b>Backups</b>
+<div class="muted small" id="setKept" hidden></div>
+<h5>Reminders</h5>
+    <label style="display:flex;gap:6px;align-items:center;margin:6px 0 10px">Show “Backup due” after <input type="number" id="sBkHrs" min="1" value="${s.backupWarnHours}" style="width:70px"> hours without a backup</label>
+    <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" id="sAutoBk" ${s.autoBackup ? 'checked' : ''}> <span>Automatically download a <b>full backup</b> every time I start a New Shift</span></label>
+<h5>Automatic backups</h5>
     <p class="muted" style="margin:4px 0 8px">Your board saves automatically in this browser, but that copy is lost if browser data is cleared (common on hospital workstations at logoff). Backup files are downloaded to your Downloads folder — restore one on any computer. Last backup: <b>${lastBackup() ? new Date(lastBackup()).toLocaleString() + ' (' + agoText(lastBackup()) + ')' : 'never'}</b>.</p>
     <div class="abkbox">
       <label style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><input type="checkbox" id="sAbkOn" ${ABK.on ? 'checked' : ''}> <b>Automatic backups</b> every <select id="sAbkMins">${[5,10,15,30,60].map(n => `<option value="${n}" ${ABK.mins === n ? 'selected' : ''}>${n}</option>`).join('')}</select> minutes <span class="muted">(only when something changed, plus right before New Shift, a restore or loading a file)</span></label>
@@ -5145,8 +5154,18 @@ function settings(){
       </div>
       <div style="margin-top:8px"><button class="btn sm primary" data-df="bklist">🗂 View &amp; restore backups…</button> <span class="muted small">${abkLastAt ? 'Last automatic backup ' + agoText(abkLastAt) : 'No automatic backup yet'}</span></div>
     </div>
-    <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" id="sAutoBk" ${s.autoBackup ? 'checked' : ''}> Automatically download a <b>full backup</b> every time I start a New Shift</label>
-    <label style="display:flex;gap:6px;align-items:center;margin:6px 0 10px">Show “Backup due” after <input type="number" id="sBkHrs" min="1" value="${s.backupWarnHours}" style="width:70px"> hours without a backup</label>
+    <details class="setdet"><summary><b>Live data file</b> <span class="muted">— Chrome / Edge: keep working in one file that saves as you go</span></summary>
+    <p class="muted" style="margin:4px 0 8px">Keep everything (your rotations and boards, settings and shortcuts) in one file you carry with you. Every change saves to it automatically. On another computer, open this board and choose <b>Open my data file</b>. Works in Chrome and Edge. Use an encrypted, hospital-approved drive or folder.</p>
+    <div class="dfstat ${DF.handle ? DF.status : 'off'}">${esc(dfStatusText())}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">${dfSupported() ? `
+      ${DF.handle && DF.status === 'needs' ? '<button class="btn primary" data-df="reconnect">Reconnect</button>' : ''}
+      <button class="btn primary" data-df="new">✚ Start a new file…</button>
+      <button class="btn" data-df="take" title="Leaving this computer: save an up-to-date copy to Downloads to carry to the next one">🧳 Take with me</button>
+      <button class="btn" data-df="open">Open my data file…</button>
+      <button class="btn" data-df="create" title="Save everything on this computer now into a new file">${DF.handle ? 'Save a copy to a different file…' : 'Save this board to a file…'}</button>
+      ${DF.handle ? '<button class="btn danger" data-df="stop">Stop using the file</button>' : ''}` : ''}
+    </div>
+    </details>
     <details class="setdet"><summary><b>Other exports</b> <span class="muted">— this board only, Excel, settings only</span></summary>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
       <button class="btn" id="bBoardOnly" title="Just the open board — no rotations, no other boards. Usually you want 💾 Save full backup instead.">This board only (.json)</button>
@@ -5154,8 +5173,7 @@ function settings(){
       <button class="btn" id="bSetExp" title="Saves team, interns, caps, columns, options and layout for all shift types — no patient data">Settings only, no patients (.json)</button>
     </div></details>
     <input type="file" id="bFile" accept=".json,application/json" hidden>
-    <hr>
-    <b>Privacy &amp; printing</b>
+</section><section class="setpane" data-pane="privacy" hidden><h4>🔒 Privacy</h4>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0">
       <label>Hide the screen after <select id="sIdle">${[[0,'never'],[2,'2 min'],[5,'5 min'],[10,'10 min'],[15,'15 min'],[30,'30 min']].map(([v, l]) => `<option value="${v}" ${PRIV.idle === v ? 'selected' : ''}>${l}</option>`).join('')}</select> without activity</label>
       <button class="btn sm" data-df="hide">👁 Hide now <span class="muted">Ctrl+Shift+L</span></button>
@@ -5165,14 +5183,17 @@ function settings(){
       <button class="btn sm" id="sPinSet">${PRIV.pin ? 'Change PIN' : 'Set PIN'}</button>${PRIV.pin ? '<button class="btn sm danger" id="sPinClear">Remove PIN</button>' : ''}
       <span class="muted small">Optional. Without a PIN any key brings the board back. Kept on this computer only — it hides the screen, it doesn't encrypt anything.</span>
     </div>
+    <p class="privacy" style="margin-top:12px">Privacy: keep identifiers (names, MRNs, DOBs) out of this board and follow your institution's PHI policy. Everything stays in this browser unless you export it.</p>
+</section><section class="setpane" data-pane="tools" hidden><h4>🛠 Tools</h4>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center"><button class="btn" id="bKeys">⌨ Keyboard shortcuts…</button><span class="muted">See and change every shortcut (press <kbd>?</kbd> on the board to view them).</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center"><button class="btn" id="bDiag">🩺 Run self-check</button><span class="muted">Checks storage, saved boards, data integrity, backups and shortcuts.</span></div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" data-df="print">🖨 Print sign-out sheet</button><button class="btn" data-df="whatsnew">✨ What's new</button></div>
-    <hr>
-    <b>Reset</b>
+</section><section class="setpane" data-pane="reset" hidden><h4>⚠️ Reset</h4><p class="muted small"><b>Start empty</b> clears the patients, admissions and history on <b>this board</b> (settings stay). To wipe Plexus from a computer completely, use 🧳 Take with me in Backup &amp; data → Live data file, then “Clear Plexus from this computer”.</p>
     <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
       <button class="btn danger" id="bEmpty">Start empty (clear everything)</button>
       ${SANDBOX ? `<button class="btn" id="bDemo">${typeOf(activeType).kind === 'night' ? 'Load overnight cross-cover scenario' : typeOf(activeType).kind === 'admit' ? 'Load night admitting scenario' : 'Reset to demo patients'}</button>` : ''}
     </div>
-    <p class="privacy" style="margin-top:12px">Privacy: keep identifiers (names, MRNs, DOBs) out of this board and follow your institution's PHI policy. Everything stays in this browser unless you export it.</p>`,
+</section></div></div>`,
     [['Close'],['Save settings','primary',() => {
       mutate(() => {
         s.team = $('#sTeam').value.trim();
@@ -5195,6 +5216,13 @@ function settings(){
       });
       toast('Settings saved');
     }]], m => {
+      m.classList.add('wide', 'setmodal');
+      { const KEY = `${KEY_PREFIX}.setPane`; let cur = 'team'; try{ cur = sessionStorage.getItem(KEY) || 'team'; }catch(e){}
+        const show = k => { if(!m.querySelector(`.setpane[data-pane="${k}"]`)) k = 'team'; m.querySelectorAll('.setpane').forEach(x => x.hidden = x.dataset.pane !== k); m.querySelectorAll('.setnavb').forEach(x => x.classList.toggle('on', x.dataset.spane === k));
+          try{ sessionStorage.setItem(KEY, k); }catch(e){} const pn = m.querySelector('.setpanes'); if(pn) pn.scrollTop = 0; };
+        m.querySelector('.setnav').addEventListener('click', e => { const b = e.target.closest('[data-spane]'); if(b) show(b.dataset.spane); });
+        show(cur); m._setShow = show; }
+      if(isTouch()) storageKept().then(k => { const x = m.querySelector('#setKept'); if(x){ x.hidden = false; x.innerHTML = k ? '🔒 iPadOS is protecting Plexus’s data on this iPad.' : '⚠️ iPadOS may clear Plexus’s data — open Plexus from its Home Screen icon and back up each shift.'; } });
       m.querySelector('#bCols').onclick = () => { closeModal(); columnsEditor(); };
       m.querySelector('#sShowHC').onchange = e => { try{ localStorage.setItem(SHOWHC_KEY, e.target.checked ? '1' : '0'); }catch(err){} renderAll(); toast(e.target.checked ? 'Hosp Course column shown on every board' : 'Hosp Course column hidden'); };
       m.querySelector('#bKeys').onclick = () => { closeModal(); shortcutEditor(); };
@@ -8634,6 +8662,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:306, d:'2026-11-26', items:['<b>Settings, reorganised</b> — a side list of sections like Mac System Settings: <b>Team · Flags &amp; timers · Board &amp; columns · Appearance · Backup &amp; data · Privacy · Tools · Reset</b>. Tap a section to see only its settings; Plexus remembers the last one you opened. Nothing was removed.']},
   {v:305, d:'2026-11-26', items:['<b>T&amp;S</b> turns <b>light orange</b> the day before it expires, then light red once expired — e.g. collected 11/24: orange on 11/26, red on 11/27 (with the default 72 h).']},
   {v:304, d:'2026-11-25', items:['<b>Rounds: Focus.</b> AM · PM · Dispo · All, or <b>Auto</b> (AM before noon, PM after; All on nights). The focus section comes first; the others fold to one line listing what’s left.', '<b>Finished sections fold away</b> to “✓ All done” — tap any folded section to open it (tap its title to fold it again).', '<b>Progress in the patient list:</b> each bed shows how many boxes are left (orange when 1–2, ✓ when done), and a <b>All · To discuss · Open boxes</b> filter.', '<b>Talking points:</b> a 📝 notepad per patient for what you want to bring up on rounds (saved until you clear it; 📝 shows in the list).', '<b>Classic Rounds:</b> a slim header with the bed, one-liner, Pre-charted and Discussed stays at the top as you scroll. (Split Rounds already keeps its header pinned.)']},
   {v:303, d:'2026-11-25', items:['Lab Ord time chips are now <b>5 am · 9 am · 5 pm · 9 pm</b>, plus <b>＋</b> to add your own time — once, or kept as a chip (✕ removes a kept chip while ＋ is open).']},
