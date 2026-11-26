@@ -1953,7 +1953,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '318';
+const APP_VERSION = '321';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2143,6 +2143,25 @@ const STATES = [
   {k:'A', label:'ALOC',                             bg:'#9900FF', fg:'#fff',    g:'A'},
 ];
 const SMAP = Object.fromEntries(STATES.map(s => [s.k, s]));
+/* v319: each status column has its own short list (keys 1–5) instead of the shared 1–8 legend. Codes keep their meaning (C done, R revisit, P pending, X panic, N N/A, A ALOC). */
+const ST = (k, label, bg, fg, g) => ({k, label, bg, fg, g});
+const ST_C = l => ST('C', l, '#34A853', '#fff', '✓'), ST_X = ST('X', 'Panic', '#EA4335', '#fff', '!'), ST_N = ST('N', 'N/A', '#999999', '#fff', '–');
+const ST_PEND = ST('P', 'Pending / in process', '#FFB74D', '#1a1a1a', 'P'), ST_REV = ST('R', 'Revisit', '#E8710A', '#fff', 'R');
+const STSETS = {
+  vitals:[ST_C('Reviewed'), ST_REV, ST_X, ST_N],
+  labrev:[ST_C('Reviewed'), ST('O', 'Ordered', '#FBBC04', '#1a1a1a', 'O'), ST_PEND, ST_REV, ST_X, ST_N],
+  note:[ST_C('Complete'), ST_PEND, ST('A', 'ALOC', '#9900FF', '#fff', 'A'), ST_N],
+  _:[ST_C('Complete'), ST_PEND, ST_REV, ST_X, ST_N]};
+STSETS.fsg = STSETS.vitals; STSETS.img = STSETS.labrev;
+const stSet = col => STSETS[col] || STSETS._;
+const stOf = (col, k) => !k ? null : (stSet(col).find(x => x.k === k) || SMAP[k] || null);
+// old codes that a column no longer offers → the nearest one it does
+const ST_MAP = {vitals:{P:'R', O:'R', S:'R', A:'R'}, labrev:{S:'R', A:'R'}, note:{R:'P', O:'P', X:'P', S:'P'}, _:{O:'P', S:'R', A:'R'}};
+ST_MAP.fsg = ST_MAP.vitals; ST_MAP.img = ST_MAP.labrev;
+function stMigrate(){ const fix = (k, c) => { if(!c || !c.s || stSet(k).some(x => x.k === c.s)) return; const to = (ST_MAP[k] || ST_MAP._)[c.s]; c.s = to || ''; };
+  try{ const nc = state.settings.columns && state.settings.columns.note; if(nc && Array.isArray(nc.opts)) nc.opts = nc.opts.filter(o => !/^(pending|aloc)$/i.test(o.label));
+    (state.patients || []).forEach(p => { const c = p.cells && p.cells.note; if(!c) return; const m = String(c.t || '').match(/^(pending|aloc)$/i); if(m){ if(!c.s) c.s = /^p/i.test(m[1]) ? 'P' : 'A'; c.t = ''; } }); }catch(e){}
+  try{ ALL_COLS.forEach(col => { if(!isStatusType(colCfg(col.k).type)) return; (state.patients || []).forEach(p => p.cells && fix(col.k, p.cells[col.k])); }); }catch(e){} }
 const DONE = new Set(['C','N']);
 
 const STATUS_OPTS = ['New','Existing','Discharge','Transfer'];
@@ -2150,7 +2169,7 @@ const ORIGIN_OPTS = ['ED Admit','Direct Admit','ICU/SDU Transfer','OSH Transfer'
 const METHOD_OPTS = ['Direct','RML'];
 
 /* Column types
-   status       – daily-task status legend (1–8) + optional comment
+   status       – the column's own short status list (STSETS) + optional comment
    statusChoice – status legend + a value from your option list (e.g. Note type)
    choice       – value from your option list only (no status colors)
    date         – date (or N/A)
@@ -2179,7 +2198,7 @@ const GROUPS = [
   {k:'daily', label:'Daily', cols:[
     {k:'vitals',h:'Vitals',type:'status'},{k:'io',h:'I/O',type:'io',fixedType:true},{k:'avatar',h:'Avatar',type:'ldt',fixedType:true,size:'mid',opts:['PIV','Midline','PICC','CVC','Arterial line','HD catheter','Port','IABP','S-G catheter','Foley catheter','NG tube','OG tube','G-tube / PEG','Rectal tube','ETT','Trach','Chest tube','JP drain'].map(x=>O(x))},{k:'fsg',h:'FSG',type:'status'},
     {k:'labrev',h:'Lab Rev',type:'status'},{k:'img',h:'Imaging',type:'status'},{k:'vst',h:'Visit',type:'check'},
-    {k:'note',h:'Note',type:'statusChoice',size:'mid',opts:[O('Progress'),O('H&P'),O('Discharge'),O('Pending'),O('ALOC'),O('Transfer')]},
+    {k:'note',h:'Note',type:'statusChoice',size:'mid',opts:[O('Progress'),O('H&P'),O('Discharge'),O('Transfer')]},
     {k:'hc',h:'Hosp Course',type:'check'},
     {k:'attest',h:'Attest',type:'check'},{k:'labord',h:'Lab Ord',type:'checkNote'},{k:'handoff',h:'Handoff',type:'check'},{k:'ordrev',h:'Ord Rev',type:'check'}]},
   {k:'standing', label:'Standing', cols:[
@@ -2416,7 +2435,7 @@ function demoState(){
       mk('7W-12B','Intern C','Hypo Na','Existing',2,{vitals:'C',io:['R','Fluid restrict 1.2L'],avatar:'C',fsg:'N',labrev:['P','Na q6h – 124'],note:['','Progress'],labord:{c:false},bm:['',addDays(d,-2)],diet:['','General'],dvt:['','LMWH'],pt:['',addDays(d,-1)],edd:['',addDays(d,3)],dest:['','Home']}),
       // ---- Intern D ----
       mk('7W-13A','Intern D','Sepsis, UTI','Existing',2,{vitals:['R','Soft BPs overnight'],io:'C',avatar:'C',fsg:'C',labrev:['X','Lactate 4.2'],note:['','Progress'],bm:['',y],ts:['',addDays(d,-2)],diet:['','Diabetic'],dvt:['','SQH'],edd:['',addDays(d,4)],dest:['','Home']}),
-      mk('7W-14B','Intern D','HE, EtOH cirrhosis','Existing',4,{vitals:'C',io:'C',avatar:['A','Grade 2 HE'],fsg:'C',labrev:['C','NH3 trending down'],vst:Y,note:['A','ALOC'],bm:['',d],diet:['','General'],dvt:['','HELD'],sw:['','Family meeting 2pm'],edd:['',addDays(d,3)],dest:['','Home']}),
+      mk('7W-14B','Intern D','HE, EtOH cirrhosis','Existing',4,{vitals:'C',io:'C',avatar:['A','Grade 2 HE'],fsg:'C',labrev:['C','NH3 trending down'],vst:Y,note:['A','Progress'],bm:['',d],diet:['','General'],dvt:['','HELD'],sw:['','Family meeting 2pm'],edd:['',addDays(d,3)],dest:['','Home']}),
       mk('7W-15A','Intern D','PE','Transfer',3,{vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:['C','PTT therapeutic'],vst:Y,note:['','Transfer'],handoff:Y,bm:['',y],diet:['','General'],dvt:['','HELD'],dest:['','Uptriage'],dispo:['','Step-down bed requested']}),
       mk('7W-16B','Intern D','TIA','Existing',2,{hc:Y,vitals:'C',io:'C',avatar:'C',fsg:'N',labrev:'C',vst:Y,note:['','Progress'],attest:Y,bm:['',y],ts:['',addDays(d,-2)],diet:['','Heart Healthy'],dvt:['','LMWH'],pt:['',y],ot:['',y],proc:['','MRI brain done'],edd:['',t1],dest:['','Home'],dcint:['','Incomplete'],dcmdr:['','Pended'],transport:['','Family / friend']}),
     ],
@@ -2910,7 +2929,7 @@ const q = v => `“${String(v).length > 60 ? String(v).slice(0,60) + '…' : v}�
 function cellDesc(cfg, c){
   if(!c) return 'blank';
   switch(cfg.type){
-    case 'status': case 'statusChoice': return [SMAP[c.s] ? SMAP[c.s].label : (c.s ? c.s : ''), c.t].filter(Boolean).join(' · ') || 'cleared';
+    case 'status': case 'statusChoice': return [stOf(cfg.k, c.s) ? stOf(cfg.k, c.s).label : (c.s ? c.s : ''), c.t].filter(Boolean).join(' · ') || 'cleared';
     case 'check': return c.t ? 'checked' : 'unchecked';
     case 'proc': return procItems(c).length ? procSummary(c) : 'cleared';
     case 'ldt': return ldtItems(c).length ? ldtItems(c).map(i => ldtLabel(i) + (i.rm ? ' removed ' + fmtShort(i.rm) : isISO(i.d) ? ' ' + fmtShort(i.d) : '')).join(', ') : 'none';
@@ -3063,7 +3082,7 @@ function npoToggle(id){ const p = rowOf('p', id); if(!p) return; const on = !npo
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-npo]'); if(!b) return; e.preventDefault(); e.stopPropagation(); npoToggle(b.dataset.npo); }, true);
 const rvLabel = k => '↻ ' + colCfg(k).h;
 function revisitCellHTML(p){ const ks = followKeys(p); if(!ks.length) return '<div class="tc t-rv rv-none"></div>';
-  return `<div class="tc t-rv">${ks.map(k => { const c = p.cells[k], st = SMAP[c.s]; return `<button type="button" class="rvchip" data-kind="p" data-id="${p.id}" data-col="${k}" style="--rv:${st.bg};--rvfg:${st.fg}" title="${esc(colCfg(k).h + ': ' + st.label + (c.t ? ' — ' + c.t : '') + ' · tap to update')}"><b>${esc(st.g)}</b>${esc(colCfg(k).h)}${c.t ? `<span>${esc(c.t)}</span>` : ''}</button>`; }).join('')}</div>`; }
+  return `<div class="tc t-rv">${ks.map(k => { const c = p.cells[k], st = stOf(k, c.s) || SMAP.R; return `<button type="button" class="rvchip" data-kind="p" data-id="${p.id}" data-col="${k}" style="--rv:${st.bg};--rvfg:${st.fg}" title="${esc(colCfg(k).h + ': ' + st.label + (c.t ? ' — ' + c.t : '') + ' · tap to update')}"><b>${esc(st.g)}</b>${esc(colCfg(k).h)}${c.t ? `<span>${esc(c.t)}</span>` : ''}</button>`; }).join('')}</div>`; }
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('.rvchip'); if(!b) return; e.preventDefault(); e.stopPropagation(); openPop(b); }, true);
 // a new admit's Note, Visit and Handoff follow the Admissions tab: done there → done on the census (and undone if it's undone there)
 const ADMIT_SYNC = [
@@ -3071,7 +3090,7 @@ const ADMIT_SYNC = [
   {k:'vst', from:'visit', done:t => t === 'Yes' || t === 'N/A', on:c => !!c.t, set:c => { c.t = 'Yes'; }, clear:c => { c.t = ''; }},
   {k:'handoff', from:'handoff', done:t => ['Signed', 'N/A'].includes(t), on:c => !!c.t, set:c => { c.t = 'Yes'; }, clear:c => { c.t = ''; }}];
 // after a board is loaded: bring derived ticks up to date (new-admit Note / Visit / Handoff, auto pre-charted) and save if anything changed
-function afterLoad(){ try{ const before = JSON.stringify(state); syncAdmitNotes(); autoPc(); try{ syncLabTasks(null); }catch(e){ console.warn("lab sync", e); } if(JSON.stringify(state) !== before) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} }
+function afterLoad(){ try{ const before = JSON.stringify(state); stMigrate(); syncAdmitNotes(); autoPc(); try{ syncLabTasks(null); }catch(e){ console.warn("lab sync", e); } if(JSON.stringify(state) !== before) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} }
 function syncAdmitNotes(){
   state.patients.forEach(p => { if(p.status !== 'New') return; const a = admitOf(p); if(!a) return;
     ADMIT_SYNC.forEach(m => { const c = p.cells[m.k], ac = a.cells[m.from]; if(!c || !ac) return;
@@ -3515,7 +3534,7 @@ function cellHTML0(cell, col, kind, id, ri, ci, ro){
     return `<div class="tc t-ldt ldt-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}${txt && goneH ? ' · ' : ''}${goneH}</span>${ldtItems(cell).length ? `<button type="button" class="avbtn" data-avbody="${id}" data-kind="${kind}" title="Body map — where each line is and how long it's been in" aria-label="Body map">${AV_ICON}</button>` : ''}</div>`;
   }
   const statusy = isStatusType(col.type);
-  const st = statusy ? SMAP[cell.s] : null;
+  const st = statusy ? stOf(col.k, cell.s) : null;
   const style = st ? `background:${st.bg};color:${st.fg}` : '';
   let txt = cell.t, ocls = '';
   if(col.type === 'date' && isISO(txt)) txt = fmtShort(txt);
@@ -4421,7 +4440,7 @@ function renderChromeInner(){
   { const allSc = `<a href="#" class="sclink" data-sc-open>⌨ All shortcuts ${scLabel('help') || ''}</a>`, tab = ui.tab;
     const chk = [['Signed','green','S'],['Pended','orange','P'],['Incomplete','red','I'],['N/A','grey','N']];
     $('#legend').innerHTML = tab === 'census'
-      ? `<b style="color:var(--ink)">Task status:</b>` + STATES.map((s,i) => `<span class="lg" title="Key ${i+1}"><i style="background:${s.bg};color:${s.fg}">${s.g}</i>${esc(s.label)} <kbd class="lgk">${i+1}</kbd></span>`).join('')
+      ? `<b style="color:var(--ink)">Status:</b>` + [['#34A853','Reviewed / complete'],['#FBBC04','Ordered'],['#FFB74D','Pending'],['#E8710A','Revisit'],['#EA4335','Panic'],['#9900FF','ALOC'],['#999999','N/A']].map(([c, l]) => `<span class="lg"><i style="background:${c}"></i>${l}</span>`).join('') + `<span class="lg muted">each column’s choices are numbered in its pop-up</span>`
         + `<span class="keys">Click a cell to edit · <kbd>Shift</kbd>+click task = Complete · arrows move · <kbd>1</kbd>–<kbd>9</kbd> pick status/option · <kbd>Del</kbd> clear · <kbd>Enter</kbd> edit · <kbd>Ctrl/⌘ Z</kbd> undo · <kbd>Ctrl K</kbd> command bar · ${allSc}</span>`
       : tab === 'admits' || tab === 'discharges'
       ? `<b style="color:var(--ink)">Checklist:</b>` + chk.map(([l, c, k]) => `<span class="lg" title="In a box, type ${k} to pick ${l}"><span class="lgchip oc-${c}">${esc(l)}</span><kbd class="lgk">${k}</kbd></span>`).join('')
@@ -4507,7 +4526,8 @@ function openPop(cellEl, focusEditor=false){
   const optKey = kind==='p' ? k : col.from;   // which column's option list to edit
   let body = '';
   if(statusy){
-    body += `<div class="chips">${STATES.map((s,i) => `<button class="chip ${cell.s===s.k?'on':''}" data-s="${s.k}"><i style="background:${s.bg};color:${s.fg}">${i+1}</i>${esc(s.label)}</button>`).join('')}</div>`;
+    const ss = stSet(col.k), legacy = cell.s && !ss.some(x => x.k === cell.s) ? SMAP[cell.s] : null;
+    body += `<div class="chips">${ss.map((s,i) => `<button class="chip ${cell.s===s.k?'on':''}" data-s="${s.k}"><i style="background:${s.bg};color:${s.fg}">${i+1}</i>${esc(s.label)}</button>`).join('')}</div>${legacy ? `<div class="muted small">Currently “${esc(legacy.label)}” (an old status) — pick one above.</div>` : ''}`;
   }
   if(col.type === 'choice' && k === 'diet'){
     const dp = dietParse(cell.t);
@@ -4562,7 +4582,7 @@ function openPop(cellEl, focusEditor=false){
     const rv = statusy ? [] : recentVals(col.k).filter(v => v !== cell.t);
     body += `<div class="ed"><input type="text" data-ed value="${esc(cell.t)}" placeholder="${statusy?'Comment (optional)':'Type here'}" enterkeyhint="done" ${rv.length ? 'list="edRecent"' : ''}>${rv.length ? `<datalist id="edRecent">${rv.map(v => `<option value="${esc(v)}">`).join('')}</datalist>` : ''}</div>`;
   }
-  const left = statusy ? `<button class="btn sm" data-clear>Clear status</button>` : `<button class="btn sm" data-clearval>Clear</button>`;
+  const left = statusy ? `<button class="btn sm" data-clear>Clear status</button>` : col.type === 'io' ? `<span style="display:flex;gap:6px"><button class="btn sm" data-clearval>Clear</button><button class="btn sm ${cell.t === 'N/A' ? 'primary' : ''}" data-iona title="I/O not being tracked for this patient">N/A</button></span>` : `<button class="btn sm" data-clearval>Clear</button>`;
   const editLink = (hasOpts(col.type) && optKey) ? `<button class="linkbtn" data-editopts="${optKey}">Edit options…</button>` : '';
   el.innerHTML = `<h4><b>${esc(col.h)}</b> · ${esc(who)}</h4>${body}
     <div class="row2">${left}<span style="display:flex;gap:8px;align-items:center">${editLink}<button class="btn sm primary" data-done>Done</button></span></div>`;
@@ -4611,6 +4631,7 @@ function openPop(cellEl, focusEditor=false){
     if(b.dataset.pday !== undefined) return;
     if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' || col.type === 'cons' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:'', items:[]} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
     if(b.hasAttribute('data-today')){ finish({t:state.boardDate}); return; }
+    if(b.hasAttribute('data-iona')){ finish({t:'N/A', s:'', in:undefined, out:undefined, goal:undefined}); return; }
     const labRe = edit => { const box = el.querySelector('.labchips'); if(!box) return; const tmp = document.createElement('div'); tmp.innerHTML = labChipsHTML(edEl.value, edit);
       const row = el.querySelector('.labaddrow'); if(row) row.remove(); box.replaceWith(...tmp.childNodes); const ni = el.querySelector('[data-labnew]'); if(ni){ ni.focus(); ni.addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); ev.stopPropagation(); el.querySelector('[data-labaddgo]').click(); } }); } };
     if(b.hasAttribute('data-labadd')){ labRe(!el.querySelector('.labaddrow')); return; }
@@ -4686,7 +4707,7 @@ function onCellKey(e){
   else if(e.key === 'ArrowUp'){ e.preventDefault(); move(-1,0); }
   else if(/^[1-9]$/.test(e.key)){
     const cfg = colOf(kind,col), n = +e.key-1;
-    if(isStatusType(cfg.type)){ if(STATES[n]){ e.preventDefault(); setCell(kind,id,col,{s:STATES[n].k}); } }
+    if(isStatusType(cfg.type)){ const ss = stSet(col); if(ss[n]){ e.preventDefault(); setCell(kind,id,col,{s:ss[n].k}); } }
     else if(cfg.type === 'io'){ e.preventDefault(); openPop(c); setTimeout(() => { const f = document.querySelector('.pop [data-ioin]'); if(f){ f.value = e.key; f.dispatchEvent(new Event('input', {bubbles:true})); } }, 10); }   // typing a number starts the intake
     else if(cfg.type === 'choice'){ if(cfg.opts[n]){ e.preventDefault(); setCell(kind,id,col,{t:col === 'diet' ? dietJoin(cfg.opts[n].label, dietParse(rowOf(kind,id).cells.diet.t).mods) : cfg.opts[n].label}); } }
   }
@@ -4855,7 +4876,7 @@ function evShowAll(){ const ps = state.patients.filter(p => evList(p).length);
 /* v316: Present — the patient laid out the way you'd present them, read-only, big type */
 function presentHTML(p){
   const hd = hospDay(p), sec = (t, b) => b ? `<section class="pz-sec"><h4>${t}</h4>${b}</section>` : '';
-  const val = k => { const c = p.cells[k]; if(!c || !COLMAP[k] || colHidden(k)) return ''; const cfg = colCfg(k); const st = isStatusType(cfg.type) && SMAP[c.s];
+  const val = k => { const c = p.cells[k]; if(!c || !COLMAP[k] || colHidden(k)) return ''; const cfg = colCfg(k); const st = isStatusType(cfg.type) && stOf(k, c.s);
     if(cfg.type === 'date') return isISO(c.t) ? fmtShort(c.t) : c.t === 'Unknown' ? 'Unknown' : ''; return [st && st.label, c.t].filter(Boolean).join(' — '); };
   const drips = gttShown(p.cells.gtt, p).map(i => i.k || i);
   const lines = COLMAP.avatar ? ldtActive(p.cells.avatar).map(it => `<li><b>${esc(ldtLabel(it))}</b>${isISO(it.d) ? ` <span class="muted">day ${daysBetween(it.d, state.boardDate)} · placed ${esc(fmtShort(it.d))}</span>` : ''}</li>`) : [];
@@ -5567,7 +5588,7 @@ function toCSV(){
   const head = ['#','Bed','Intern','Problem','Status','Admitted','Flags', ...ALL_COLS.map(c => colCfg(c.k).h)];
   const q = v => `"${String(v??'').replace(/"/g,'""')}"`;
   const rows = state.patients.map((p,i) => [i+1, p.bed, p.intern, p.problem, p.status, p.admitDate, flagsFor(p).map(f=>f[1]).join('; '),
-    ...ALL_COLS.map(c => { const x = p.cells[c.k]; const ty = colCfg(c.k).type; if(ty === 'ldt') return ldtSummary(x); if(ty === 'gtt') return gttSummary(x); if(ty === 'proc') return procSorted(x).map(it => [it.t, isISO(it.d) ? it.d : ''].filter(Boolean).join(' · ')).join('; '); if(ty === 'checkNote') return [x.c ? '✓' : '', x.t].filter(Boolean).join(' '); return [isStatusType(ty) ? SMAP[x.s]?.label : '', x.t].filter(Boolean).join(' | '); })]);
+    ...ALL_COLS.map(c => { const x = p.cells[c.k]; const ty = colCfg(c.k).type; if(ty === 'ldt') return ldtSummary(x); if(ty === 'gtt') return gttSummary(x); if(ty === 'proc') return procSorted(x).map(it => [it.t, isISO(it.d) ? it.d : ''].filter(Boolean).join(' · ')).join('; '); if(ty === 'checkNote') return [x.c ? '✓' : '', x.t].filter(Boolean).join(' '); return [isStatusType(ty) ? stOf(c.k, x.s)?.label : '', x.t].filter(Boolean).join(' | '); })]);
   return [head, ...rows].map(r => r.map(q).join(',')).join('\r\n');
 }
 function download(name, text, type){
@@ -6038,7 +6059,7 @@ function scRun(a, ctx){
     case 'copy': {
       const cfg = colOf(kind, col), cell = rowOf(kind, id).cells[col];
       scClip = {type:cfg.type, cell:clone(cell), h:cfg.h};
-      const st = isStatusType(cfg.type) && SMAP[cell.s];
+      const st = isStatusType(cfg.type) && stOf(col, cell.s);
       const txt = cfg.type === 'ldt' ? ldtSummary(cell) : cfg.type === 'gtt' ? gttSummary(cell) : cfg.type === 'cons' ? consSummary(cell) : cfg.type === 'proc' ? procSummary(cell) : [st && st.label, cfg.type === 'checkNote' ? (cell.c ? '✓' : '') : '', cfg.type === 'check' ? (cell.t ? '✓' : '') : cell.t].filter(Boolean).join(' · ');
       try{ navigator.clipboard && navigator.clipboard.writeText(txt).catch(() => {}); }catch(e){}
       toast(`Copied ${cfg.h}${txt ? ': ' + txt : ' (empty)'}`); return; }
@@ -7545,7 +7566,7 @@ function cmdCur(side, r, k){
   const c = r.cells[k]; if(!c) return '';
   if(side === 'a'){ const col = ADMIT_COLMAP[k]; return col.check ? (c.t === 'Yes' ? '✓' : '☐') : (c.t || '—'); }
   const cfg = colCfg(k);
-  if(isStatusType(cfg.type)) return [c.s && SMAP[c.s] ? SMAP[c.s].label : '', c.t].filter(Boolean).join(' · ') || '—';
+  if(isStatusType(cfg.type)) return [stOf(k, c.s) ? stOf(k, c.s).label : '', c.t].filter(Boolean).join(' · ') || '—';
   if(cfg.type === 'check') return c.t ? '✓' : '☐';
   if(cfg.type === 'checkNote') return (c.c ? '✓' : '☐') + (c.t ? ' ' + c.t : '');
   if(cfg.type === 'date') return c.t ? (isISO(c.t) ? fmtShort(c.t) : c.t) : '—';
@@ -7565,9 +7586,13 @@ function cmdDate(s){
   m = v.match(/^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/); if(m){ const y = m[3] ? (m[3].length === 2 ? 2000 + +m[3] : +m[3]) : +b.slice(0, 4); return `${y}-${pad(+m[1])}-${pad(+m[2])}`; }
   return null;
 }
-const CMD_STATE_WORDS = {complete:'C', done:'C', c:'C', ok:'C', revisit:'R', followup:'R', fu:'R', r:'R', pending:'P', inprocess:'P', p:'P', ordered:'O', o:'O', panic:'X', needsorder:'X', x:'X',
+const CMD_STATE_WORDS = {reviewed:'C', rev:'C', complete:'C', done:'C', c:'C', ok:'C', wnl:'C', revisit:'R', followup:'R', fu:'R', r:'R', pending:'P', inprocess:'P', p:'P', ordered:'O', o:'O', panic:'X', needsorder:'X', x:'X',
   na:'N', holiday:'N', notapplicable:'N', n:'N', comments:'S', seecomments:'S', s:'S', aloc:'A', a:'A'};
-const cmdState = w => { const v = nw(w); if(/^[1-8]$/.test(v)) return STATES[+v - 1].k; if(CMD_STATE_WORDS[v]) return CMD_STATE_WORDS[v]; const s = STATES.find(x => nw(x.label).startsWith(v) && v.length >= 3); return s ? s.k : null; };
+const cmdState = (w, col) => { const v = nw(w), ss = stSet(col); let k = null;
+  if(/^[1-9]$/.test(v)) return ss[+v - 1] ? ss[+v - 1].k : null;
+  const s = ss.find(x => nw(x.label).startsWith(v) && v.length >= 3); if(s) return s.k;
+  if(CMD_STATE_WORDS[v]) k = CMD_STATE_WORDS[v]; if(!k) return null;
+  return ss.some(x => x.k === k) ? k : ((ST_MAP[col] || ST_MAP._)[k] || null); };
 // Work out what "<bed> <column> <value…>" means. Returns {html, run} or {err}
 const cmdAlready = (who, what, now) => ({already:true, err:`Already done — ${who} · <b>${what}</b> is already ${now}. Nothing changed.`});
 function cmdSetPlan(ent, f, vals){
@@ -7623,11 +7648,11 @@ function cmdSetPlan(ent, f, vals){
     : ({html:`${who('p')} · <b>${esc(h)}</b> → ${txt}`, run:() => { setCell('p', p.id, k, patch); return `${p.bed}: ${h} → ${txt.replace(/<[^>]+>/g, '')}`; }, row:['p', p.id]});
   if(isStatusType(cfg.type)){
     if(CMD_NO.has(w0) && w0 !== 'n') return done({s:'', t:''}, 'cleared');
-    const st = !raw ? 'C' : cmdState(v0);
-    if(cfg.type === 'statusChoice' && (!st || (raw && !cmdState(v0)))){ const o = cmdOpt(cfg.opts.map(x => x.label), raw); if(o) return done({t:o}, esc(o)); }
-    if(!st) return {err:`${esc(h)}: complete, revisit, pending, ordered, panic, N/A, comments, ALOC — or 1–8`};
+    const st = !raw ? 'C' : cmdState(v0, k);
+    if(cfg.type === 'statusChoice' && (!st || (raw && !cmdState(v0, k)))){ const o = cmdOpt(cfg.opts.map(x => x.label), raw); if(o) return done({t:o}, esc(o)); }
+    if(!st) return {err:`${esc(h)}: ${stSet(k).map((x, i) => `${i + 1} ${esc(x.label.toLowerCase())}`).join(', ')}`};
     const note = st && raw ? vals.slice(1).join(' ').trim() : '';
-    return done(note ? {s:st, t:note} : {s:st}, `${esc(SMAP[st].label)}${note ? ` · “${esc(note)}”` : ''}`);
+    return done(note ? {s:st, t:note} : {s:st}, `${esc(stOf(k, st).label)}${note ? ` · “${esc(note)}”` : ''}`);
   }
   if(cfg.type === 'check'){ const on = !raw || CMD_YES.has(w0) ? true : CMD_NO.has(w0) ? false : null; if(on === null) return {err:`For ${esc(h)}, use complete or undo`}; return done({t:on ? 'Yes' : ''}, on ? '✓ ticked' : '☐ unticked'); }
   if(cfg.type === 'checkNote'){ if(CMD_NO.has(w0)) return done({c:false}, '☐ unticked'); const note = CMD_YES.has(w0) ? vals.slice(1).join(' ').trim() : raw; return done(note ? {c:true, t:note} : {c:true}, `✓ ticked${note ? ` · “${esc(note)}”` : ''}`); }
@@ -8000,7 +8025,7 @@ function cmdKey(e){
 function cmdHelp(){
   const ex = [['ED15L visit complete', 'Tick Visit (also: ED15L visit — no word needed)'], ['ED15L visit undo', 'Untick it'], ['ED-21 medrec pended', 'Set an Admissions dropdown — signed, pended, incomplete, N/A, clear'],
     ['ED-21 dvt heparin', 'Diet / DVT PPx — any option, first letters are enough'], ['ED-21 team GM2', 'Admission fields: team, timein, arrived, problem, from'], ['ED-21 bed 14E05/01', 'New bed (ED → floor) — the tasks move with the patient'], ['14E12/02 arrived now', 'Tisch: patient is on the floor (or arrived 21:40)'],
-    ['7W05 vitals done', 'Census status — complete, revisit, pending, ordered, panic, N/A, comments, ALOC, or 1–8'], ['7W05 io revisit low UOP', 'Status with a note'], ['7W05 edd tomorrow', 'Dates — today, tomorrow, +2, 10/30'],
+    ['7W05 vitals done', 'Census status — the words or numbers in that column’s pop-up (reviewed, revisit, pending, panic, N/A, ALOC…)'], ['7W05 labrev revisit K 3.2', 'Status with a note'], ['7W05 edd tomorrow', 'Dates — today, tomorrow, +2, 10/30'],
     ['7W05 dest home', 'Census dropdowns'], ['10N62 PIV L forearm 11/23/26', 'Add a line / drain / tube to the Avatar (picc, foley, art, cvc R IJ…; no date = today)'], ['10N62 foley out', 'Mark it removed (add a date if it wasn’t today)'], ['10N62 cards 11/25', 'Consults: add or update the last note date (no date = today)'], ['10N62 renal off', 'Consult signed off (… on to undo, … remove to delete)'], ['10N62 gtt levo', 'Start a drip (… off to stop it)'], ['10N62 event hypotensive → 500 LR', 'Night boards: log an overnight event (stamped now; start with 02:10 for another time)'], ['events', 'All overnight events, ready to copy for handoff'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['pc 7W05', 'Pre-charted ✓ (just “pc” shows who’s left)'], ['outstanding', 'What’s left to check off, patient by patient — or “outstanding am”, “outstanding 7W05”'], ['snooze ED-21 lactate 30', 'Push a task back'],
     ['admit ED-14 sepsis', 'New admission'], ['hold ED-30 CAP from Dr K', 'New moonlighter hold'], ['go census', 'Change tab — overview, census, admits, discharges, transfers, tasks, history, analytics, log (just “tasks” or “go adm” works too)']];
   modal(`<h3>Command bar</h3><p class="muted" style="margin-top:-4px">Open with <kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>:</kbd>. Beds can be typed without dashes or slashes (<b>ed15l</b>, <b>14e1202</b>); column names can be shortened (<b>ed</b>, <b>pl</b>, <b>mr</b>, <b>so</b>). You see what will happen before Enter, and <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes it.</p>
@@ -9055,6 +9080,9 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:321, d:'2026-11-26', items:['Colors: <b>Pending / in process</b> is light orange and <b>Revisit</b> is dark orange (Vitals, FSG, Lab Rev, Imaging).', '<b>Note</b> types are Progress, H&amp;P, Discharge, Transfer — Pending and ALOC are statuses now (a note typed “Pending” or “ALOC” was switched to that status).']},
+  {v:320, d:'2026-11-26', items:['<b>Lab Rev / Imaging</b> choices are now 1 Reviewed · 2 Ordered · 3 Pending / in process · 4 Revisit · 5 Panic · 6 N/A.']},
+  {v:319, d:'2026-11-26', items:['<b>Simpler status choices</b> — the shared 1–8 legend is gone; each column has its own short list (comments still work): <b>Vitals / FSG</b> 1 Reviewed · 2 Revisit · 3 Panic · 4 N/A. <b>Lab Rev / Imaging</b> 1 Reviewed · 2 Pending / in process · 3 Revisit · 4 Panic · 5 N/A. <b>Note</b> 1 Complete · 2 Pending / in process · 3 ALOC · 4 N/A.', '<b>I/O</b> has an <b>N/A</b> button next to Clear.', 'Old statuses a column no longer has were moved to the nearest one (e.g. Ordered → Pending, See comments → Revisit; the comment is kept).']},
   {v:318, d:'2026-11-26', items:['<b>🏷 Problem chips</b>: the Problem column is now a list of short problems instead of a free-text one-liner — tap it, type an abbreviation (adhf, aki, hypo k, af, dka, J44.1…) and tap to add. ~320 curated problems, each with its ICD-10 code checked against the CMS FY2027 list; browse by system too. First chip is the principal problem ★. Anything not on the list can be added as your own short chip (no identifiers). Same on the census, Admissions and both Rounds views. Older one-liners show as chips split at commas.']},
   {v:317, d:'2026-11-26', items:['<b>🌙 Overnight events</b> (night boards): a log on each patient in Rounds — type what happened and press Enter; it’s stamped with the time (start with 02:10 to backdate). 🌙 count beside the bed on the census; also in 🗣 Present.', 'Command bar: <b>10N62 event hypotensive → 500 LR</b>; <b>events</b> shows every patient’s overnight events with <b>📋 Copy for handoff</b> (also in ✓ Wrap up).']},
   {v:316, d:'2026-11-26', items:['<b>Add to the lists yourself</b>: a new consult service or drip you type in now stays in the list for every patient (✕ on a dashed chip removes your own); dropdown columns like Disposition have <b>＋ Add a choice to this list</b>.', '<b>Stale consult notes</b>: an active consult with no note for 2+ days shows orange on the census and in Rounds.', '<b>Command bar</b>: consults — <b>10N62 cards 11/25</b>, <b>10N62 renal off</b> (… on / … remove); drips — <b>10N62 gtt levo</b>, <b>10N62 gtt levo off</b>.', '<b>🗣 Present</b> (Rounds): the patient laid out to present — one-liner, drips, lines with day counts, consults, basics, talking points, what’s still open and tasks — with ← → through the list.', '<b>Safer restores</b>: if a backup is older than the data already on this device, Plexus says so (with both times) before replacing anything.']},
