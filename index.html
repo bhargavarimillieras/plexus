@@ -626,6 +626,33 @@ body.tkfull #hclocks{margin-right:4px}
 .setmodal .actions{margin:0;padding:12px 20px;border-top:1px solid var(--line)}
 body.touch .setnavb{padding:11px 10px}
 @media (max-width:719px){.setwrap{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}.setnav{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.setnavb{width:auto;flex:none;margin:0 4px 0 0}.setnavb .snt span{display:none}.modal.setmodal{height:92vh}}
+/* v317 overnight events */
+.rs-evcard{border-left:4px solid #5C6BC0}.evlist{display:flex;flex-direction:column;gap:4px;margin:4px 0 8px}
+.evrow{display:grid;grid-template-columns:46px 1fr auto;gap:8px;align-items:baseline;font-size:14px}.evrow b{font:700 13px ui-monospace,Menlo,monospace;color:#3949AB}
+.evrow .ib{opacity:.5}.evrow:hover .ib{opacity:1}
+.evin{width:100%;box-sizing:border-box;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;font:14px inherit;font-family:inherit;background:var(--panel);color:var(--ink)}
+.stev{font-style:normal;font-size:10px;margin-left:3px}
+.evall{border-top:1px solid var(--line);padding:8px 0}.evall:first-of-type{border-top:0}.evbed{margin-bottom:4px}
+@media (prefers-color-scheme: dark){.evrow b{color:#9fa8da}}
+/* v316 */
+.conschipw{display:inline-flex;position:relative}.conschipw[hidden]{display:none}.conschip.mine{border-style:dashed}
+.conschipx{position:absolute;top:-6px;right:-6px;width:17px;height:17px;border-radius:50%;border:0;background:#d93025;color:#fff;font-size:9px;line-height:17px;padding:0;cursor:pointer;display:none}
+.conschipw:hover .conschipx,body.touch .conschipx{display:block}
+.cons-stale{background:#FFE8C7;color:#8a4b00;border-radius:4px;padding:0 3px}
+.conspill.stale{background:#FFE8C7}.conspill.stale small{color:#8a4b00}
+@media (prefers-color-scheme: dark){.cons-stale,.conspill.stale{background:#4a3313;color:#ffcf8a}}
+.optadd{margin-top:8px}.optaddrow{display:flex;gap:6px;margin-top:6px}.optaddrow[hidden]{display:none}.optaddrow input{flex:1;min-width:0}
+.rs-present{margin-right:6px}
+.modal.pzmodal{max-width:1000px}.pz{max-height:72vh;overflow:auto}
+.pz-head{display:flex;gap:18px;align-items:center;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:12px}
+.pz-bed{font:800 34px ui-monospace,Menlo,monospace}.pz-one{font-size:20px;font-weight:700}
+.pz-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.pz-sec{border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:16px}.pz-sec h4{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+.pz-sec ul{margin:0;padding-left:18px}.pz-sec li{margin:3px 0}.pz-sec dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0}.pz-sec dt{color:var(--muted)}.pz-sec dd{margin:0;font-weight:600}
+.pz-chips{display:flex;flex-wrap:wrap;gap:6px}.pz-off b{text-decoration:line-through;opacity:.6}.pz-stale b{background:#FFE8C7;border-radius:4px;padding:0 3px}
+.pz-talk{background:#FFFBEA;border-radius:8px;padding:8px 10px}@media (prefers-color-scheme: dark){.pz-talk{background:#2b2717}}
+.bkolder{background:#FCE8E6;border:1px solid #F4B4AE;color:#8C1D18;border-radius:10px;padding:10px 12px;margin:10px 0;line-height:1.5}
+@media (prefers-color-scheme: dark){.bkolder{background:#3c1714;border-color:#6b2a25;color:#f6b8b2}}
 /* v304 Rounds */
 .rs-left{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:20px;padding:0 6px;border-radius:10px;background:#eef0f4;color:#3c4452;font:800 11.5px/1 -apple-system,BlinkMacSystemFont,sans-serif;box-sizing:border-box}
 .rs-left.near{background:#FFE8C7;color:#8a4b00}.rs-left.ok{background:#DDF3E3;color:#137333}.rs-left.new{background:#E8F0FE;color:#174ea6;font-size:10px}
@@ -1907,7 +1934,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '315';
+const APP_VERSION = '317';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3300,9 +3327,9 @@ const GTT_ALIAS = {Epinephrine:'epi adrenaline', Norepinephrine:'norepi levophed
 const gttRowHTML = (n, on) => `<label class="gttrow ${on ? 'on' : ''}" data-q="${esc((n + ' ' + (GTT_SHORT[n] || '') + ' ' + (GTT_ALIAS[n] || '')).toLowerCase())}"><input type="checkbox" data-gtt="${esc(n)}" ${on ? 'checked' : ''}><span class="gttn"><i class="gttdot g-${gttCat(n)}"></i>${esc(n)}</span></label>`;
 function gttPopHTML(cell, p){
   const items = gttItems(cell), find = n => items.find(i => i.k.toLowerCase() === n.toLowerCase());
-  const known = new Set(GTT_GROUPS.flatMap(g => g[1].map(x => x.toLowerCase()))), extra = items.filter(i => !known.has(i.k.toLowerCase()));
+  const known = new Set(GTT_GROUPS.flatMap(g => g[1].map(x => x.toLowerCase()))), extra = [...items.filter(i => !known.has(i.k.toLowerCase())).map(i => i.k), ...gttExtra()].filter((x, i, a) => a.findIndex(y => y.toLowerCase() === x.toLowerCase()) === i).map(k => ({k}));
   const html = GTT_GROUPS.map(([h, list]) => `<div class="ldtgrp">${esc(h)}</div>${list.map(n => gttRowHTML(n, find(n))).join('')}`).join('')
-    + `<div class="ldtgrp gttoth" ${extra.length ? '' : 'hidden'}>Other</div>${extra.map(it => gttRowHTML(it.k, true)).join('')}`;
+    + `<div class="ldtgrp gttoth" ${extra.length ? '' : 'hidden'}>Other · added by you</div>${extra.map(it => gttRowHTML(it.k, !!find(it.k))).join('')}`;
   const lock = hepOn(p) ? `<div class="gttlock"><span class="gttn"><i class="gttdot g-oth"></i><b>Heparin</b></span><span class="muted">HEP GTT in DVT PPx — change it there</span><span class="gttlk">🔒</span></div>` : '';
   return `${lock}<div class="gttsearch"><input type="search" data-gttq placeholder="Search or add a drip (levo, prop…)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button class="btn sm" data-gttadd hidden>Add</button><button class="btn sm ${cell.t === 'N/A' ? 'primary' : ''}" data-gttna title="No drips running">N/A</button></div>
     <div class="ldtlist gttlist">${html}<div class="muted gttnone" hidden></div></div>
@@ -3332,6 +3359,8 @@ function wireGttPop(el){
 }
 function commitGtt(p, r, el){
   const seen = new Set(), items = [];
+  { const known = new Set(GTT_GROUPS.flatMap(g => g[1].map(x => x.toLowerCase()))), ex = gttExtra(), add = [...el.querySelectorAll('.gttrow [data-gtt]')].filter(c => c.checked && !known.has(c.dataset.gtt.toLowerCase()) && !ex.some(x => x.toLowerCase() === c.dataset.gtt.toLowerCase())).map(c => c.dataset.gtt);
+    if(add.length) extraSet('gttExtra', [...ex, ...add]); }
   el.querySelectorAll('.gttrow').forEach(l => { const cb = l.querySelector('[data-gtt]'), k = cb.dataset.gtt; if(!cb.checked || seen.has(k.toLowerCase())) return; seen.add(k.toLowerCase());
     items.push({k}); });
   if(JSON.stringify(items) !== JSON.stringify(gttItems(r.cells[p.k])) || (items.length && r.cells[p.k].t === 'N/A')) setCell(p.kind, p.id, p.k, {items, s:'', t:''});
@@ -3344,40 +3373,52 @@ const CONS_LIST = [['Anesthesia', 'Anesthesia', 'anes'], ['Cardiology', 'Cards',
   ['Psychiatry', 'Psych', 'psych cl'], ['Pulmonology', 'Pulm', 'pulm'], ['Rheumatology', 'Rheum', 'rheum'], ['Surgery', 'Surg', 'surg gen surg acs'], ['Toxicology', 'Tox', 'tox poison'], ['Urology', 'Uro', 'uro gu']]
   .sort((a, b) => a[0].localeCompare(b[0]));
 const CONS_SHORT = Object.fromEntries(CONS_LIST.map(c => [c[0], c[1]]));
+/* v316: your own additions to the Consults and GTT lists — kept on this device and in each board's settings, so they travel in backups */
+function extraList(key){ let a = []; try{ a = JSON.parse(localStorage.getItem(`${KEY_PREFIX}.${key}`) || '[]'); }catch(e){} const b = (state && state.settings && state.settings[key]) || [];
+  const seen = new Set(), out = []; [...a, ...b].forEach(x => { x = String(x || '').trim(); if(x && !seen.has(x.toLowerCase())){ seen.add(x.toLowerCase()); out.push(x); } }); return out.sort((x, y) => x.localeCompare(y)); }
+function extraSet(key, list){ const L = [...new Set(list.map(x => String(x).trim()).filter(Boolean))]; try{ localStorage.setItem(`${KEY_PREFIX}.${key}`, JSON.stringify(L)); }catch(e){}
+  if(state && state.settings && JSON.stringify(state.settings[key] || []) !== JSON.stringify(L)) mutate(() => { state.settings[key] = L; }, {render:false, label:'Updated your list', cat:'system'}); }
+const consExtra = () => extraList('consExtra').filter(n => !CONS_LIST.some(c => c[0].toLowerCase() === n.toLowerCase()));
+const consAll = () => [...CONS_LIST.map(c => c[0]), ...consExtra()].sort((a, b) => a.localeCompare(b));
+const gttExtra = () => extraList('gttExtra').filter(n => !GTT_GROUPS.some(g => g[1].some(x => x.toLowerCase() === n.toLowerCase())));
 const consItems = cell => (cell && Array.isArray(cell.items)) ? cell.items : [];
 const consActive = cell => consItems(cell).filter(i => !i.off);
 // v315: display order — most recent note first (undated after), signed-off services last
 const consSorted = cell => consItems(cell).map((it, i) => ({it, i})).sort((a, b) => (!!a.it.off - !!b.it.off) || ((isISO(b.it.d) ? b.it.d : '') .localeCompare(isISO(a.it.d) ? a.it.d : '')) || a.i - b.i).map(x => x.it);
 const consShort = k => CONS_SHORT[k] || k;
+const OPTADD_HTML = `<div class="optadd"><button type="button" class="linkbtn" data-optaddshow>＋ Add a choice to this list</button><div class="optaddrow" hidden><input type="text" data-optnew placeholder="New choice" enterkeyhint="done" autocomplete="off"><button type="button" class="btn sm primary" data-optadd>Add &amp; pick</button></div></div>`;
 const consNoteAge = it => isISO(it.d) ? daysBetween(it.d, state.boardDate) : null;
+const consStale = it => !it.off && isISO(it.d) && daysBetween(it.d, state.boardDate) >= 2;   // v316: no note for 2+ days
 const consSummary = cell => consSorted(cell).map(i => `${i.k}${isISO(i.d) ? ' (note ' + fmtShort(i.d) + ')' : ''}${i.off ? ' — signed off' + (isISO(i.off) ? ' ' + fmtShort(i.off) : '') : ''}`).join('; ');
 const consQ = n => (n + ' ' + consShort(n) + ' ' + ((CONS_LIST.find(c => c[0] === n) || [])[2] || '')).toLowerCase();
 const consRowHTML = (n, it) => `<div class="consrow ${it && it.off ? 'off' : ''}" data-q="${esc(consQ(n))}">
   <label class="consname" title="${esc(n)}"><input type="checkbox" data-cons="${esc(n)}" checked><b>${esc(consShort(n))}</b></label>
   <label class="consnote" title="Date of their last note"><span>Last note</span><input type="date" data-consd value="${esc(it && isISO(it.d) ? it.d : '')}" max="${state.boardDate}"></label>
   <button type="button" class="consoff ${it && it.off ? 'on' : ''}" data-consoff data-offd="${esc(it && it.off ? it.off : '')}" title="${it && it.off ? 'Signed off ' + fmtShort(it.off) + ' — tap to undo' : 'Tap when they sign off'}">${it && it.off ? '✓ Signed off' : 'Signed off'}</button></div>`;
-const consChipHTML = n => `<button type="button" class="conschip" data-conspick="${esc(n)}" data-q="${esc(consQ(n))}" title="${esc(n)}">${esc(consShort(n))}</button>`;
+const consChipHTML = n => { const mine = !CONS_LIST.some(c => c[0] === n); return `<span class="conschipw"><button type="button" class="conschip ${mine ? 'mine' : ''}" data-conspick="${esc(n)}" data-q="${esc(consQ(n))}" title="${esc(n)}${mine ? ' (added by you)' : ''}">${esc(consShort(n))}</button>${mine ? `<button type="button" class="conschipx" data-consforget="${esc(n)}" title="Remove ${esc(n)} from your list">✕</button>` : ''}</span>`; };
 function consPopHTML(cell){
   const items = consItems(cell), has = n => items.some(i => i.k.toLowerCase() === n.toLowerCase());
   return `<div class="gttsearch"><input type="search" data-consq placeholder="Search or add a service (cards, ID, pall…)" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><button class="btn sm" data-consadd hidden>Add</button></div>
     <div class="consfol">${items.map(it => consRowHTML(it.k, it)).join('')}<div class="muted small consempty" ${items.length ? 'hidden' : ''}>No consults yet — tap a service below.</div></div>
-    <div class="conschips">${CONS_LIST.map(c => c[0]).filter(n => !has(n)).map(consChipHTML).join('')}<span class="muted small gttnone" hidden></span></div>`;
+    <div class="conschips">${consAll().filter(n => !has(n)).map(consChipHTML).join('')}<span class="muted small gttnone" hidden></span></div>`;
 }
 function wireConsPop(el){
   const fol = el.querySelector('.consfol'), chips = el.querySelector('.conschips'), q = el.querySelector('[data-consq]'), addB = el.querySelector('[data-consadd]'), none = chips.querySelector('.gttnone'), empty = fol.querySelector('.consempty');
   const setOff = (b, d) => { b.dataset.offd = d; b.classList.toggle('on', !!d); b.textContent = d ? '✓ Signed off' : 'Signed off'; b.title = d ? 'Signed off ' + fmtShort(d) + ' — tap to undo' : 'Tap when they sign off'; b.closest('.consrow').classList.toggle('off', !!d); };
-  const pick = n => { const ch = [...chips.querySelectorAll('.conschip')].find(c => c.dataset.conspick.toLowerCase() === n.toLowerCase()); if(ch) ch.remove();
+  const pick = n => { const ch = [...chips.querySelectorAll('.conschip')].find(c => c.dataset.conspick.toLowerCase() === n.toLowerCase()); if(ch) ch.closest('.conschipw').remove();
+    if(!consAll().some(x => x.toLowerCase() === n.toLowerCase())) extraSet('consExtra', [...consExtra(), n]);   // a new service stays in your list
     if([...fol.querySelectorAll('[data-cons]')].some(c => c.dataset.cons.toLowerCase() === n.toLowerCase())) return;
     const tmp = document.createElement('div'); tmp.innerHTML = consRowHTML(n); const row = tmp.firstElementChild; fol.insertBefore(row, empty); empty.hidden = true; toast(`${consShort(n)} ✓ — add the date of their last note`); };
   const unpick = row => { const n = row.querySelector('[data-cons]').dataset.cons; row.remove(); empty.hidden = !!fol.querySelector('.consrow');
-    if(CONS_LIST.some(c => c[0] === n)){ const tmp = document.createElement('div'); tmp.innerHTML = consChipHTML(n); const all = [...chips.querySelectorAll('.conschip')], nx = all.find(c => c.dataset.conspick.localeCompare(n) > 0); chips.insertBefore(tmp.firstElementChild, nx || none); } };
+    if(consAll().includes(n)){ const tmp = document.createElement('div'); tmp.innerHTML = consChipHTML(n); const all = [...chips.querySelectorAll('.conschipw')], nx = all.find(c => c.querySelector('.conschip').dataset.conspick.localeCompare(n) > 0); chips.insertBefore(tmp.firstElementChild, nx || none); } };
   fol.addEventListener('change', e => { const cb = e.target.closest('[data-cons]'); if(cb && !cb.checked) unpick(cb.closest('.consrow')); });
   fol.addEventListener('click', e => { const b = e.target.closest('[data-consoff]'); if(!b) return; e.preventDefault(); setOff(b, b.dataset.offd ? '' : state.boardDate); });
-  chips.addEventListener('click', e => { const c = e.target.closest('[data-conspick]'); if(!c) return; pick(c.dataset.conspick); if(q.value){ q.value = ''; filter(); } });
+  chips.addEventListener('click', e => { const fx = e.target.closest('[data-consforget]'); if(fx){ const n = fx.dataset.consforget; extraSet('consExtra', consExtra().filter(x => x !== n)); fx.closest('.conschipw').remove(); toast(`${n} removed from your list`); return; }
+    const c = e.target.closest('[data-conspick]'); if(!c) return; pick(c.dataset.conspick); if(q.value){ q.value = ''; filter(); } });
   const filter = () => { const t = q.value.trim().toLowerCase(); let shown = 0;
-    chips.querySelectorAll('.conschip').forEach(c => { const ok = !t || t.split(/\s+/).every(w => c.dataset.q.split(/[\s/&-]+/).some(x => x.startsWith(w))); c.hidden = !ok; if(ok) shown++; });
+    chips.querySelectorAll('.conschip').forEach(c => { const ok = !t || t.split(/\s+/).every(w => c.dataset.q.split(/[\s/&-]+/).some(x => x.startsWith(w))); c.closest('.conschipw').hidden = !ok; if(ok) shown++; });
     none.hidden = !t || shown > 0; none.textContent = t ? `No service called “${q.value.trim()}” — press Enter or Add to add it.` : ''; addB.hidden = !t || shown > 0; };
-  const add = () => { const n = q.value.trim(); if(!n) return; const vis = [...chips.querySelectorAll('.conschip')].filter(c => !c.hidden);
+  const add = () => { const n = q.value.trim(); if(!n) return; const vis = [...chips.querySelectorAll('.conschip')].filter(c => !c.closest('.conschipw').hidden);
     const ex = vis.find(c => c.dataset.conspick.toLowerCase() === n.toLowerCase() || consShort(c.dataset.conspick).toLowerCase() === n.toLowerCase()) || vis[0];
     pick(ex ? ex.dataset.conspick : n.replace(/^./, ch => ch.toUpperCase())); q.value = ''; filter(); if(!isTouch()) q.focus(); };
   q.addEventListener('input', filter);
@@ -3393,7 +3434,7 @@ function commitCons(p, r, el){
 }
 // Rounds · At a glance: one pill per service — last note date, ✓ when signed off
 const consPills = cell => consSorted(cell).map(it => { const a = consNoteAge(it);
-  return `<span class="conspill ${it.off ? 'off' : ''}" title="${esc(it.k)}${isISO(it.d) ? ' — last note ' + fmtShort(it.d) : ''}${it.off ? ' — signed off' : ''}"><b>${esc(consShort(it.k))}</b>${it.off ? ' <small>signed off</small>' : isISO(it.d) ? ` <small>${a === 0 ? 'today' : fmtShort(it.d)}</small>` : ''}</span>`; }).join('');
+  return `<span class="conspill ${it.off ? 'off' : ''} ${consStale(it) ? 'stale' : ''}" title="${esc(it.k)}${isISO(it.d) ? ' — last note ' + fmtShort(it.d) : ''}${it.off ? ' — signed off' : ''}"><b>${esc(consShort(it.k))}</b>${it.off ? ' <small>signed off</small>' : isISO(it.d) ? ` <small>${a === 0 ? 'today' : fmtShort(it.d)}</small>` : ''}</span>`; }).join('');
 // Rounds · At a glance: one pill per drip, full name
 const gttPills = (cell, p) => gttShown(cell, p).map(it => `<span class="gttpill g-${gttCat(it.k)}" ${it.dvt ? 'title="HEP GTT — from DVT PPx"' : ''}><b>${esc(it.k)}</b>${it.dvt ? ' <small>(DVT PPx)</small>' : ''}</span>`).join('');
 
@@ -3445,7 +3486,7 @@ function cellHTML0(cell, col, kind, id, ri, ci, ro){
   }
   if(col.type === 'cons'){
     const its = consSorted(cell), act = its.filter(i => !i.off), off = its.filter(i => i.off), st = !its.length ? 'none' : 'on';
-    const h = act.map(i => esc(consShort(i.k))).join(' · ') + (act.length && off.length ? ' · ' : '') + off.map(i => `<s class="ldtgone">${esc(consShort(i.k))}</s>`).join(' ');
+    const h = act.map(i => consStale(i) ? `<span class="cons-stale" title="No ${esc(consShort(i.k))} note since ${esc(fmtShort(i.d))}">${esc(consShort(i.k))}</span>` : esc(consShort(i.k))).join(' · ') + (act.length && off.length ? ' · ' : '') + off.map(i => `<s class="ldtgone">${esc(consShort(i.k))}</s>`).join(' ');
     return `<div class="tc t-cons cons-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(col.h + ': ' + (its.length ? consSummary(cell) : 'no consults'))}"><span class="txt">${h}</span></div>`;
   }
   if(col.type === 'ldt'){
@@ -3635,7 +3676,7 @@ const pcCount = () => { const L = pcPool(); return {n:L.filter(isPc).length, of:
 const NA_NEW = 'New admit — not needed on the day they come in';
 const pcBtn = (p, ro) => ro ? '' : p.status === 'New' ? `<button type="button" class="pcchk off" disabled title="${NA_NEW}" aria-label="Pre-charted: not needed for a new admit">✓</button>` : `<button type="button" class="pcchk ${isPc(p) ? 'on' : ''}" data-pc="${p.id}" title="${isPc(p) ? 'Pre-charted' : 'Mark pre-charted'} for ${esc(fmtNoYear(state.boardDate))} — clears when the next day starts" aria-label="${isPc(p) ? 'Pre-charted' : 'Not pre-charted'}: ${esc(p.bed || 'patient')}" aria-pressed="${isPc(p)}">✓</button>`;
 // census bed cell: quiet marks only (change them from the selection menu, or in Rounds)
-const stMarks = p => `<span class="stmarks">${isPc(p) ? '<i class="stpc" title="Pre-charted today"></i>' : ''}${rdSeen(p) ? '<i class="strd" title="Discussed on rounds today">💬</i>' : ''}</span>`;
+const stMarks = p => `<span class="stmarks">${isPc(p) ? '<i class="stpc" title="Pre-charted today"></i>' : ''}${rdSeen(p) ? '<i class="strd" title="Discussed on rounds today">💬</i>' : ''}${evOn() && evList(p).length ? `<i class="stev" title="${evList(p).length} overnight event${evList(p).length === 1 ? '' : 's'}">🌙${evList(p).length}</i>` : ''}</span>`;
 function togglePc(id){ const p = rowOf('p', id); if(!p) return; const on = !isPc(p);
   mutate(() => { const q = rowOf('p', id); delete q.pcAuto; if(on){ q.pc = state.boardDate; delete q.pcOff; } else { delete q.pc; q.pcOff = state.boardDate; } }, {label:`${p.bed || 'Patient'}: ${on ? 'pre-charted ✓' : 'pre-charted tick removed'} (${fmtNoYear(state.boardDate)})`, cat:'census'}); }
 // 💬 discussed on rounds — the same mark as Rounds mode's “Mark discussed”, resets each day
@@ -4454,6 +4495,7 @@ function openPop(cellEl, focusEditor=false){
     body += `<div class="opts">${col.opts.map((o,i) => `<button class="optbtn ${dp.base===o.label?'on':''}" data-o="${esc(o.label)}"><i class="oc oc-${o.color||'none'}">${i<9?i+1:''}</i>${esc(o.label)}</button>`).join('')}
       ${dp.base && !optOf(col, dp.base) ? `<div class="muted" style="font-size:11px;margin-top:4px">Current diet “${esc(dp.base)}” isn't in the list.</div>` : ''}</div>
       <div class="dmods" data-val="${esc(cell.t || '')}" data-base="${esc(dp.base)}"><div class="dmh">Modifiers</div><div class="dmrow">${DIET_MODS.map(m => `<button type="button" class="dmod ${dp.mods.includes(m) ? 'on' : ''}" data-dmod="${esc(m)}" aria-pressed="${dp.mods.includes(m)}">${dp.mods.includes(m) ? '✓ ' : ''}${esc(m)}</button>`).join('')}</div></div>`;
+    body += OPTADD_HTML;
   } else if(col.type === 'choice' && k === 'dest'){
     // Disposition: leaving the hospital vs. moving within it
     const ob = (o, i) => `<button class="optbtn ${cell.t===o.label?'on':''}" data-o="${esc(o.label)}"><i class="oc oc-${o.color||'none'}">${i<9?i+1:''}</i>${esc(o.label)}</button>`;
@@ -4461,10 +4503,12 @@ function openPop(cellEl, focusEditor=false){
     const gOut = `<div class="optgrp">Leaving hospital</div>${outH.map(x => ob(x.o, x.i)).join('')}`, gIn = `<div class="optgrp">Within hospital</div>${inH.map(x => ob(x.o, x.i)).join('')}`;
     body += `<div class="opts">${isCritCare() ? gIn + gOut : gOut + gIn}
       ${cell.t && !optOf(col, cell.t) ? `<div class="muted" style="font-size:11px;margin-top:4px">Current value “${esc(cell.t)}” isn't in the list.</div>` : ''}</div>`;
+    body += OPTADD_HTML;
   } else if(col.type === 'choice'){
     body += `<div class="opts">${col.opts.map((o,i) => `<button class="optbtn ${cell.t===o.label?'on':''}" data-o="${esc(o.label)}"><i class="oc oc-${o.color||'none'}">${i<9?i+1:''}</i>${esc(o.label)}</button>`).join('')}
       ${cell.t && !optOf(col, cell.t) ? `<div class="muted" style="font-size:11px;margin-top:4px">Current value “${esc(cell.t)}” isn't in the list.</div>` : ''}</div>`;
     if(PTOT.has(col.k)) body += `<div class="ed ptseen"><label>Last seen</label><input type="date" data-ptd value="${esc(isISO(cell.d) ? cell.d : '')}" max="${state.boardDate}"><button class="btn sm" data-ptdtoday>Today</button></div>`;
+    body += OPTADD_HTML;
   } else if(col.type === 'io'){
     body += `<div class="iogrid"><label>Intake<input type="text" inputmode="decimal" data-ioin value="${ioNum(cell.in) ? cell.in : ''}" placeholder="mL" autocomplete="off"></label>
       <label>Output<input type="text" inputmode="decimal" data-ioout value="${ioNum(cell.out) ? cell.out : ''}" placeholder="mL" autocomplete="off"></label>
@@ -4536,6 +4580,12 @@ function openPop(cellEl, focusEditor=false){
       const mods = on ? [...cur.mods, m] : cur.mods.filter(x => x !== m); dm.dataset.val = dietJoin(cur.base, mods);
       b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); b.textContent = (on ? '✓ ' : '') + m; return; }
     if(b.hasAttribute('data-ptdtoday')){ el.querySelector('[data-ptd]').value = state.boardDate; return; }
+    if(b.hasAttribute('data-optaddshow')){ const r = el.querySelector('.optaddrow'); r.hidden = false; b.hidden = true; const i = r.querySelector('[data-optnew]'); i.focus();
+      i.addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); ev.stopPropagation(); el.querySelector('[data-optadd]').click(); } }); return; }
+    if(b.hasAttribute('data-optadd')){ const i = el.querySelector('[data-optnew]'), lab = i.value.trim(); if(!lab){ i.focus(); return; }
+      const ex = (col.opts || []).find(o => o.label.toLowerCase() === lab.toLowerCase());
+      if(!ex){ mutate(() => { const cols = state.settings.columns; cols[col.k] = {...(cols[col.k] || {}), opts:[...colCfg(col.k).opts.map(o => ({...o})), O(lab)]}; }, {render:false, label:`${col.h}: added “${lab}” to the list`, cat:'system'}); toast(`“${lab}” added to ${col.h} — it'll be there for every patient`); }
+      const dm = el.querySelector('.dmods'); finish({t:dm ? dietJoin(ex ? ex.label : lab, dietParse(dm.dataset.val).mods) : (ex ? ex.label : lab)}); return; }
     if(b.dataset.o !== undefined){ const dm = el.querySelector('.dmods'), pd = el.querySelector('[data-ptd]'); const patch = {t:dm ? dietJoin(b.dataset.o, dietParse(dm.dataset.val).mods) : b.dataset.o};
       if(pd) patch.d = isISO(pd.value) ? pd.value : ''; finish(patch); return; }
     if(b.hasAttribute('data-clear')){ finish(edEl ? {s:'', t:edEl.value} : {s:''}); return; }
@@ -4712,6 +4762,52 @@ const rLeft = p => { const f = rFocus(); return f === 'all' ? openCount(p) : chu
 const rLeftBadge = p => { if(p.status === 'New') return '<span class="rs-left new" title="New admit">new</span>'; const n = rLeft(p), f = rFocus();
   return `<span class="rs-left ${!n ? 'ok' : n <= 2 ? 'near' : ''}" title="${n ? n + ' box' + (n === 1 ? '' : 'es') + ' left' : 'All done'}${f === 'all' ? '' : ' in ' + (CHUNK[f] ? CHUNK[f].name : f)}">${n ? n : '✓'}</span>`; };
 let talkT = null;
+/* v317: 🌙 Overnight events — a timestamped log per patient on night boards, collected into one list for the morning handoff */
+const evOn = () => !!typeOf(activeType).night;
+function evWindow(){ let a, b; try{ a = shiftStartDate(); b = shiftEndDate(); }catch(e){ return null; } return [new Date(a.getTime() - 3 * 3600e3), new Date(b.getTime() + 4 * 3600e3)]; }
+const evList = p => { const w = evWindow(); return (p.events || []).filter(e => !w || (new Date(e.t) >= w[0] && new Date(e.t) <= w[1])).sort((x, y) => String(x.t).localeCompare(String(y.t))); };
+function evParse(txt){ let t = new Date(), m = String(txt).match(/^(\d{1,2}:\d{2}|\d{4}|\d{1,2}(?::\d{2})?\s?(?:am|pm|a|p))\s+/i);
+  if(m){ const d = parseTimeInput(m[1].replace(/^(\d{2})(\d{2})$/, '$1:$2')); if(d){ t = d; txt = txt.slice(m[0].length); } } return {t:localISO(t), txt:String(txt).trim()}; }
+function evAdd(pid, raw){ const {t, txt} = evParse(raw); if(!txt) return false; const p = rowOf('p', pid); if(!p) return false;
+  mutate(() => { const q = rowOf('p', pid); const cut = addDays(state.boardDate, -7); q.events = [...(q.events || []).filter(e => String(e.t).slice(0, 10) >= cut), {id:uid(), t, txt}]; }, {label:`${p.bed || 'Patient'}: overnight event — ${txt}`, cat:'rounds'}); return true; }
+function evDel(pid, eid){ const p = rowOf('p', pid); if(!p) return; mutate(() => { const q = rowOf('p', pid); q.events = (q.events || []).filter(e => e.id !== eid); }, {label:`${p.bed || 'Patient'}: overnight event removed`, cat:'rounds'}); }
+const evCardHTML = p => !evOn() ? '' : `<div class="rs-card rs-evcard"><div class="rs-cardh"><span>🌙 Overnight events</span><span class="rs-cnt">${evList(p).length || ''}</span></div>
+  <div class="evlist">${evList(p).map(e => `<div class="evrow"><b>${esc(hhmmOf(e.t))}</b><span>${esc(e.txt)}</span><button type="button" class="ib" data-evdel="${p.id}|${e.id}" title="Remove">✕</button></div>`).join('') || '<div class="muted small">Nothing yet tonight.</div>'}</div>
+  <input type="text" class="evin" data-evadd="${p.id}" placeholder="What happened? Enter logs it now (start with 02:10 to backdate)" enterkeyhint="done" autocomplete="off"></div>`;
+function evAllText(){ const ps = state.patients.filter(p => evList(p).length);
+  if(!ps.length) return '';
+  return `Overnight events — ${typeOf(activeType).label} · ${fmtNoYear(state.boardDate)}\n` + ps.map(p => `${p.bed || '—'}${p.problem ? ' — ' + p.problem : ''}\n` + evList(p).map(e => `  ${hhmmOf(e.t)}  ${e.txt}`).join('\n')).join('\n'); }
+function evShowAll(){ const ps = state.patients.filter(p => evList(p).length);
+  modal(`<h3>🌙 Overnight events</h3>${ps.length ? ps.map(p => `<div class="evall"><div class="evbed"><b>${esc(p.bed || '—')}</b> <span class="muted">${esc(p.problem || '')}</span></div>${evList(p).map(e => `<div class="evrow"><b>${esc(hhmmOf(e.t))}</b><span>${esc(e.txt)}</span></div>`).join('')}</div>`).join('') : '<p class="muted">No overnight events logged on this board yet.</p>'}`,
+    [['Close'], ...(ps.length ? [['📋 Copy for handoff', 'primary', () => { copyText(evAllText()); toast('Overnight events copied'); return false; }]] : [])]); }
+/* v316: Present — the patient laid out the way you'd present them, read-only, big type */
+function presentHTML(p){
+  const hd = hospDay(p), sec = (t, b) => b ? `<section class="pz-sec"><h4>${t}</h4>${b}</section>` : '';
+  const val = k => { const c = p.cells[k]; if(!c || !COLMAP[k] || colHidden(k)) return ''; const cfg = colCfg(k); const st = isStatusType(cfg.type) && SMAP[c.s];
+    if(cfg.type === 'date') return isISO(c.t) ? fmtShort(c.t) : c.t === 'Unknown' ? 'Unknown' : ''; return [st && st.label, c.t].filter(Boolean).join(' — '); };
+  const drips = gttShown(p.cells.gtt, p).map(i => i.k || i);
+  const lines = COLMAP.avatar ? ldtActive(p.cells.avatar).map(it => `<li><b>${esc(ldtLabel(it))}</b>${isISO(it.d) ? ` <span class="muted">day ${daysBetween(it.d, state.boardDate)} · placed ${esc(fmtShort(it.d))}</span>` : ''}</li>`) : [];
+  const cons = consSorted(p.cells.cons).map(it => `<li class="${it.off ? 'pz-off' : consStale(it) ? 'pz-stale' : ''}"><b>${esc(consShort(it.k))}</b> <span class="muted">${it.off ? 'signed off' + (isISO(it.off) ? ' ' + fmtShort(it.off) : '') : isISO(it.d) ? 'last note ' + fmtShort(it.d) + (consStale(it) ? ' — no note for ' + daysBetween(it.d, state.boardDate) + ' days' : '') : 'no note date'}</span></li>`);
+  const basics = [['Diet', val('diet')], ['DVT PPx', val('dvt')], ['Disposition', val('dest')], ['EDD', val('edd')], ['I/O', COLMAP.io && p.cells.io ? (() => { const c = p.cells.io, n = ioNet(c); return ioNum(c.in) || ioNum(c.out) ? `in ${ioNum(c.in) ? c.in : '—'} · out ${ioNum(c.out) ? c.out : '—'}${n !== null ? ` · net ${n > 0 ? '+' : ''}${n}` : ''}` : ''; })() : '']].filter(x => x[1]);
+  let open = []; try{ const o = outstanding(null, p.id)[0]; if(o) open = o.by.map(b => `<li><b>${esc(CHUNK[b.c] ? CHUNK[b.c].label : b.c)}</b> ${b.keys.map(k => esc(keyLabel(p, k, b.c))).join(', ')}</li>`); }catch(e){}
+  const tasks = patientTodos(p.id).filter(t => !t.done).map(t => `<li>${t.due ? `<b>${esc(hhmmOf(t.due))}</b> ` : ''}${esc(t.text)}</li>`);
+  return `<div class="pz-head"><div class="pz-bed">${esc(p.bed || '—')}</div><div><div class="pz-one">${esc(p.problem || '—')}</div><div class="muted">${esc(p.intern || 'Unassigned')}${hd !== null ? ' · HD ' + hd : ''}${p.status && !/^(Active|Existing)$/.test(p.status) ? ' · ' + esc(p.status) : ''}</div></div></div>
+    <div class="pz-grid">
+      ${sec('💉 Drips', drips.length ? `<div class="pz-chips">${drips.map(d => `<span class="gttpill">${esc(d)}</span>`).join('')}</div>` : '')}
+      ${sec('🩺 Lines, drains &amp; tubes', lines.length ? `<ul>${lines.join('')}</ul>` : '')}
+      ${sec('👥 Consults', cons.length ? `<ul>${cons.join('')}</ul>` : '')}
+      ${sec('📋 Basics', basics.length ? `<dl>${basics.map(([k, v]) => `<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl>` : '')}
+      ${evOn() ? sec('🌙 Overnight', evList(p).length ? `<ul>${evList(p).map(e => `<li><b>${esc(hhmmOf(e.t))}</b> ${esc(e.txt)}</li>`).join('')}</ul>` : '') : ''}
+      ${sec('📝 Talking points', p.talk ? `<div class="pz-talk">${esc(p.talk).replace(/\n/g, '<br>')}</div>` : '')}
+      ${sec('☐ Still open', open.length ? `<ul>${open.join('')}</ul>` : '')}
+      ${sec('⏰ Tasks', tasks.length ? `<ul>${tasks.join('')}</ul>` : '')}
+    </div>`;
+}
+function openPresent(id){
+  const list = roundsList(); let i = Math.max(0, list.findIndex(x => x.id === id));
+  modal(`<div class="pz" id="pzBody">${presentHTML(list[i])}</div>`, [['← Prev', '', () => { go(-1); return false; }], ['Next →', '', () => { go(1); return false; }], ['Close', 'primary', () => { if(rounds.open && list[i]) roundsTo(list[i].id); }]], m => { m.classList.add('wide', 'pzmodal'); });
+  function go(d){ if(!list.length) return; i = (i + d + list.length) % list.length; const b = $('#pzBody'); if(b){ b.innerHTML = presentHTML(list[i]); b.scrollTop = 0; } }
+}
 function talkSave(id, v){ clearTimeout(talkT); talkT = setTimeout(() => { const p = rowOf('p', id); if(!p || (p.talk || '') === v) return;
   mutate(() => { const q = rowOf('p', id); q.talk = v; q.talkAt = v ? localISO() : ''; }, {render:false, label:`Talking points — ${p.bed || 'patient'}`, cat:'rounds'});
   document.querySelectorAll(`#roundsBody [data-rgo="${id}"] .rs-talk`).forEach(x => x.hidden = !v); }, 500); }
@@ -4789,7 +4885,7 @@ function renderRounds(){
     ${fl.length || n !== null ? `<div class="rflags">${hdPill(p, true)}${fl.map(([l,t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="rtodos ${patientTodos(p.id).length ? '' : 'empty'}" id="rTodos"><h4><span>⏰ To-dos${patientTodos(p.id).length ? '' : ' <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">— none for this patient</span>'}</span><button class="btn sm" data-tdedit="${p.id}">+ Add / edit ${scLabel('todo')}</button></h4>
       ${patientTodos(p.id).map(t => todoRowHTML(t, false)).join('')}</div>
-    <div class="rtalk">${talkHTML(p)}</div>
+    <div class="rtalk"><button type="button" class="btn sm" data-present="${p.id}" style="margin-bottom:8px">🗣 Present this patient</button>${evCardHTML(p)}${talkHTML(p)}</div>
     ${rdLeaveCard(p) ? `<div class="rleave">${rdLeaveCard(p)}</div>` : ''}
     ${sections}
     <div class="rnav"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
@@ -4854,11 +4950,11 @@ function renderRoundsSplit(){
         ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
       <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
-      <div class="rs-focus" role="group" aria-label="Focus"><span class="muted small">Focus</span><span class="seg">${[['auto', `Auto${rFocusPref() === 'auto' ? ' · ' + (rFocus() === 'all' ? 'All' : CHUNK[rFocus()].name.replace(/ rounds/i, '')) : ''}`], ['am', 'AM'], ['pm', 'PM'], ['dispo', 'Dispo'], ['all', 'All']].map(([k, l]) => `<button type="button" data-rfocus="${k}" class="${rFocusPref() === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</span></div>
+      <div class="rs-focus" role="group" aria-label="Focus"><button type="button" class="btn sm rs-present" data-present="${p.id}" title="Show this patient laid out to present">🗣 Present</button><span class="muted small">Focus</span><span class="seg">${[['auto', `Auto${rFocusPref() === 'auto' ? ' · ' + (rFocus() === 'all' ? 'All' : CHUNK[rFocus()].name.replace(/ rounds/i, '')) : ''}`], ['am', 'AM'], ['pm', 'PM'], ['dispo', 'Dispo'], ['all', 'All']].map(([k, l]) => `<button type="button" data-rfocus="${k}" class="${rFocusPref() === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</span></div>
       ${rdLeaveCard(p)}
       ${(() => { const f = rFocus(), fc = CHUNKS.find(c => c.k === f); return (fc ? ckCard(fc) : '') + `<div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>` + CHUNKS.filter(c => c !== fc).map(ckCard).join(''); })()}
     </div>
-    <div class="rs-plancol">${talkHTML(p)}<div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
+    <div class="rs-plancol">${evCardHTML(p)}${talkHTML(p)}<div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
       <div class="rs-todos" id="rTodos">${todos.map(t => todoRowHTML(t, false)).join('') || '<div class="muted small" style="padding:6px 2px">Nothing yet.</div>'}</div>
       <div class="rs-quick">${RS_QUICK.map(q => `<button type="button" data-rsq="${esc(q)}">+ ${esc(q.replace(': ', ''))}</button>`).join('')}</div>
       <textarea id="rsAdd" data-pid="${p.id}" rows="2" placeholder="Type a to-do (e.g. “echo today”, “cards recs 2pm”) — Enter adds it"></textarea>
@@ -4875,10 +4971,14 @@ function rsAddTodo(pid, text){ text = (text || '').trim(); const p = rowOf('p', 
   renderRounds(); const t = $('#rsAdd'); if(t) t.focus(); }
 $('#roundsBody').addEventListener('input', e => { const t = e.target.closest && e.target.closest('[data-talk]'); if(t){ t.style.height = 'auto'; t.style.height = Math.min(320, t.scrollHeight + 2) + 'px'; talkSave(t.dataset.talk, t.value); } });
 $('#roundsBody').addEventListener('focusout', e => { const t = e.target.closest && e.target.closest('[data-talk]'); if(t){ clearTimeout(talkT); talkT = null; const p = rowOf('p', t.dataset.talk); if(p && (p.talk || '') !== t.value) { mutate(() => { p.talk = t.value; p.talkAt = t.value ? localISO() : ''; }, {render:false, label:`Talking points — ${p.bed || 'patient'}`, cat:'rounds'}); } } });
+$('#roundsBody').addEventListener('keydown', e => { const ei = e.target.closest && e.target.closest('[data-evadd]');
+  if(ei && e.key === 'Enter'){ e.preventDefault(); e.stopPropagation(); const pid = ei.dataset.evadd; if(evAdd(pid, ei.value)){ renderRounds(); const n = document.querySelector(`#roundsBody [data-evadd="${pid}"]`); if(n) n.focus(); toast('Event logged'); } return; } }, true);
 $('#roundsBody').addEventListener('keydown', e => { if(e.target.id === 'rsAdd' && e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); rsAddTodo(e.target.dataset.pid, e.target.value); } });
 $('#roundsBtn').addEventListener('click', () => openRounds());
 $('#roundsBody').addEventListener('click', e => {
   const g = e.target.closest('[data-rgo]'); if(g){ roundsTo(g.dataset.rgo); return; }
+  const pz = e.target.closest('[data-present]'); if(pz){ openPresent(pz.dataset.present); return; }
+  const ed = e.target.closest('[data-evdel]'); if(ed){ const [pid, eid] = ed.dataset.evdel.split('|'); evDel(pid, eid); renderRounds(); return; }
   const fo = e.target.closest('[data-rfocus]'); if(fo){ try{ localStorage.setItem(RFOCUS_KEY, fo.dataset.rfocus); }catch(err){} rounds.cx = {}; renderRounds(); return; }
   const rf = e.target.closest('[data-rfilt]'); if(rf){ try{ localStorage.setItem(RFILT_KEY, rf.dataset.rfilt); }catch(err){} renderRounds(); return; }
   const cx = !e.target.closest('.tc,button:not([data-rcx]),select,input,textarea') && e.target.closest('[data-rcx]'); if(cx){ const k = cx.dataset.rcx; rounds.cx[k] = !cx.classList.contains('rs-col'); renderRounds(); return; }
@@ -7512,11 +7612,11 @@ function cmdParse(input){
     full:['Tasks full screen on / off', () => { if(ui.tab !== 'tasks' && !scGoTab('tasks')) return ''; tkFullOn() ? exitTkFull() : enterTkFull(); return ''; }],
     rounds:['Start Rounds', () => { if(!state.patients.length) return 'No patients on the census'; openRounds(); return ''; }],
     backup:['Save a full backup (everything) + automatic copy', () => { backupNow(); autoBackup('manual', true); return ''; }],
-    print:['Print the sign-out sheet', () => { printSheet(); return ''; }], take:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], leaving:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], hide:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }], lock:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }],
+    print:['Print the sign-out sheet', () => { printSheet(); return ''; }], events:['🌙 Overnight events — all patients, ready to copy', () => { if(!evOn()) return 'Overnight events are for night boards'; evShowAll(); return ''; }], take:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], leaving:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], hide:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }], lock:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }],
     whatsnew:['What’s new in this version', () => { whatsNew(null); return ''; }], changes:['What’s new in this version', () => { whatsNew(null); return ''; }],
     newshift:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], start:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], precharting:['Start pre-charting for the next day…', () => { newDay(); return ''; }],
     endshift:['Wrap up — sign-out, print, backup', () => { wrapUp(); return ''; }], wrapup:['Wrap up — sign-out, print, backup', () => { wrapUp(); return ''; }], schedule:['Edit this rotation’s schedule', () => { if(!isRot(activeType)) return 'This board has no schedule'; showRotSetup({edit:activeType}); return ''; }]};
-  if(simple[v] && !rest.length) return {html:simple[v][0], run:simple[v][1], nav:['validate','full','rounds','newshift','endshift','start','precharting','wrapup','schedule','print','hide','lock','whatsnew','changes','take','leaving','tidy'].includes(v)};
+  if(simple[v] && !rest.length) return {html:simple[v][0], run:simple[v][1], nav:['events','validate','full','rounds','newshift','endshift','start','precharting','wrapup','schedule','print','hide','lock','whatsnew','changes','take','leaving','tidy'].includes(v)};
   if(v === 'admit' || v === 'hold'){
     const hold = v === 'hold';
     if(hold && !typeOf(activeType).holds) return {err:'Moonlighter holds are for Bellevue Night Admitting'};
@@ -7601,7 +7701,10 @@ function cmdParse(input){
   const ent = b.ent, fw = words.slice(b.used);
   if(!fw.length) return {nav:true, html:`Go to <b>${esc(ent.bed)}</b> <span class="muted">${esc(entSub(ent))}</span> — or add a column: visit, medrec, vitals…`, run:() => { cmdJump(ent); return ''; },
     sugg:cmdFieldList(ent).slice(0, 40).map(x => ({label:`${esc(x.label)} <span class="muted">${esc(x.cur)}</span>`, fill:`${ent.bed} ${x.name} `}))};
-  { const ln = ent.p ? cmdLine(ent, fw) : null; if(ln) return ln; }
+  if(ent.p && /^(event|ev|evt|overnight)$/i.test(fw[0])){ if(!evOn()) return {err:'Overnight events are for night boards'};
+    const raw = fw.slice(1).join(' '), pe = evParse(raw); if(!pe.txt) return {err:`What happened? e.g. <b>${esc(ent.p.bed)} event hypotensive → 500 LR</b> (or start with a time: 02:10 …)`};
+    return {html:`🌙 <b>${esc(ent.p.bed)}</b> · <b>${esc(hhmmOf(pe.t))}</b> ${esc(pe.txt)}`, run:() => { evAdd(ent.p.id, raw); cmdPulse('p', ent.p.id); return `${ent.p.bed}: event logged`; }}; }
+  { const ln = ent.p ? (cmdGtt(ent, fw) || cmdLine(ent, fw) || cmdCons(ent, fw)) : null; if(ln) return ln; }
   const f = cmdField(ent, fw);
   if(!f){ const q = nw(fw[0]); const L = cmdFieldList(ent).filter(x => x.name.startsWith(q) || x.name.includes(q));
     if(ent.a && isHold(ent.a) && !ent.p && ADMIT_COLMAP[CMD_A_ALIAS[q] || q]) return {err:`${esc(ent.bed)} is a moonlighter hold — the admission is already done, so only <b>signout</b>, team and problem apply`};
@@ -7659,6 +7762,47 @@ function cmdLine(ent, fw){
         if(upd){ const x = L.find(q => !q.rm && q.k === name); if(x){ x.d = d; if(side) x.side = side; else delete x.side; if(site) x.site = site; else delete x.site; } } else L.push(it);
         r.cells.avatar = {...(r.cells.avatar || {}), items:L, s:'', t:''}; }, {label:`${p.bed}: ${upd ? 'updated' : 'added'} ${ldtLabel(it)}`});
       cmdPulse('p', p.id); return `${p.bed}: ${ldtLabel(it)} ${upd ? 'updated' : 'added'} — placed ${fmtShort(d)}`; }};
+}
+/* v316: consults & drips from the command bar — "10N62 cards 11/25", "10N62 renal off", "10N62 id remove", "10N62 gtt levo", "10N62 gtt levo off" */
+function consMatch(words){ const all = consAll(), norm = x => lineNorm(x).replace(/\//g, ' ');
+  for(let n = Math.min(3, words.length); n >= 1; n--){ const k = norm(words.slice(0, n).join(' '));
+    const hit = all.find(c => norm(c) === k || norm(consShort(c)) === k || (((CONS_LIST.find(x => x[0] === c) || [])[2] || '').split(' ').some(a => a.length >= 2 && a === k)));
+    if(hit) return {name:hit, used:n}; } return null; }
+function cmdCons(ent, fw){
+  const p = ent.p; if(!p || !COLMAP.cons || colHidden('cons')) return null;
+  if(cmdFieldList(ent).some(x => x.name === nw(fw[0]))) return null;   // a column name wins (e.g. "dest", "diet")
+  const m = consMatch(fw); if(!m) return null;
+  const rest = fw.slice(m.used).map(w => w.toLowerCase()); let date = '', act = 'note'; const bad = [];
+  rest.forEach(w => { if(/^(off|signedoff|signed|so|s\/o)$/.test(w)) act = 'off'; else if(/^(on|back|unsign|resume)$/.test(w)) act = 'on'; else if(/^(remove|rm|delete|del|x)$/.test(w)) act = 'rm';
+    else if(/^(note|seen|saw)$/.test(w)) act = 'note'; else { const d = lineDate(w); if(d) date = d; else bad.push(w); } });
+  if(bad.length) return {err:`${esc(consShort(m.name))}: didn’t understand “${esc(bad.join(' '))}”. Try <b>${esc(p.bed)} ${esc(consShort(m.name))} 11/25</b>, <b>… off</b> or <b>… remove</b>`};
+  const items = consItems(p.cells.cons), cur = items.find(i => i.k.toLowerCase() === m.name.toLowerCase()), d = date || state.boardDate, nm = consShort(m.name);
+  if(d > state.boardDate) return {err:`That date is after the board date`};
+  const save = (fn, label, msg) => () => { mutate(() => { const r = rowOf('p', p.id), L = clone(consItems(r.cells.cons)); fn(L); r.cells.cons = {...(r.cells.cons || {}), items:L, s:'', t:''}; }, {label:`${p.bed}: ${label}`}); cmdPulse('p', p.id); return `${p.bed}: ${msg}`; };
+  if(act === 'rm'){ if(!cur) return {err:`${esc(p.bed)} has no ${esc(nm)} consult`};
+    return {html:`Consults · <b>${esc(p.bed)}</b> · remove <b>${esc(nm)}</b>`, run:save(L => { const i = L.findIndex(x => x.k === cur.k); if(i >= 0) L.splice(i, 1); }, `${nm} consult removed`, `${nm} removed`)}; }
+  if(act === 'off') return {html:`Consults · <b>${esc(p.bed)}</b> · <b>${esc(nm)}</b> signed off <span class="muted">${esc(fmtShort(d))}${cur ? '' : ' (adds it too)'}</span>`,
+    run:save(L => { let x = L.find(y => y.k === m.name); if(!x){ x = {k:m.name}; L.push(x); } x.off = d; }, `${nm} signed off`, `${nm} signed off ✓`)};
+  if(act === 'on') { if(!cur || !cur.off) return {err:`${esc(nm)} isn’t signed off on ${esc(p.bed)}`};
+    return {html:`Consults · <b>${esc(p.bed)}</b> · <b>${esc(nm)}</b> following again`, run:save(L => { const x = L.find(y => y.k === cur.k); if(x) delete x.off; }, `${nm} following again`, `${nm} following again`)}; }
+  return {html:`Consults · <b>${esc(p.bed)}</b> · ${cur ? '' : 'add '}<b>${esc(nm)}</b> <span class="muted">— last note ${esc(fmtShort(d))}${cur && isISO(cur.d) ? ` (was ${esc(fmtShort(cur.d))})` : ''}</span>`,
+    run:save(L => { let x = L.find(y => y.k === m.name); if(!x){ x = {k:m.name}; L.push(x); } x.d = d; }, `${nm} last note ${fmtShort(d)}`, `${nm} — last note ${fmtShort(d)}`)};
+}
+function gttMatch(words){ const all = [...GTT_GROUPS.flatMap(g => g[1]), ...gttExtra()], norm = x => lineNorm(x);
+  for(let n = Math.min(3, words.length); n >= 1; n--){ const k = norm(words.slice(0, n).join(' '));
+    const hit = all.find(c => norm(c) === k || norm(GTT_SHORT[c] || '') === k || (GTT_ALIAS[c] || '').split(' ').some(a => a.length >= 2 && a === k)) || all.find(c => k.length >= 4 && norm(c).startsWith(k));
+    if(hit) return {name:hit, used:n}; } return null; }
+function cmdGtt(ent, fw){
+  const p = ent.p; if(!p || nw(fw[0]) !== 'gtt') return null;
+  if(!COLMAP.gtt || colHidden('gtt')) return {err:'Drips (GTT) only show on ICU / CCU boards'};
+  const w = fw.slice(1); if(!w.length) return null;
+  const m = gttMatch(w); if(!m) return {err:`No drip called “${esc(w.join(' '))}” — try levo, vaso, prop, precedex, insulin, heparin…`};
+  const rest = w.slice(m.used).map(x => x.toLowerCase()), off = rest.some(x => /^(off|stop|stopped|rm|remove|weaned|dc)$/.test(x)), bad = rest.filter(x => !/^(off|stop|stopped|rm|remove|weaned|dc|on|start|started)$/.test(x));
+  if(bad.length) return {err:`${esc(m.name)}: didn’t understand “${esc(bad.join(' '))}” — add “off” to stop it`};
+  const on = gttItems(p.cells.gtt).some(i => i.k.toLowerCase() === m.name.toLowerCase());
+  if(off && !on) return {err:`${esc(p.bed)} isn’t on ${esc(m.name)}`}; if(!off && on) return {err:`${esc(p.bed)} is already on ${esc(m.name)}`, already:true};
+  return {html:`GTT · <b>${esc(p.bed)}</b> · ${off ? 'stop' : 'start'} <b>${esc(m.name)}</b>`,
+    run:() => { mutate(() => { const r = rowOf('p', p.id), L = gttItems(r.cells.gtt).filter(i => i.k.toLowerCase() !== m.name.toLowerCase()); if(!off) L.push({k:m.name}); r.cells.gtt = {...(r.cells.gtt || {}), items:L, s:'', t:''}; }, {label:`${p.bed}: ${m.name} ${off ? 'stopped' : 'started'}`}); cmdPulse('p', p.id); return `${p.bed}: ${m.name} ${off ? 'off' : 'on'}`; }};
 }
 function cmdJump(ent){
   if(ui.tab === 'tasks'){ tkUI.bed = ent.key ? (ent.bed || '').toUpperCase() : ''; renderTasks(); const bi = $('#tkBed'); bi.value = ent.bed; bi.dispatchEvent(new Event('input', {bubbles:true})); $('#tkText').focus(); return; }
@@ -7785,7 +7929,7 @@ function cmdHelp(){
   const ex = [['ED15L visit complete', 'Tick Visit (also: ED15L visit — no word needed)'], ['ED15L visit undo', 'Untick it'], ['ED-21 medrec pended', 'Set an Admissions dropdown — signed, pended, incomplete, N/A, clear'],
     ['ED-21 dvt heparin', 'Diet / DVT PPx — any option, first letters are enough'], ['ED-21 team GM2', 'Admission fields: team, timein, arrived, problem, from'], ['ED-21 bed 14E05/01', 'New bed (ED → floor) — the tasks move with the patient'], ['14E12/02 arrived now', 'Tisch: patient is on the floor (or arrived 21:40)'],
     ['7W05 vitals done', 'Census status — complete, revisit, pending, ordered, panic, N/A, comments, ALOC, or 1–8'], ['7W05 io revisit low UOP', 'Status with a note'], ['7W05 edd tomorrow', 'Dates — today, tomorrow, +2, 10/30'],
-    ['7W05 dest home', 'Census dropdowns'], ['10N62 PIV L forearm 11/23/26', 'Add a line / drain / tube to the Avatar (picc, foley, art, cvc R IJ…; no date = today)'], ['10N62 foley out', 'Mark it removed (add a date if it wasn’t today)'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['pc 7W05', 'Pre-charted ✓ (just “pc” shows who’s left)'], ['outstanding', 'What’s left to check off, patient by patient — or “outstanding am”, “outstanding 7W05”'], ['snooze ED-21 lactate 30', 'Push a task back'],
+    ['7W05 dest home', 'Census dropdowns'], ['10N62 PIV L forearm 11/23/26', 'Add a line / drain / tube to the Avatar (picc, foley, art, cvc R IJ…; no date = today)'], ['10N62 foley out', 'Mark it removed (add a date if it wasn’t today)'], ['10N62 cards 11/25', 'Consults: add or update the last note date (no date = today)'], ['10N62 renal off', 'Consult signed off (… on to undo, … remove to delete)'], ['10N62 gtt levo', 'Start a drip (… off to stop it)'], ['10N62 event hypotensive → 500 LR', 'Night boards: log an overnight event (stamped now; start with 02:10 for another time)'], ['events', 'All overnight events, ready to copy for handoff'], ['7W05', 'Just a bed: jump to it'], ['task ED-21 04:00 H/H !', 'New task (! urgent, !! emergent)'], ['done ED-21 H/H', 'Tick a task off'], ['pc 7W05', 'Pre-charted ✓ (just “pc” shows who’s left)'], ['outstanding', 'What’s left to check off, patient by patient — or “outstanding am”, “outstanding 7W05”'], ['snooze ED-21 lactate 30', 'Push a task back'],
     ['admit ED-14 sepsis', 'New admission'], ['hold ED-30 CAP from Dr K', 'New moonlighter hold'], ['go census', 'Change tab — overview, census, admits, discharges, transfers, tasks, history, analytics, log (just “tasks” or “go adm” works too)']];
   modal(`<h3>Command bar</h3><p class="muted" style="margin-top:-4px">Open with <kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>:</kbd>. Beds can be typed without dashes or slashes (<b>ed15l</b>, <b>14e1202</b>); column names can be shortened (<b>ed</b>, <b>pl</b>, <b>mr</b>, <b>so</b>). You see what will happen before Enter, and <kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes it.</p>
     <table class="sctab">${ex.map(([c, d]) => `<tr><td><code class="cmdcode">${esc(c)}</code></td><td>${esc(d)}</td></tr>`).join('')}</table>
@@ -8292,9 +8436,16 @@ async function restoreFile(txt, fname){
   if(pkg.olderShifts){ toast('That’s an older-shifts file — open it from History & Archive → Past shift files'); return true; }
   const when = pkg.savedAt || pkg.takenAt; const sum = sumTxt(pkgSummary(pkg));
   const other = pkg.edition && pkg.edition !== EDITION;
+  // v316: warn when the backup is older than what's already here
+  const lastOf = logs => Object.values(logs || {}).reduce((m, L) => { const t = Array.isArray(L) && L.length ? String(L[L.length - 1].t || '') : ''; return t > m ? t : m; }, '');
+  const hereLog = {}; try{ allBoardIds().forEach(k => { if(k === activeType){ hereLog[k] = actLog; return; } const l = localStorage.getItem(logKeyFor(k)); if(l) hereLog[k] = JSON.parse(l); }); }catch(e){}
+  const hereLast = localHasData() ? lastOf(hereLog) : '', fileLast = lastOf(pkg.logs) || when || '';
+  const older = hereLast && fileLast && Date.parse(hereLast) - Date.parse(fileLast) > 5 * 60e3;
+  const fmtW = t => new Date(t).toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
   const go = await askChoice(`<h3>Restore this backup?</h3><p><b>${esc(fname)}</b>${when ? ` — saved ${esc(new Date(when).toLocaleString([], {weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}))}` : ''}</p><p class="muted">${sum}</p>
     ${other ? `<p class="red"><b>⚠ This came from the ${pkg.edition === 'sandbox' ? 'Sandbox (test)' : 'Portable (real)'} edition.</b></p>` : ''}
-    <p>It <b>replaces everything</b> Plexus has here now. A snapshot of the current data is kept first (⚙ → View &amp; restore backups) in case you need it back.</p>`, [['Cancel', '', false], ['Replace with this backup', 'danger', true]]);
+    ${older ? `<div class="bkolder"><b>⚠ This backup is older than what’s on this device.</b><br>Last change here: <b>${esc(fmtW(hereLast))}</b><br>Last change in the backup: <b>${esc(fmtW(fileLast))}</b><br>Restoring it would lose the changes made here since then. Check you picked the newest file.</div>` : ''}
+    <p>It <b>replaces everything</b> Plexus has here now. A snapshot of the current data is kept first (⚙ → View &amp; restore backups) in case you need it back.</p>`, [['Cancel', '', false], [older ? 'Replace anyway' : 'Replace with this backup', 'danger', true]]);
   if(!go) return true;
   try{ await autoBackup('before restoring ' + fname, true); }catch(e){}
   applyAll(pkg); logAdd([{cat:'system', msg:`Restored everything from ${fname}`}]); toast('Backup restored'); return true;
@@ -8638,6 +8789,7 @@ function wrapUp(){
     <p class="muted">Nothing is ended or locked — you can keep charting here, at home, or tomorrow morning. The board moves on when you start the next day.</p>
     <div class="wubtns">
       ${T.tasks ? '<button class="btn" data-wu="sb">📋 Copy the night-task sign-back</button>' : ''}
+      ${evOn() ? `<button class="btn" data-wu="ev">🌙 Overnight events${state.patients.some(p => evList(p).length) ? ` <span class="muted small">· ${state.patients.reduce((n, p) => n + evList(p).length, 0)} logged</span>` : ''}</button>` : ''}
       ${state.admits.some(a => a.date === state.boardDate) ? '<button class="btn" data-wu="so">📋 Copy the admissions sign-out</button>' : ''}
       <button class="btn" data-wu="pr">🖨 Print the board</button>
       ${isTouch() ? `<button class="btn ${filesBackupDue() ? 'primary' : ''}" data-wu="fb">⬆ Back up to Files${filesBackupAt() ? ` <span class="muted small">· last ${esc(agoText(filesBackupAt()))}</span>` : ''}</button>` : `<button class="btn" data-wu="bk">⬇ Download a backup</button>
@@ -8645,6 +8797,7 @@ function wrapUp(){
     </div>`, [['Done', 'primary', () => logAdd([{cat:'shift', msg:`Wrapped up ${fmtNoYear(state.boardDate)}`}])]], m => {
     m.addEventListener('click', e => { const b = e.target.closest('[data-wu]'); if(!b) return; const w = b.dataset.wu;
       if(w === 'sb'){ copyText(signBackText()); toast('Sign-back copied'); }
+      else if(w === 'ev'){ closeModal(); setTimeout(evShowAll, 0); }
       else if(w === 'so'){ copyText(soText(state.boardDate)); toast('Sign-out copied'); }
       else if(w === 'pr'){ closeModal(); setTimeout(() => window.print(), 50); }
       else if(w === 'bk'){ backupNow(); }
@@ -8830,6 +8983,8 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:317, d:'2026-11-26', items:['<b>🌙 Overnight events</b> (night boards): a log on each patient in Rounds — type what happened and press Enter; it’s stamped with the time (start with 02:10 to backdate). 🌙 count beside the bed on the census; also in 🗣 Present.', 'Command bar: <b>10N62 event hypotensive → 500 LR</b>; <b>events</b> shows every patient’s overnight events with <b>📋 Copy for handoff</b> (also in ✓ Wrap up).']},
+  {v:316, d:'2026-11-26', items:['<b>Add to the lists yourself</b>: a new consult service or drip you type in now stays in the list for every patient (✕ on a dashed chip removes your own); dropdown columns like Disposition have <b>＋ Add a choice to this list</b>.', '<b>Stale consult notes</b>: an active consult with no note for 2+ days shows orange on the census and in Rounds.', '<b>Command bar</b>: consults — <b>10N62 cards 11/25</b>, <b>10N62 renal off</b> (… on / … remove); drips — <b>10N62 gtt levo</b>, <b>10N62 gtt levo off</b>.', '<b>🗣 Present</b> (Rounds): the patient laid out to present — one-liner, drips, lines with day counts, consults, basics, talking points, what’s still open and tasks — with ← → through the list.', '<b>Safer restores</b>: if a backup is older than the data already on this device, Plexus says so (with both times) before replacing anything.']},
   {v:315, d:'2026-11-26', items:['Consults: <b>IR</b> (interventional radiology) added. On the census and in Rounds, consults are now listed <b>most recent note first</b> (no date yet → after those; signed off → last).']},
   {v:314, d:'2026-11-26', items:['Consults: <b>CT Surg</b> (cardiothoracic surgery) added to the list.']},
   {v:313, d:'2026-11-26', items:['<b>Add lines from the command bar</b>: type the bed, the device, side, site and date — e.g. <b>10N62 PIV L forearm 11/23/26</b>, <b>7W05 picc R 11/20</b>, <b>ED15 cvc R IJ</b> (no date = today). <b>7W05 foley out</b> marks it removed. Works with nicknames (art, a-line, swan, trialysis, peg, ngt…).']},
