@@ -156,6 +156,8 @@ table.grid{border-collapse:separate;border-spacing:0;font-variant-numeric:tabula
 @media (prefers-color-scheme: dark){ .grid .tc.tc-na{background:#2a2d33 !important;color:#8a919c !important} }
 .tc.tc-old,.grid .tc.tc-old{background:#fde4e4 !important}
 @media (prefers-color-scheme: dark){ .tc.tc-old,.grid .tc.tc-old{background:#4a2326 !important} }
+.tc.tc-soon,.grid .tc.tc-soon{background:#FFE8C7 !important}
+@media (prefers-color-scheme: dark){ .tc.tc-soon,.grid .tc.tc-soon{background:#4a3313 !important} }
 .plist{display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;margin-bottom:6px}
 .prow{display:grid;grid-template-columns:1fr 138px auto;gap:6px;align-items:center}
 .prow input{min-width:0}
@@ -1870,7 +1872,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '304';
+const APP_VERSION = '305';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2262,6 +2264,7 @@ function ioText(c){ if(!c) return ''; const n = ioNet(c), g = ioNum(c.goal) ? ' 
   return [ioNum(c.in) && `In ${ioVol(c.in)}`, ioNum(c.out) && `Out ${ioVol(c.out)}`].filter(Boolean).join(' · ') + g; }
 const PTOT = new Set(['pt', 'ot']);   // PT / OT: a recommendation plus a “last seen” date (cell.d)
 const tsExpired = t => isISO(t) && daysBetween(t, state.boardDate) * 24 >= (state.settings.tsHours || 72);
+const tsSoon = t => isISO(t) && !tsExpired(t) && (daysBetween(t, state.boardDate) + 1) * 24 >= (state.settings.tsHours || 72);   // v305: expires tomorrow
 const bmCurrent = c => !isISO(c.t) || daysBetween(c.t, state.boardDate) <= 1 || c.ck === state.boardDate;   // BM today / yesterday, or re-checked today
 function isDone(cfg, cell){ if(cfg.type === 'ldt' || cfg.type === 'proc' || cfg.type === 'gtt') return true;
   if(cfg.type === 'date' && cfg.k === 'ts' && tsExpired(cell.t)) return false;    // an expired T&S needs a new one (or N/A)
@@ -3291,6 +3294,7 @@ function cellHTML(cell, col, kind, id, ri, ci, ro){
     h = h.replace(/<\/div>$/, `<button type="button" class="npoflag ${ok ? 'ok' : ''}" ${ro ? 'disabled' : `data-npo="${id}"`} title="${ok ? 'NPO after midnight ordered — tap to undo' : 'Procedure tomorrow — is the NPO-after-midnight order in? Tap once it is.'}">${ok ? '✓ NPO @ MN' : 'NPO @ MN?'}</button></div>`); } }
   if(cellIsNA(cell, col)) return h.replace('class="tc ', 'class="tc tc-na ');   // N/A cells are lightly greyed out
   if(kind === 'p' && cellOverdue(cell, col)) return h.replace('class="tc ', 'class="tc tc-old ');   // v292: old Last BM / expired T&S turn light red
+  if(kind === 'p' && col.k === 'ts' && cell && tsSoon(cell.t)) return h.replace('class="tc ', 'class="tc tc-soon ');   // v305: T&S expires tomorrow → light orange
   return h;
 }
 // v292/v300: Last BM ≥ Settings no-BM days (default 2) ago, or T&S collected ≥ 3 days ago (Settings T&S hours) → light red
@@ -8630,6 +8634,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:305, d:'2026-11-26', items:['<b>T&amp;S</b> turns <b>light orange</b> the day before it expires, then light red once expired — e.g. collected 11/24: orange on 11/26, red on 11/27 (with the default 72 h).']},
   {v:304, d:'2026-11-25', items:['<b>Rounds: Focus.</b> AM · PM · Dispo · All, or <b>Auto</b> (AM before noon, PM after; All on nights). The focus section comes first; the others fold to one line listing what’s left.', '<b>Finished sections fold away</b> to “✓ All done” — tap any folded section to open it (tap its title to fold it again).', '<b>Progress in the patient list:</b> each bed shows how many boxes are left (orange when 1–2, ✓ when done), and a <b>All · To discuss · Open boxes</b> filter.', '<b>Talking points:</b> a 📝 notepad per patient for what you want to bring up on rounds (saved until you clear it; 📝 shows in the list).', '<b>Classic Rounds:</b> a slim header with the bed, one-liner, Pre-charted and Discussed stays at the top as you scroll. (Split Rounds already keeps its header pinned.)']},
   {v:303, d:'2026-11-25', items:['Lab Ord time chips are now <b>5 am · 9 am · 5 pm · 9 pm</b>, plus <b>＋</b> to add your own time — once, or kept as a chip (✕ removes a kept chip while ＋ is open).']},
   {v:302, d:'2026-11-25', items:['<b>iPad pack.</b> <b>Data safety:</b> a “Shift’s almost over — back up?” prompt near the end of each shift (once per shift, only if you haven’t backed up); More shows whether iPadOS is protecting Plexus’s data; Plexus now opens and works with no network.', '<b>Less typing:</b> Lab Ord has one-tap time chips (04:00 · 05:00 · 11:00 · 17:00 · 21:00); task boxes suggest tasks you’ve used before; text cells suggest what you’ve typed before in that column.', '<b>Touch:</b> swipe left/right in Split Rounds for the next/previous patient; long-press a census row (#, HD or Problem) for its actions; bigger census cells to tap.', '<b>Keyboard on the iPad:</b> a focus ring shows where the arrow keys are; More → Keyboard shortcuts.', '<b>Narrow screens</b> (portrait, or Split View beside Epic): slimmer frozen census columns, and Split Rounds puts the patients in a strip across the top.']},
