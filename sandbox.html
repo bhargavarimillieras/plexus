@@ -613,6 +613,9 @@ body.tkfull #hclocks{margin-right:4px}
 .labchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
 .labchip{border:1px solid var(--line2);background:var(--panel);border-radius:16px;padding:5px 11px;font:600 13px ui-monospace,Menlo,monospace;cursor:pointer;color:var(--ink)}
 .labchip.on{background:#E8F0FE;border-color:#4285F4;color:#174ea6}
+.labchip{font-family:inherit}.labchip.add{font-weight:800;min-width:40px}.labchipw{position:relative;display:inline-flex}
+.labchipx{position:absolute;top:-7px;right:-7px;width:20px;height:20px;border-radius:50%;border:0;background:#d93025;color:#fff;font-size:11px;line-height:20px;padding:0;cursor:pointer}
+.labaddrow{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}.labaddrow input[type=text]{flex:1;min-width:120px}
 @media (prefers-color-scheme: dark){.labchip.on{background:#1d3357;color:#a8c7fa}}
 body.touch .labchip{padding:9px 14px;font-size:15px}
 .actsheet{display:flex;flex-direction:column;gap:8px;min-width:min(420px,80vw)}
@@ -1844,7 +1847,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '302';
+const APP_VERSION = '303';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4381,8 +4384,17 @@ function openPop(cellEl, focusEditor=false){
     if(b.dataset.pday !== undefined) return;
     if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:'', items:[]} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
     if(b.hasAttribute('data-today')){ finish({t:state.boardDate}); return; }
+    const labRe = edit => { const box = el.querySelector('.labchips'); if(!box) return; const tmp = document.createElement('div'); tmp.innerHTML = labChipsHTML(edEl.value, edit);
+      const row = el.querySelector('.labaddrow'); if(row) row.remove(); box.replaceWith(...tmp.childNodes); const ni = el.querySelector('[data-labnew]'); if(ni){ ni.focus(); ni.addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); ev.stopPropagation(); el.querySelector('[data-labaddgo]').click(); } }); } };
+    if(b.hasAttribute('data-labadd')){ labRe(!el.querySelector('.labaddrow')); return; }
+    if(b.dataset.labdel){ labCustomSet(labCustom().filter(h => h !== b.dataset.labdel)); labRe(true); return; }
+    if(b.hasAttribute('data-labaddgo')){ const ni = el.querySelector('[data-labnew]'), hm = labTokHM(ni.value);
+      if(!hm){ toast('Type a time — e.g. 1 pm or 13:00'); ni.focus(); return; }
+      if(el.querySelector('[data-labkeep]').checked && !LAB_CHIPS.includes(hm)) labCustomSet([...labCustom(), hm]);
+      let ts = labToks(edEl.value === 'Lab holiday' ? '' : edEl.value); if(!ts.some(x => labTokHM(x) === hm)){ ts.push(labChipLabel(hm)); ts.sort((a, c) => (labTokHM(a) || '99').localeCompare(labTokHM(c) || '99')); }
+      edEl.value = ts.join(', '); const cb = el.querySelector('[data-cn]'); if(cb) cb.checked = true; labRe(false); return; }
     if(b.dataset.labchip){ const hm = b.dataset.labchip; let ts = labToks(edEl.value === 'Lab holiday' ? '' : edEl.value); const i = ts.findIndex(x => labTokHM(x) === hm);
-      if(i >= 0) ts.splice(i, 1); else { ts.push(hm); ts.sort((a, c) => (labTokHM(a) || '99').localeCompare(labTokHM(c) || '99')); }
+      if(i >= 0) ts.splice(i, 1); else { ts.push(labChipLabel(hm)); ts.sort((a, c) => (labTokHM(a) || '99').localeCompare(labTokHM(c) || '99')); }
       edEl.value = ts.join(', '); b.classList.toggle('on', i < 0); const cb = el.querySelector('[data-cn]'); if(cb) cb.checked = !!ts.length; return; }
     if(b.hasAttribute('data-now')){
       const d = new Date(), h = d.getHours(), now = `${h % 12 || 12}:${pad(d.getMinutes())} ${h < 12 ? 'am' : 'pm'}`;
@@ -8090,8 +8102,14 @@ function keptInfo(){ storageKept().then(k => modal(`<h3>🔒 ${k ? 'Your data is
       : '<p>iPadOS hasn\'t promised to keep Plexus\'s data. Open Plexus from its <b>Home Screen icon</b> (not a Safari tab) — that\'s what makes iPadOS keep it — and back up at the end of every shift.</p>'}
   <p class="muted">Backups: More → <b>Back up to Files</b> → Save to Files → your <b>NYU OneDrive</b> (or On My iPad).</p>`, [['OK', 'primary']])); }
 // ---- 2 · less typing ----
-const LAB_CHIPS = ['04:00', '05:00', '11:00', '17:00', '21:00'];
-function labChipsHTML(t){ const on = new Set(labToks(t === 'Lab holiday' ? '' : t).map(labTokHM)); return `<div class="labchips">${LAB_CHIPS.map(h => `<button type="button" class="labchip ${on.has(h) ? 'on' : ''}" data-labchip="${h}">${h}</button>`).join('')}</div>`; }
+const LAB_CHIPS = ['05:00', '09:00', '17:00', '21:00'], LABCHIP_KEY = `${KEY_PREFIX}.labChips`;   // v303: 5 am · 9 am · 5 pm · 9 pm + your own
+const labCustom = () => { try{ return JSON.parse(localStorage.getItem(LABCHIP_KEY) || '[]').filter(h => /^\d\d:\d\d$/.test(h)); }catch(e){ return []; } };
+const labCustomSet = a => { try{ localStorage.setItem(LABCHIP_KEY, JSON.stringify([...new Set(a)].sort())); }catch(e){} };
+const labChipLabel = hm => { const [h, m] = hm.split(':').map(Number); return `${h % 12 || 12}${m ? ':' + pad(m) : ''} ${h < 12 ? 'am' : 'pm'}`; };
+function labChipsHTML(t, edit){ const on = new Set(labToks(t === 'Lab holiday' ? '' : t).map(labTokHM)), cus = labCustom().filter(h => !LAB_CHIPS.includes(h));
+  const all = [...LAB_CHIPS, ...cus].sort((a, b) => a.localeCompare(b));
+  return `<div class="labchips">${all.map(h => `<span class="labchipw"><button type="button" class="labchip ${on.has(h) ? 'on' : ''} ${cus.includes(h) ? 'cus' : ''}" data-labchip="${h}">${labChipLabel(h)}</button>${edit && cus.includes(h) ? `<button type="button" class="labchipx" data-labdel="${h}" title="Remove this chip">✕</button>` : ''}</span>`).join('')}<button type="button" class="labchip add ${edit ? 'on' : ''}" data-labadd title="Add your own time">＋</button></div>
+    ${edit ? `<div class="labaddrow"><input type="text" data-labnew placeholder="e.g. 1 pm or 13:00" enterkeyhint="done" autocomplete="off"><button type="button" class="btn sm primary" data-labaddgo>Add</button><label class="muted small"><input type="checkbox" data-labkeep checked> keep as a chip</label></div>` : ''}`; }
 // what you've typed before in this column (this board + recently discharged), most recent first
 function recentVals(col, max = 12){ const seen = new Map(), add = v => { v = String(v || '').trim(); if(v && v !== 'N/A' && v.length <= 80 && !seen.has(v.toLowerCase())) seen.set(v.toLowerCase(), v); };
   (state.patients || []).forEach(p => add(p.cells && p.cells[col] && p.cells[col].t)); (state.archive || []).slice(-60).reverse().forEach(p => add(p.cells && p.cells[col] && p.cells[col].t));
@@ -8555,6 +8573,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:303, d:'2026-11-25', items:['Lab Ord time chips are now <b>5 am · 9 am · 5 pm · 9 pm</b>, plus <b>＋</b> to add your own time — once, or kept as a chip (✕ removes a kept chip while ＋ is open).']},
   {v:302, d:'2026-11-25', items:['<b>iPad pack.</b> <b>Data safety:</b> a “Shift’s almost over — back up?” prompt near the end of each shift (once per shift, only if you haven’t backed up); More shows whether iPadOS is protecting Plexus’s data; Plexus now opens and works with no network.', '<b>Less typing:</b> Lab Ord has one-tap time chips (04:00 · 05:00 · 11:00 · 17:00 · 21:00); task boxes suggest tasks you’ve used before; text cells suggest what you’ve typed before in that column.', '<b>Touch:</b> swipe left/right in Split Rounds for the next/previous patient; long-press a census row (#, HD or Problem) for its actions; bigger census cells to tap.', '<b>Keyboard on the iPad:</b> a focus ring shows where the arrow keys are; More → Keyboard shortcuts.', '<b>Narrow screens</b> (portrait, or Split View beside Epic): slimmer frozen census columns, and Split Rounds puts the patients in a strip across the top.']},
   {v:301, d:'2026-11-25', items:['Census: the <b>Avatar</b> column is narrower — lines wrap onto two lines instead of stretching the column. Hover (or open the cell / body map) for the full list.']},
   {v:300, d:'2026-11-25', items:['<b>Last BM</b> now turns light red (and gets the “No BM” flag) once the last BM was <b>2 or more days</b> ago — e.g. 11/23 on 11/25. Boards still on the old default of 3 days were moved to 2; change it in ⚙ Settings → Flag no BM after (days).']},
