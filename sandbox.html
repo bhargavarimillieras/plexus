@@ -1973,7 +1973,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '322';
+const APP_VERSION = '323';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -4814,7 +4814,8 @@ function onCellKey(e){
 /* ---------- rounds mode: one patient at a time ---------- */
 const rounds = {open:false, id:null, cx:{}};
 /* v304: Rounds focus (AM / PM / Dispo / All, or Auto by time of day), strip filter, talking points */
-const RFOCUS_KEY = `${KEY_PREFIX}.rFocus`, RFILT_KEY = `${KEY_PREFIX}.rFilter`;
+const RFOCUS_KEY = `${KEY_PREFIX}.rFocus`, RFILT_KEY = `${KEY_PREFIX}.rFilter`, RGLX_KEY = `${KEY_PREFIX}.rGlanceCx`;
+const rGlanceCx = () => { try{ return localStorage.getItem(RGLX_KEY) === '1'; }catch(e){ return false; } };   // v323: At a glance open by default; collapsing it sticks on this device
 const rFocusPref = () => { try{ return localStorage.getItem(RFOCUS_KEY) || 'auto'; }catch(e){ return 'auto'; } };
 const rFilter = () => { try{ return localStorage.getItem(RFILT_KEY) || 'all'; }catch(e){ return 'all'; } };
 function rFocus(){ const f = rFocusPref(); if(f !== 'auto') return f; if(typeOf(activeType).night) return 'all'; return new Date().getHours() < 12 ? 'am' : 'pm'; }
@@ -5018,7 +5019,7 @@ function renderRounds(){
     ${fl.length || n !== null ? `<div class="rflags">${hdPill(p, true)}${fl.map(([l,t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}
     <div class="rtodos ${patientTodos(p.id).length ? '' : 'empty'}" id="rTodos"><h4><span>⏰ To-dos${patientTodos(p.id).length ? '' : ' <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:500">— none for this patient</span>'}</span><button class="btn sm" data-tdedit="${p.id}">+ Add / edit ${scLabel('todo')}</button></h4>
       ${patientTodos(p.id).map(t => todoRowHTML(t, false)).join('')}</div>
-    <div class="rtalk"><button type="button" class="btn sm" data-present="${p.id}" style="margin-bottom:8px">🗣 Present this patient</button>${evCardHTML(p)}${talkHTML(p)}</div>
+    <div class="rtalk">${evCardHTML(p)}${talkHTML(p)}</div>
     ${rdLeaveCard(p) ? `<div class="rleave">${rdLeaveCard(p)}</div>` : ''}
     ${sections}
     <div class="rnav"><button class="btn" data-r="prev" ${i <= 0 ? 'disabled' : ''}>← ${i > 0 ? esc(list[i-1].bed || 'Previous') : 'Previous'}</button>
@@ -5083,9 +5084,9 @@ function renderRoundsSplit(){
         ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
       <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
-      <div class="rs-focus" role="group" aria-label="Focus"><button type="button" class="btn sm rs-present" data-present="${p.id}" title="Show this patient laid out to present">🗣 Present</button><span class="muted small">Focus</span><span class="seg">${[['auto', `Auto${rFocusPref() === 'auto' ? ' · ' + (rFocus() === 'all' ? 'All' : CHUNK[rFocus()].name.replace(/ rounds/i, '')) : ''}`], ['am', 'AM'], ['pm', 'PM'], ['dispo', 'Dispo'], ['all', 'All']].map(([k, l]) => `<button type="button" data-rfocus="${k}" class="${rFocusPref() === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</span></div>
+      <div class="rs-focus" role="group" aria-label="Focus"><span class="muted small">Focus</span><span class="seg">${[['auto', `Auto${rFocusPref() === 'auto' ? ' · ' + (rFocus() === 'all' ? 'All' : CHUNK[rFocus()].name.replace(/ rounds/i, '')) : ''}`], ['am', 'AM'], ['pm', 'PM'], ['dispo', 'Dispo'], ['all', 'All']].map(([k, l]) => `<button type="button" data-rfocus="${k}" class="${rFocusPref() === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</span></div>
       ${rdLeaveCard(p)}
-      ${(() => { const f = rFocus(), fc = CHUNKS.find(c => c.k === f); return (fc ? ckCard(fc) : '') + `<div class="rs-card"><div class="rs-cardh">At a glance</div><div class="rs-glance">${glance}</div></div>` + CHUNKS.filter(c => c !== fc).map(ckCard).join(''); })()}
+      ${(() => { const f = rFocus(), fc = CHUNKS.find(c => c.k === f); return (fc ? ckCard(fc) : '') + (rGlanceCx() ? `<div class="rs-card rs-col rs-glcard" data-rglx="1" role="button" tabindex="0" title="Tap to open"><div class="rs-cardh"><span>▸ At a glance</span></div></div>` : `<div class="rs-card rs-glcard"><div class="rs-cardh"><span class="rs-cxh" data-rglx="0" role="button" title="Collapse">▾ At a glance</span></div><div class="rs-glance">${glance}</div></div>`) + CHUNKS.filter(c => c !== fc).map(ckCard).join(''); })()}
     </div>
     <div class="rs-plancol">${evCardHTML(p)}${talkHTML(p)}<div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
       <div class="rs-todos" id="rTodos">${todos.map(t => todoRowHTML(t, false)).join('') || '<div class="muted small" style="padding:6px 2px">Nothing yet.</div>'}</div>
@@ -5111,6 +5112,7 @@ $('#roundsBtn').addEventListener('click', () => openRounds());
 $('#roundsBody').addEventListener('click', e => {
   const g = e.target.closest('[data-rgo]'); if(g){ roundsTo(g.dataset.rgo); return; }
   const pz = e.target.closest('[data-present]'); if(pz){ openPresent(pz.dataset.present); return; }
+  const gx = !e.target.closest('.tc,button,select,input,textarea') && e.target.closest('[data-rglx]'); if(gx){ try{ localStorage.setItem(RGLX_KEY, gx.dataset.rglx === '1' ? '0' : '1'); }catch(err){} renderRounds(); return; }
   const ed = e.target.closest('[data-evdel]'); if(ed){ const [pid, eid] = ed.dataset.evdel.split('|'); evDel(pid, eid); renderRounds(); return; }
   const fo = e.target.closest('[data-rfocus]'); if(fo){ try{ localStorage.setItem(RFOCUS_KEY, fo.dataset.rfocus); }catch(err){} rounds.cx = {}; renderRounds(); return; }
   const rf = e.target.closest('[data-rfilt]'); if(rf){ try{ localStorage.setItem(RFILT_KEY, rf.dataset.rfilt); }catch(err){} renderRounds(); return; }
@@ -9122,6 +9124,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:323, d:'2026-11-26', items:['Rounds: the <b>🗣 Present</b> button is gone.', 'Rounds · Split: <b>At a glance</b> can be collapsed — tap its title (▾). It’s open by default and stays the way you left it on this device.']},
   {v:322, d:'2026-11-26', items:['<b>✓ Work done</b> — see at a glance when AM rounds, PM rounds and Dispo are all accounted for.', '<b>Rounds</b>: AM · PM · Dispo pills at the top (patients done / total — orange when 1–2 are left, green when done; tap one to focus on it) turn into a green <b>✓ All work done</b> when everything is accounted for. Each patient shows the same: what’s left in AM / PM / Dispo, or <b>✓ All done</b>.', '<b>Overview</b>: a <b>Work done today</b> panel with a progress bar for each, plus the beds still open (tap one to jump to it in Rounds).']},
   {v:321, d:'2026-11-26', items:['Colors: <b>Pending / in process</b> is light orange and <b>Revisit</b> is dark orange (Vitals, FSG, Lab Rev, Imaging).', '<b>Note</b> types are Progress, H&amp;P, Discharge, Transfer — Pending and ALOC are statuses now (a note typed “Pending” or “ALOC” was switched to that status).']},
   {v:320, d:'2026-11-26', items:['<b>Lab Rev / Imaging</b> choices are now 1 Reviewed · 2 Ordered · 3 Pending / in process · 4 Revisit · 5 Panic · 6 N/A.']},
