@@ -626,6 +626,12 @@ body.tkfull #hclocks{margin-right:4px}
 .setmodal .actions{margin:0;padding:12px 20px;border-top:1px solid var(--line)}
 body.touch .setnavb{padding:11px 10px}
 @media (max-width:719px){.setwrap{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}.setnav{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.setnavb{width:auto;flex:none;margin:0 4px 0 0}.setnavb .snt span{display:none}.modal.setmodal{height:92vh}}
+/* v327 night rounds */
+.rs-nightlbl{display:inline-flex;align-items:center;gap:4px;background:#283593;color:#e8eaf6;border-radius:999px;padding:3px 11px;font-weight:800;font-size:12.5px;white-space:nowrap}
+.rs-focus .rs-nightlbl+.muted{margin-left:8px}.rs-night .rs-cardh span:first-child{color:#3949AB}
+.wkpanel.wk1 .wkgrid{grid-template-columns:minmax(0,1fr)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .rs-night .rs-cardh span:first-child{color:#9fa8da}}
+:root[data-theme="dark"] .rs-night .rs-cardh span:first-child{color:#9fa8da}
 /* v326 night display: deeper blacks, softer text, dimmed status colors, larger tap targets */
 html[data-night]{--bg:#07080a;--panel:#0e1014;--ink:#b4bac4;--muted:#69707d;--line:#1a1e25;--line2:#272c35;--head:#13161b;--accent:#3f6aa6;--accent-ink:#e6ebf2;--hover:#151920;--sticky:#0e1014;
   --warn-bg:#2a220d;--warn-ink:#d6ae5a;--bad-bg:#2c1413;--bad-ink:#d9857e;--info-bg:#121e31;--info-ink:#86a8d8;--focus:#6f98d6;--na-bg:#1b1e24;--na-ink:#646b78;
@@ -1065,7 +1071,7 @@ body.touch .rchip{padding:8px 12px;font-size:14px}
 .rounds.rsplit #roundsBody{overflow:hidden}
 .rs{--rs-hh:128px;--rs-fh:68px;display:grid;grid-template-columns:260px 1fr;height:100%;min-height:0}
 .rs-rail{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;height:100%;min-height:0}
-.rs-railhd{height:var(--rs-hh);box-sizing:border-box;padding:12px 12px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:8px;flex:none}
+.rs-railhd{min-height:var(--rs-hh);box-sizing:border-box;padding:12px 12px 10px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:8px;flex:none}
 
 .rs-row{display:flex;align-items:center;justify-content:space-between}.rs-row b{font-size:16px}
 .rs-railhd .seg{display:flex}.rs-railhd .seg button{flex:1;display:flex;align-items:center;justify-content:center;line-height:1.2;padding-top:0;padding-bottom:0}
@@ -1985,7 +1991,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '326';
+const APP_VERSION = '327';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -3089,6 +3095,16 @@ const CHUNKS = [
   {k:'pm', label:'PM', g:'standing', name:'PM rounds', keys:['avatar', 'diet', 'dvt', 'dest', 'vst', 'note', 'hc', 'attest', 'labord', 'handoff', 'ordrev', 'proc', 'cons']},
   {k:'dispo', label:'Dispo', g:'dispo', name:'Dispo', keys:['sw', 'pt', 'ot', 'services', 'dispo']}];
 const CHUNK = Object.fromEntries(CHUNKS.map(c => [c.k, c]));
+/* v327: 🌙 Night rounds — ICU boards (Bellevue MICU / CCU, Tisch MICU, VA ICU) on a night shift, or the night half of a 24-hour shift:
+   one pass over every column except the day-team ones (Note, Attest, Lab Ord, Handoff, Ord Rev). Not part of CHUNKS, so the census keeps AM / PM / Dispo. */
+const NIGHT_EXCL = new Set(['note', 'attest', 'labord', 'handoff', 'ordrev']);
+CHUNK.night = {k:'night', label:'Night', g:'daily', name:'Night rounds', keys:CHUNKS.flatMap(c => c.keys).filter(k => !NIGHT_EXCL.has(k))};
+const ICU_TYPES = new Set(['bv-icu-24', 'bv-icu-day', 'bv-ccu-day', 'bv-ccu-night', 'day-icu', 'ti-icu-night', 'va-icu-day', 'va-icu-night', 'va-icu-24']);
+function isIcuBoard(){ const r = ROTS[activeType]; if(r) return ICU_TYPES.has(r.tpl) || /\b(icu|micu|ccu)\b/i.test(`${r.tplKey || ''} ${r.name || ''} ${r.label || ''}`.replace(/-/g, ' ')); return ICU_TYPES.has(activeType); }
+function nightRoundsAvail(){ try{ if(!isIcuBoard()) return false; const h = boardHours(); return !h.off && (h.base === 'night' || h.base === '24h'); }catch(e){ return false; } }
+function nightRoundsNow(){ try{ if(!nightRoundsAvail()) return false; const h = boardHours(); if(h.base === 'night') return true; const H = new Date().getHours(); return H >= 19 || H < 7; }catch(e){ return false; } }
+const nightOnly = () => { try{ return nightRoundsAvail() && boardHours().base === 'night'; }catch(e){ return false; } };   // a whole night shift: no AM / PM / Dispo at all
+const workChunks = () => (nightRoundsNow() ? [CHUNK.night] : CHUNKS).filter(c => chunkReq(c.k).length);
 const chunkKeys = ck => CHUNK[ck].keys.filter(k => COLMAP[k] && !colHidden(k));
 const OPTIONAL_KEYS = new Set(['services', 'dispo', 'cons']);   // nice-to-have notes: never count as open
 const chunkReq = ck => chunkKeys(ck).filter(k => !OPTIONAL_KEYS.has(k));
@@ -4834,30 +4850,30 @@ const RFOCUS_KEY = `${KEY_PREFIX}.rFocus`, RFILT_KEY = `${KEY_PREFIX}.rFilter`, 
 const rGlanceCx = () => { try{ return localStorage.getItem(RGLX_KEY) === '1'; }catch(e){ return false; } };   // v323: At a glance open by default; collapsing it sticks on this device
 const rFocusPref = () => { try{ return localStorage.getItem(RFOCUS_KEY) || 'auto'; }catch(e){ return 'auto'; } };
 const rFilter = () => { try{ return localStorage.getItem(RFILT_KEY) || 'all'; }catch(e){ return 'all'; } };
-function rFocus(){ const f = rFocusPref(); if(f !== 'auto') return f; if(typeOf(activeType).night) return 'all'; return new Date().getHours() < 12 ? 'am' : 'pm'; }
+function rFocus(){ const f = rFocusPref(); if(nightOnly() || (f === 'auto' && nightRoundsNow())) return 'night'; if(f === 'night' && !nightRoundsAvail()) return new Date().getHours() < 12 ? 'am' : 'pm'; if(f !== 'auto') return f; if(typeOf(activeType).night) return 'all'; return new Date().getHours() < 12 ? 'am' : 'pm'; }
 const rLeft = p => { const f = rFocus(); return f === 'all' ? openCount(p) : chunkOpen(p, f); };
 const rLeftBadge = p => { if(p.status === 'New') return '<span class="rs-left new" title="New admit">new</span>'; const n = rLeft(p), f = rFocus();
   return `<span class="rs-left ${!n ? 'ok' : n <= 2 ? 'near' : ''}" title="${n ? n + ' box' + (n === 1 ? '' : 'es') + ' left' : 'All done'}${f === 'all' ? '' : ' in ' + (CHUNK[f] ? CHUNK[f].name : f)}">${n ? n : '✓'}</span>`; };
 let talkT = null;
 /* v322: ✓ Work done — AM rounds / PM rounds / Dispo accounted for, per patient and for the whole list (Rounds + Overview) */
 function workSum(ps){ ps = ps || state.patients;
-  return CHUNKS.filter(c => chunkReq(c.k).length).map(c => { const L = ps.map(p => ({p, n:chunkOpen(p, c.k)})), left = L.filter(x => x.n);
+  return workChunks().map(c => { const L = ps.map(p => ({p, n:chunkOpen(p, c.k)})), left = L.filter(x => x.n);
     return {k:c.k, label:c.label, name:c.name, tot:ps.length, done:ps.length - left.length, boxes:left.reduce((a, x) => a + x.n, 0), left}; }); }
 const workCls = w => !w.tot ? '' : w.done === w.tot ? 'ok' : w.tot - w.done <= 2 ? 'near' : '';
 const allWorkDone = ws => ws.length && ws.every(w => w.done === w.tot);
 function rWorkHTML(list){ const ws = workSum(list); if(!ws.length || !list.length) return '';
-  if(allWorkDone(ws)) return `<span class="rwork alldone" title="Every AM, PM and Dispo box is accounted for${list.length !== state.patients.length ? ' (patients in this view)' : ''}">✓ All work done</span>`;
+  if(allWorkDone(ws)) return `<span class="rwork alldone" title="Every ${ws.map(w => w.label).join(' / ')} box is accounted for${list.length !== state.patients.length ? ' (patients in this view)' : ''}">✓ All work done</span>`;
   return `<span class="rwork" role="group" aria-label="Work done">${ws.map(w => `<button type="button" class="rwk ${workCls(w)}" data-rfocus="${w.k}" title="${w.name}: ${w.done} of ${w.tot} patients done · ${w.boxes} box${w.boxes === 1 ? '' : 'es'} left — tap to focus on ${w.name}"><b>${w.label}</b> ${w.done === w.tot ? '✓' : `${w.done}/${w.tot}`}</button>`).join('')}</span>`; }
-function rPtWork(p){ const ws = CHUNKS.filter(c => chunkReq(c.k).length).map(c => ({c, n:chunkOpen(p, c.k)}));
-  if(ws.every(x => !x.n)) return `<span class="rptw alldone" title="AM, PM and Dispo all accounted for">✓ All done</span>`;
+function rPtWork(p){ const ws = workChunks().map(c => ({c, n:chunkOpen(p, c.k)}));
+  if(ws.every(x => !x.n)) return `<span class="rptw alldone" title="${ws.map(x => x.c.name).join(', ')} — all accounted for">✓ All done</span>`;
   return `<span class="rptw">${ws.map(x => `<button type="button" class="rwk sm ${x.n ? (x.n <= 2 ? 'near' : '') : 'ok'}" data-rfocus="${x.c.k}" title="${x.c.name}: ${x.n ? x.n + ' box' + (x.n === 1 ? '' : 'es') + ' left' : 'done'}"><b>${x.c.label}</b> ${x.n ? x.n + ' left' : '✓'}</button>`).join('')}</span>`; }
 function ovWorkHTML(){ const ps = state.patients, ws = workSum(ps); if(!ps.length || !ws.length) return '';
   const done = allWorkDone(ws), tl = taskList().filter(t => !t.done).length;
   const col = w => `<div class="wkcol ${workCls(w)}"><div class="wkh"><b>${esc(w.name)}</b><span>${w.done === w.tot ? '✓ done' : `${w.boxes} box${w.boxes === 1 ? '' : 'es'} left`}</span></div>
     <div class="wkn">${w.done}<small>/${w.tot} patients</small></div><div class="wkbar"><i style="width:${(w.tot ? w.done / w.tot * 100 : 0).toFixed(1)}%"></i></div>
     <div class="wkleft">${w.left.length ? w.left.sort((a, b) => b.n - a.n).map(x => `<button type="button" class="wkpt" data-ovround="${x.p.id}" data-ovfocus="${w.k}" title="${esc(openKeys(x.p, w.k).map(k => k === '_npo' ? 'NPO' : (COLMAP[k] ? colCfg(k).h : k)).join(', '))} — open in Rounds">${esc(x.p.bed || '—')} <b>${x.n}</b></button>`).join('') : '<span class="muted small">Everyone’s done</span>'}</div></div>`;
-  return `<div class="hp s12 wkpanel ${done ? 'alldone' : ''}"><div class="hph"><h4>${done ? '✓ All work done' : 'Work done today'}</h4><span class="n">${ws.filter(w => w.done === w.tot).length}/${ws.length}</span><a href="#" data-ovgo="census">Census →</a></div>
-    ${done ? `<div class="wkdone">Every AM, PM and Dispo box is accounted for.${tl ? ` <span class="muted">${tl} open task${tl === 1 ? '' : 's'} still on the list.</span>` : ''}</div>` : ''}
+  return `<div class="hp s12 wkpanel ${done ? 'alldone' : ''} ${ws.length === 1 ? 'wk1' : ''}"><div class="hph"><h4>${done ? '✓ All work done' : ws[0].k === 'night' ? 'Night rounds' : 'Work done today'}</h4><span class="n">${ws.filter(w => w.done === w.tot).length}/${ws.length}</span><a href="#" data-ovgo="census">Census →</a></div>
+    ${done ? `<div class="wkdone">Every ${ws.map(w => w.name.replace(/ rounds/, '')).join(', ')} box is accounted for.${tl ? ` <span class="muted">${tl} open task${tl === 1 ? '' : 's'} still on the list.</span>` : ''}</div>` : ''}
     <div class="wkgrid">${ws.map(col).join('')}</div></div>`; }
 /* v318: 🏷 Problem chips — the Problem column is a list of short problems (abbreviations), stored as "ADHF (HFrEF), AKI, Hypo K"; first = principal.
    Curated list: every ICD-10 code checked against the CMS FY2027 list. No free-text one-liner. */
@@ -5004,7 +5020,7 @@ function renderRounds(){
   const seenN = list.filter(rdSeen).length, dTot = list.filter(q => q.status !== 'New').length, ord = roundsOrder();
   const strip = list.length ? `<div class="rstrip" role="tablist" aria-label="Patients">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<span class="rsi">${esc(q.intern || 'Unassigned')}</span>` : ''}<button type="button" class="rchip ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'seen' : ''}" data-rgo="${q.id}" title="${esc((q.problem || '') + (rdSeen(q) ? ' — discussed' : ''))}">${rdSeen(q) ? '✓ ' : ''}${esc(q.bed || '—')}</button>`).join('')}</div>` : '';
   const bar = `<div class="rbar"><h3>Rounds</h3><span class="rcount">${list.length ? `${i+1} / ${list.length}` : '0 patients'}</span>
-    <span class="rseen" title="Patients discussed on rounds today (separate from the Visit box) — new admits aren't counted">✓ ${seenN}/${dTot} discussed</span>${rWorkHTML(list)}
+    <span class="rseen" title="Patients discussed on rounds today (separate from the Visit box) — new admits aren't counted">✓ ${seenN}/${dTot} discussed</span>${rFocus() === 'night' ? '<span class="rs-nightlbl">🌙 Night rounds</span>' : ''}${rWorkHTML(list)}
     <span class="seg rord" role="group" aria-label="Order">${[['intern', 'By intern'], ['bed', 'By bed'], ['list', 'Census order']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
     <span class="seg rview" role="group" aria-label="Layout"><button type="button" data-rview="classic" class="on">Classic</button><button type="button" data-rview="split">Split</button></span>
     ${list.length ? `<select id="rJump" title="Jump to a patient">${list.map((p,j) => `<option value="${p.id}" ${j===i?'selected':''}>${j+1}. ${esc(p.bed || '(no bed)')} — ${esc(p.intern || 'unassigned')}${p.problem ? ' · ' + esc(p.problem) : ''}</option>`).join('')}</select>` : ''}
@@ -5015,7 +5031,8 @@ function renderRounds(){
   if(!list.length){ body.innerHTML = bar + `<div class="rempty">No patients in this view.</div>`; return; }
   const p = list[i], fl = flagsFor(p), n = hospDay(p), cm = p.comments || {};
   const adm = admitOf(p);
-  const sections = CENSUS_GROUPS().map(g => ({g, cols:visibleCols(g)})).filter(x => x.cols.length).map(({g, cols}) => `
+  const nightR = rFocus() === 'night';
+  const sections = CENSUS_GROUPS().map(g => ({g, cols:visibleCols(g).filter(c => !nightR || !NIGHT_EXCL.has(c.k))})).filter(x => x.cols.length).map(({g, cols}) => `
     <div class="rsec"><h4 style="background:var(--g-${g.k})">${esc(g.label.split(' —')[0])}</h4><div class="rtiles">${cols.map((c, ci) => { const cfg = colCfg(c.k);
       return `<div class="rtile"><div class="rlab" title="${esc(cfg.h)}">${esc(cfg.h)}</div>${cellHTML(p.cells[c.k], cfg, 'p', p.id, 0, ci, false)}${cm[c.k] ? `<div class="rcmt">${esc(cm[c.k])}</div>` : ''}</div>`; }).join('')}</div></div>`).join('');
   body.innerHTML = bar + `<div class="rbody">
@@ -5083,7 +5100,7 @@ function renderRoundsSplit(){
     const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
   const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' || k === 'cons' ? 'rs-gtt' : ''}">${k === 'cons' && consItems(p.cells.cons).length ? `<div class="tc t-cons rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="cons" data-ri="0" data-ci="0" title="Edit consults">${consPills(p.cells.cons)}</div>` : k === 'gtt' && gttShown(p.cells.gtt, p).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt, p)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
   const ckCard = c => { const all = chunkKeys(c.k), show = all.filter(k => !RS_GLANCE.includes(k)); if(!show.length) return '';
-    const fk = c.k === 'pm' ? followKeys(p) : [], doneK = k => isDone(colCfg(k), p.cells[k] || {}) || (c.k === 'am' && isFollow(p, k));
+    const fk = c.k === 'pm' ? followKeys(p) : [], doneK = k => isDone(colCfg(k), p.cells[k] || {}) || (c.k === 'am' && isFollow(p, k)) || (c.k === 'night' && newCovers(p, k));
     const req = all.filter(k => !OPTIONAL_KEYS.has(k)), done = req.filter(doneK).length, inGl = all.filter(k => RS_GLANCE.includes(k)).map(k => colCfg(k).h);
     const tot = req.length + fk.length, left = tot - done, cntCls = !left ? 'ok' : left <= 2 ? 'near' : '';
     const cnt = `<span class="rs-cnt ${cntCls}" title="${esc(inGl.length ? 'Includes ' + inGl.join(', ') + ' (in At a glance)' : c.k === 'dispo' ? 'Services and Dispo notes are optional' : '')}">${done} / ${req.length + fk.length} done</span>`;
@@ -5100,9 +5117,9 @@ function renderRoundsSplit(){
         ${fl.length ? `<div class="rs-flags">${fl.map(([l, t]) => l === 'xfer' ? `<button class="flag xfer" data-act="xfer" data-id="${p.id}">${esc(t)}</button>` : `<span class="flag ${l}">${esc(t)}</span>`).join('')}</div>` : ''}</div>
       <div class="rs-act"><button type="button" class="rseenbtn rpcbtn ${isPc(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rpc="${p.id}" title="${isPc(p) ? 'Pre-charted — tap to undo' : 'Mark pre-charted (same as the ✓ on the census)'}">${isPc(p) ? '✓ Pre-charted' : '○ Mark pre-charted'}</button><button type="button" class="rseenbtn ${rdSeen(p) ? 'on' : ''}" ${p.status === 'New' ? `disabled title="${NA_NEW}"` : ''} data-rseen="${p.id}" title="${rdSeen(p) ? 'Discussed on rounds today — tap to undo' : 'Mark discussed on rounds (separate from the Visit box)'}">💬 ${rdSeen(p) ? 'Discussed' : 'Mark discussed'}</button><button class="btn" data-r="close" title="Close (Esc)">✕</button></div></div>
     <div class="rs-body"><div class="rs-colL">
-      <div class="rs-focus" role="group" aria-label="Focus"><span class="muted small">Focus</span><span class="seg">${[['auto', `Auto${rFocusPref() === 'auto' ? ' · ' + (rFocus() === 'all' ? 'All' : CHUNK[rFocus()].name.replace(/ rounds/i, '')) : ''}`], ['am', 'AM'], ['pm', 'PM'], ['dispo', 'Dispo'], ['all', 'All']].map(([k, l]) => `<button type="button" data-rfocus="${k}" class="${rFocusPref() === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</span></div>
+      <div class="rs-focus" role="group" aria-label="Focus">${nightOnly() ? `<span class="rs-nightlbl">🌙 Night rounds</span><span class="muted small">everything except ${[...NIGHT_EXCL].filter(k => COLMAP[k]).map(k => colCfg(k).h).join(', ')}</span>` : `<span class="muted small">Focus</span><span class="seg">${[['auto', `Auto${rFocusPref() === 'auto' ? ' · ' + (rFocus() === 'all' ? 'All' : CHUNK[rFocus()].name.replace(/ rounds/i, '')) : ''}`], ['am', 'AM'], ['pm', 'PM'], ['dispo', 'Dispo'], ...(nightRoundsAvail() ? [['night', '🌙 Night']] : []), ['all', 'All']].map(([k, l]) => `<button type="button" data-rfocus="${k}" class="${rFocusPref() === k ? 'on' : ''}">${esc(l)}</button>`).join('')}</span>`}</div>
       ${rdLeaveCard(p)}
-      ${(() => { const f = rFocus(), fc = CHUNKS.find(c => c.k === f); return (fc ? ckCard(fc) : '') + (rGlanceCx() ? `<div class="rs-card rs-col rs-glcard" data-rglx="1" role="button" tabindex="0" title="Tap to open"><div class="rs-cardh"><span>▸ At a glance</span></div></div>` : `<div class="rs-card rs-glcard"><div class="rs-cardh"><span class="rs-cxh" data-rglx="0" role="button" title="Collapse">▾ At a glance</span></div><div class="rs-glance">${glance}</div></div>`) + CHUNKS.filter(c => c !== fc).map(ckCard).join(''); })()}
+      ${(() => { const f = rFocus(), fc = f === 'night' ? CHUNK.night : CHUNKS.find(c => c.k === f); return (fc ? ckCard(fc) : '') + (rGlanceCx() ? `<div class="rs-card rs-col rs-glcard" data-rglx="1" role="button" tabindex="0" title="Tap to open"><div class="rs-cardh"><span>▸ At a glance</span></div></div>` : `<div class="rs-card rs-glcard"><div class="rs-cardh"><span class="rs-cxh" data-rglx="0" role="button" title="Collapse">▾ At a glance</span></div><div class="rs-glance">${glance}</div></div>`) + (f === 'night' ? '' : CHUNKS.filter(c => c !== fc).map(ckCard).join('')); })()}
     </div>
     <div class="rs-plancol">${evCardHTML(p)}${talkHTML(p)}<div class="rs-card rs-plan"><div class="rs-cardh">Plan from rounds <span class="rs-cnt">${todos.length ? todos.length + ' open' : ''}</span></div>
       <div class="rs-todos" id="rTodos">${todos.map(t => todoRowHTML(t, false)).join('') || '<div class="muted small" style="padding:6px 2px">Nothing yet.</div>'}</div>
@@ -9177,6 +9194,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:327, d:'2026-11-27', items:['<b>🌙 Night rounds</b> (ICU boards — Bellevue MICU, Bellevue CCU, Tisch MICU, VA ICU): on a night shift, Rounds is one <b>Night rounds</b> pass over every column except Note, Attest, Lab Ord, Handoff and Ord Rev — instead of AM / PM / Dispo. On a 24-hour shift it switches to Night rounds from 19:00 to 07:00 (or pick <b>🌙 Night</b> in Focus any time).', 'The Work done pills in Rounds and the Overview panel follow it: <b>Night</b> done / total, then <b>✓ All work done</b>.', 'Fix: the Order and Layout switches at the top of Split Rounds’ patient list were squashed into empty bars.']},
   {v:326, d:'2026-11-27', items:['<b>🌙 Night display</b>: a dimmer, low-glare dark screen — deeper blacks, softer text, toned-down status colors and bigger buttons. Turns on by itself while you’re on a night shift and off when the shift ends. ⚙ Settings → Look → Night display (automatic / always / off); the command bar’s <b>night</b> flips it on or off.']},
   {v:325, d:'2026-11-27', items:['<b>⏰ Hourly backup</b>: while you’re on shift, Plexus asks every hour to save a <b>full backup</b> (one tap; <b>In 15 min</b> or <b>Later</b> to put it off). Skipped if you backed up in the last hour. On a computer it opens a <b>Save</b> box — pick your NYU OneDrive once and it remembers the folder; on the iPad it’s the usual Save to Files.', 'Change it (30 min / 1 h / 2 h / never) or try it in ⚙ Settings → Backups → Reminders.']},
   {v:324, d:'2026-11-26', items:['Patients whose diet is <b>NPO</b> get an <b>NPO</b> flag beside the bed (like T&amp;S expired) — on the census, in Rounds, on the Overview’s Needs attention and in the Flagged filter.']},
@@ -9615,7 +9633,7 @@ if(!tabLocked) showLaunch({boot:true});
 { const tryWN = n => { if(modalEl || tabLocked || (SANDBOX && !(() => { try{ return localStorage.getItem(SEEN_KEY); }catch(e){ return ''; } })())){ if(SANDBOX && !modalEl && !tabLocked){ try{ localStorage.setItem(SEEN_KEY, APP_VERSION); }catch(e){} return; } if(n < 20) setTimeout(() => tryWN(n + 1), 1500); return; } whatsNewBoot(); };
   whenLaunched(() => setTimeout(() => tryWN(0), 600)); }
 // test hook for the automated checks (sandbox only)
-if(SANDBOX) window.__wmTest = {syncLabTasks, labTokHM, get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, switchBoard, showLaunch, get launching(){ return launching; }, get rots(){ return ROTS; }, typeOf, addDays, renderAll, shiftStartDate, shiftEndDate, dayGo(d){ mutate(() => { state.boardDate = d; }); }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
+if(SANDBOX) window.__wmTest = {nightRoundsNow, nightRoundsAvail, rFocus, isIcuBoard, workChunks, syncLabTasks, labTokHM, get BKF(){ return BKF; }, ABK, autoBackup, idbGetK, backupsModal, settings, setDirty(v){ abkDirty = v; }, switchBoard, showLaunch, get launching(){ return launching; }, get rots(){ return ROTS; }, typeOf, addDays, renderAll, shiftStartDate, shiftEndDate, dayGo(d){ mutate(() => { state.boardDate = d; }); }, get state(){ return state; }, get activeType(){ return activeType; }, get actLog(){ return actLog; }, mutate, tidyScan, collectAll, ADMIT_COLMAP, ADMIT_PHASES, DC_KEYS, SHIFT_TYPES};
 setTimeout(() => { try{ const bad = runDiagnostics().filter(r => r.lvl === 'fail'); if(bad.length) toast(`Self-check found ${bad.length} problem${bad.length===1?'':'s'}: ${bad[0].title} — see Settings → Run self-check`); }catch(e){} }, 1500);
 })();
 </script>
