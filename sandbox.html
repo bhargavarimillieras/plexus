@@ -626,6 +626,18 @@ body.tkfull #hclocks{margin-right:4px}
 .setmodal .actions{margin:0;padding:12px 20px;border-top:1px solid var(--line)}
 body.touch .setnavb{padding:11px 10px}
 @media (max-width:719px){.setwrap{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}.setnav{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.setnavb{width:auto;flex:none;margin:0 4px 0 0}.setnavb .snt span{display:none}.modal.setmodal{height:92vh}}
+/* v326 night display: deeper blacks, softer text, dimmed status colors, larger tap targets */
+html[data-night]{--bg:#07080a;--panel:#0e1014;--ink:#b4bac4;--muted:#69707d;--line:#1a1e25;--line2:#272c35;--head:#13161b;--accent:#3f6aa6;--accent-ink:#e6ebf2;--hover:#151920;--sticky:#0e1014;
+  --warn-bg:#2a220d;--warn-ink:#d6ae5a;--bad-bg:#2c1413;--bad-ink:#d9857e;--info-bg:#121e31;--info-ink:#86a8d8;--focus:#6f98d6;--na-bg:#1b1e24;--na-ink:#646b78;
+  --g-daily:#111a27;--g-standing:#112018;--g-dc:#251c11;--g-dispo:#1c1729}
+html[data-night] body{background:var(--bg)}
+html[data-night] .tc,html[data-night] .chip i,html[data-night] .pchip,html[data-night] .rwk,html[data-night] .rwork.alldone,html[data-night] .rptw.alldone,html[data-night] .flag,html[data-night] .tag,html[data-night] .lg i,html[data-night] .cons-pill,html[data-night] .bdg,html[data-night] img,html[data-night] .brandname,html[data-night] .ovhero,html[data-night] .kpi{filter:brightness(.78) saturate(.8)}
+html[data-night] .btn,html[data-night] .seg button,html[data-night] #tabs button{min-height:40px}
+html[data-night] .btn.sm{min-height:34px;padding-top:6px;padding-bottom:6px}
+html[data-night] .rs-card,html[data-night] .hp{border-color:var(--line)}
+html[data-night] ::selection{background:#2a3b57}
+html[data-night] .sitelogo{filter:brightness(.55) saturate(.6)}
+html[data-night] .toast{background:#1c2129;color:#c3c8d0;box-shadow:0 0 0 1px #2c323c}
 /* v322 work done */
 .rwork{display:inline-flex;gap:4px;flex-wrap:wrap;align-items:center}
 .rwk{border:1px solid var(--line2);background:var(--panel);color:var(--ink);border-radius:999px;padding:3px 9px;font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;cursor:pointer;white-space:nowrap}
@@ -1973,7 +1985,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '325';
+const APP_VERSION = '326';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2255,15 +2267,18 @@ function orderedKeys(g){
    blocks; to force a theme those blocks' conditions are switched to always / never match. Saved on this device. */
 const THEME_KEY = `${KEY_PREFIX}.theme`;
 const themeGet = () => { try{ const v = localStorage.getItem(THEME_KEY); return v === 'light' || v === 'dark' ? v : 'auto'; }catch(e){ return 'auto'; } };
-function themeApply(){ const t = themeGet(), DARK = '(prefers-color-scheme: dark)', NEVER = '(min-width: 100000px)', ALWAYS = '(min-width: 0px)';
+let nightOn = false;   // v326: night display — forces the dark theme plus a dimmer palette
+function themeApply(){ const t = nightOn ? 'dark' : themeGet(), DARK = '(prefers-color-scheme: dark)', NEVER = '(min-width: 100000px)', ALWAYS = '(min-width: 0px)';
   [...document.styleSheets].forEach(sh => { let rules; try{ rules = sh.cssRules; }catch(e){ return; }
     const want = t === 'auto' ? DARK : t === 'dark' ? ALWAYS : NEVER;
     const walk = list => [...list].forEach(r => { if(r.media && r.cssRules){ const m = r.media.mediaText;
         if(m.includes(DARK) || m.includes(NEVER) || m.includes(ALWAYS)){ const txt = m.split(DARK).join(want).split(NEVER).join(want).split(ALWAYS).join(want); if(m !== txt) r.media.mediaText = txt; }
         walk(r.cssRules); } });
     walk(rules); });
-  document.documentElement.style.colorScheme = t === 'auto' ? '' : t; document.documentElement.dataset.theme = t; }
+  document.documentElement.style.colorScheme = t === 'auto' ? '' : t; document.documentElement.dataset.theme = t; if(nightOn) document.documentElement.dataset.night = '1'; else delete document.documentElement.dataset.night; }
 themeApply();
+const NIGHT_KEY = `${KEY_PREFIX}.nightDisplay`;
+const nightMode = () => { try{ const v = localStorage.getItem(NIGHT_KEY); return v === 'on' || v === 'off' ? v : 'auto'; }catch(e){ return 'auto'; } };
 const SHOWHC_KEY = `${KEY_PREFIX}.showHospCourse`;
 const showHC = () => { try{ return localStorage.getItem(SHOWHC_KEY) === '1'; }catch(e){ return false; } };
 const colHidden = k => (k === 'hc' && !showHC()) || (COLMAP[k] && COLMAP[k].icu && !isCritCare()) || (state.settings.hiddenCols || []).includes(k);
@@ -3111,7 +3126,7 @@ const ADMIT_SYNC = [
   {k:'vst', from:'visit', done:t => t === 'Yes' || t === 'N/A', on:c => !!c.t, set:c => { c.t = 'Yes'; }, clear:c => { c.t = ''; }},
   {k:'handoff', from:'handoff', done:t => ['Signed', 'N/A'].includes(t), on:c => !!c.t, set:c => { c.t = 'Yes'; }, clear:c => { c.t = ''; }}];
 // after a board is loaded: bring derived ticks up to date (new-admit Note / Visit / Handoff, auto pre-charted) and save if anything changed
-function afterLoad(){ try{ const before = JSON.stringify(state); stMigrate(); syncAdmitNotes(); autoPc(); try{ syncLabTasks(null); }catch(e){ console.warn("lab sync", e); } if(JSON.stringify(state) !== before) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} }
+function afterLoad(){ try{ setTimeout(() => { try{ nightApply(); }catch(e){} }, 0); }catch(e){} try{ const before = JSON.stringify(state); stMigrate(); syncAdmitNotes(); autoPc(); try{ syncLabTasks(null); }catch(e){ console.warn("lab sync", e); } if(JSON.stringify(state) !== before) localStorage.setItem(storeKeyFor(activeType), JSON.stringify(state)); }catch(e){} }
 function syncAdmitNotes(){
   state.patients.forEach(p => { if(p.status !== 'New') return; const a = admitOf(p); if(!a) return;
     ADMIT_SYNC.forEach(m => { const c = p.cells[m.k], ac = a.cells[m.from]; if(!c || !ac) return;
@@ -5475,6 +5490,7 @@ function settings(){
     <label style="display:flex;gap:6px;align-items:center;margin-top:8px"><input type="checkbox" id="sShowHC" ${showHC() ? 'checked' : ''}> Show the <b>Hosp Course</b> column <span class="muted small">— on every board and rotation; hidden by default</span></label>
 <h5>Older shifts</h5>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Appearance <select id="sTheme"><option value="auto" ${themeGet() === 'auto' ? 'selected' : ''}>Automatic (follow this device)</option><option value="light" ${themeGet() === 'light' ? 'selected' : ''}>Light</option><option value="dark" ${themeGet() === 'dark' ? 'selected' : ''}>Dark</option></select></label><span class="muted small">— saved on this device</span></div>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>🌙 Night display <select id="sNight"><option value="auto" ${nightMode() === 'auto' ? 'selected' : ''}>Automatic — while I’m on a night shift</option><option value="on" ${nightMode() === 'on' ? 'selected' : ''}>Always on</option><option value="off" ${nightMode() === 'off' ? 'selected' : ''}>Off</option></select></label><span class="muted small">— dimmer, low-glare dark screen with softer colors and bigger buttons</span></div>
 </section><section class="setpane" data-pane="look" hidden><h4>🎨 Appearance</h4>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Older shifts: move out anything older than <select id="sTidyDays">${TIDY_DAYS.map(d => `<option value="${d}" ${TIDY.days === d ? 'selected' : ''}>${d} days</option>`).join('')}</select></label><button class="btn sm" id="bTidy">🗄 Move older shifts out…</button><span class="muted">Keeps the data file small. Plexus also offers this when you start a new shift.</span></div>
     <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap"><label>Layout <select id="sLayout"><option value="auto" ${LAYOUT === 'auto' ? 'selected' : ''}>Automatic (${touchMQ.matches ? 'touch on this device' : 'desktop on this device'})</option><option value="touch" ${LAYOUT === 'touch' ? 'selected' : ''}>Touch — iPad style</option><option value="desktop" ${LAYOUT === 'desktop' ? 'selected' : ''}>Desktop</option></select></label><span class="muted">Touch: tab bar at the bottom, swipe tasks, long-press a bed to change it.</span></div>
@@ -5591,6 +5607,7 @@ function settings(){
       m.querySelector('#mvGo').onclick = () => { const to = m.querySelector('#mvTo').value; closeModal(); moveBoard(to); };
       m.querySelector('#sCmdDock').onchange = e => cmdDockSet(e.target.value);
       m.querySelector('#sLayout').onchange = e => layoutSet(e.target.value);
+      m.querySelector('#sNight').onchange = e => { try{ localStorage.setItem(NIGHT_KEY, e.target.value); }catch(err){} nightApply(); toast(`Night display: ${({auto:'automatic on night shifts', on:'always on', off:'off'})[e.target.value]}`); };
       m.querySelector('#sTheme').onchange = e => { try{ localStorage.setItem(THEME_KEY, e.target.value); }catch(err){} themeApply(); toast(`Appearance: ${({auto:'Automatic', light:'Light', dark:'Dark'})[e.target.value]}`); };
       m.querySelector('#bSwitchBoard').onclick = () => { closeModal(); setTimeout(switchBoardFlow, 0); };
       if(m.querySelector('#bSched')) m.querySelector('#bSched').onclick = () => { closeModal(); setTimeout(() => showRotSetup({edit:activeType}), 0); };
@@ -7754,7 +7771,7 @@ function cmdParse(input){
     full:['Tasks full screen on / off', () => { if(ui.tab !== 'tasks' && !scGoTab('tasks')) return ''; tkFullOn() ? exitTkFull() : enterTkFull(); return ''; }],
     rounds:['Start Rounds', () => { if(!state.patients.length) return 'No patients on the census'; openRounds(); return ''; }],
     backup:['Save a full backup (everything) + automatic copy', () => { backupNow(); autoBackup('manual', true); return ''; }],
-    print:['Print the sign-out sheet', () => { printSheet(); return ''; }], events:['🌙 Overnight events — all patients, ready to copy', () => { if(!evOn()) return 'Overnight events are for night boards'; evShowAll(); return ''; }], take:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], leaving:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], hide:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }], lock:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }],
+    print:['Print the sign-out sheet', () => { printSheet(); return ''; }], night:['🌙 Night display on / off for now', () => { try{ localStorage.setItem(NIGHT_KEY, nightOn ? 'off' : 'on'); }catch(e){} nightApply(); return nightOn ? 'Night display on (⚙ Settings → Look to set it back to automatic)' : 'Night display off'; }], events:['🌙 Overnight events — all patients, ready to copy', () => { if(!evOn()) return 'Overnight events are for night boards'; evShowAll(); return ''; }], take:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], leaving:['🧳 Take with me — save a copy to carry to the next computer', () => { takeWithMe(); return ''; }], hide:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }], lock:['Hide the screen (privacy)', () => { privacyOn('cmd'); return ''; }],
     whatsnew:['What’s new in this version', () => { whatsNew(null); return ''; }], changes:['What’s new in this version', () => { whatsNew(null); return ''; }],
     newshift:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], start:['Start the next day (or pre-charting)…', () => { newDay(); return ''; }], precharting:['Start pre-charting for the next day…', () => { newDay(); return ''; }],
     endshift:['Wrap up — sign-out, print, backup', () => { wrapUp(); return ''; }], wrapup:['Wrap up — sign-out, print, backup', () => { wrapUp(); return ''; }], schedule:['Edit this rotation’s schedule', () => { if(!isRot(activeType)) return 'This board has no schedule'; showRotSetup({edit:activeType}); return ''; }]};
@@ -8644,6 +8661,10 @@ function shiftEndNudge(){
     [['Later'], ['⬆ Back up now', 'primary', () => { filesBackup(); }]]);
 }
 setInterval(shiftEndNudge, 60e3);
+/* v326: 🌙 night display — on automatically while you're on a night shift (or always / never, ⚙ Settings → Look) */
+function nightShiftNow(){ try{ const h = boardHours(); if(h.off) return false; const night = !!typeOf(activeType).night || /night|nf/i.test(h.label || '') || +String(h.start).split(':')[0] >= 15 || +String(h.start).split(':')[0] < 4; return night && onShiftNow(); }catch(e){ return false; } }
+function nightApply(){ const m = nightMode(), want = m === 'on' || (m === 'auto' && !!state && nightShiftNow()); if(want !== nightOn){ nightOn = want; themeApply(); } }
+setInterval(nightApply, 60e3); document.addEventListener('visibilitychange', () => { if(!document.hidden) nightApply(); });
 /* v325: ⏰ hourly backup prompt while on shift — iPad: share sheet → Files; computer: a Save dialog (pick OneDrive once; Chrome remembers the folder) */
 const HRBK_KEY = `${KEY_PREFIX}.hourlyBk`, HRBK_ASK = `${KEY_PREFIX}.hourlyBkAsked`;
 const hrbkMins = () => { try{ const v = localStorage.getItem(HRBK_KEY); return v === null ? 60 : +v || 0; }catch(e){ return 60; } };
@@ -9156,6 +9177,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:326, d:'2026-11-27', items:['<b>🌙 Night display</b>: a dimmer, low-glare dark screen — deeper blacks, softer text, toned-down status colors and bigger buttons. Turns on by itself while you’re on a night shift and off when the shift ends. ⚙ Settings → Look → Night display (automatic / always / off); the command bar’s <b>night</b> flips it on or off.']},
   {v:325, d:'2026-11-27', items:['<b>⏰ Hourly backup</b>: while you’re on shift, Plexus asks every hour to save a <b>full backup</b> (one tap; <b>In 15 min</b> or <b>Later</b> to put it off). Skipped if you backed up in the last hour. On a computer it opens a <b>Save</b> box — pick your NYU OneDrive once and it remembers the folder; on the iPad it’s the usual Save to Files.', 'Change it (30 min / 1 h / 2 h / never) or try it in ⚙ Settings → Backups → Reminders.']},
   {v:324, d:'2026-11-26', items:['Patients whose diet is <b>NPO</b> get an <b>NPO</b> flag beside the bed (like T&amp;S expired) — on the census, in Rounds, on the Overview’s Needs attention and in the Flagged filter.']},
   {v:323, d:'2026-11-26', items:['Rounds: the <b>🗣 Present</b> button is gone.', 'Rounds · Split: <b>At a glance</b> can be collapsed — tap its title (▾). It’s open by default and stays the way you left it on this device.']},
