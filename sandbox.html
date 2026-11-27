@@ -1991,7 +1991,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '329';
+const APP_VERSION = '330';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -5011,7 +5011,7 @@ function roundsTo(id){ closePop(); rounds.id = id; lastFocus = null; renderRound
 function focusRounds(){ const r = $('#rounds'); if(r) r.focus({preventScroll:true}); }
 function renderRounds(){
   if(!rounds.open) return;
-  if(ui.roundsView === 'split') return renderRoundsSplit();
+  return renderRoundsSplit();   // v330: Split is the only Rounds layout (Classic retired)
   $('#rounds').classList.remove('rsplit');
   const list = roundsList(), body = $('#roundsBody');
   let i = list.findIndex(p => p.id === rounds.id);
@@ -5086,7 +5086,7 @@ function renderRoundsSplit(){
   let i = list.findIndex(p => p.id === rounds.id); if(i < 0 && list.length){ i = 0; rounds.id = list[0].id; }
   const rail = `<aside class="rs-rail"><div class="rs-railhd"><div class="rs-row"><b>Rounds</b><span class="rseen" title="New admits aren't counted">✓ ${seenN}/${dTot} discussed</span></div>${list.length ? `<div class="rs-row rs-workrow">${rWorkHTML(list)}</div>` : ''}
       <span class="seg rord" role="group" aria-label="Order">${[['intern', 'Intern'], ['bed', 'Bed'], ['list', 'List']].map(([k, l]) => `<button type="button" data-rord="${k}" class="${ord === k ? 'on' : ''}">${l}</button>`).join('')}</span>
-      <span class="seg rview" role="group" aria-label="Layout"><button type="button" data-rview="classic">Classic</button><button type="button" data-rview="split" class="on">Split</button></span></div>
+</div>
     <div class="rs-filtrow"><span class="seg rfilt" role="group" aria-label="Show">${[['all', 'All'], ['notd', 'To discuss'], ['open', 'Open boxes']].map(([k, l]) => `<button type="button" data-rfilt="${k}" class="${rFilter() === k ? 'on' : ''}">${l}</button>`).join('')}</span></div>
     <div class="rs-list">${list.map((q, j) => `${ord === 'intern' && (j === 0 || list[j-1].intern !== q.intern) ? `<div class="rs-grp">${esc(q.intern || 'Unassigned')} · ${list.filter(x => x.intern === q.intern).length}</div>` : ''}
       <button type="button" class="rs-pi ${q.id === rounds.id ? 'on' : ''} ${rdSeen(q) ? 'dsc' : ''}" data-rgo="${q.id}"><span class="rs-bed">${esc(q.bed || '—')}${rdSeen(q) ? ' <i class="rs-ck" title="Discussed">💬</i>' : ''}<i class="rs-talk" title="Has talking points" ${q.talk ? '' : 'hidden'}>📝</i></span>
@@ -9200,6 +9200,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:330, d:'2026-11-27', items:['Rounds has one layout now — the <b>Split</b> view (patient list on the left, the patient on the right). The Classic layout and the Classic / Split switch are gone.']},
   {v:329, d:'2026-11-27', items:['Command bar: tasks can start with the bed like everything else — <b>10E05 task 3pm repeat BMP</b> (same as <b>task 10E05 3pm repeat BMP</b>); <b>todo</b> works as well as <b>task</b>.']},
   {v:328, d:'2026-11-27', items:['Command bar: leading zeros in bed numbers are optional — <b>10E5</b> finds 10E05, <b>14E1/1</b> finds 14E01/01.']},
   {v:327, d:'2026-11-27', items:['<b>🌙 Night rounds</b> (ICU boards — Bellevue MICU, Bellevue CCU, Tisch MICU, VA ICU): on a night shift, Rounds is one <b>Night rounds</b> pass over every column except Note, Attest, Lab Ord, Handoff and Ord Rev — instead of AM / PM / Dispo. On a 24-hour shift it switches to Night rounds from 19:00 to 07:00 (or pick <b>🌙 Night</b> in Focus any time).', 'The Work done pills in Rounds and the Overview panel follow it: <b>Night</b> done / total, then <b>✓ All work done</b>.', 'Fix: the Order and Layout switches at the top of Split Rounds’ patient list were squashed into empty bars.']},
