@@ -1973,7 +1973,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '324';
+const APP_VERSION = '325';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -5490,6 +5490,7 @@ function settings(){
     </div>
 <div class="muted small" id="setKept" hidden></div>
 <h5>Reminders</h5>
+    <label style="display:flex;gap:6px;align-items:center;margin:6px 0 10px;flex-wrap:wrap">While I’m on shift, prompt me to back up <select id="sHrBk">${[[0, 'never'], [30, 'every 30 min'], [60, 'every hour'], [120, 'every 2 hours']].map(([v, l]) => `<option value="${v}" ${hrbkMins() === v ? 'selected' : ''}>${l}</option>`).join('')}</select> <button type="button" class="btn sm" id="sHrBkTry">Try it</button></label>
     <label style="display:flex;gap:6px;align-items:center;margin:6px 0 10px">Show “Backup due” after <input type="number" id="sBkHrs" min="1" value="${s.backupWarnHours}" style="width:70px"> hours without a backup</label>
     <label style="display:flex;gap:6px;align-items:center;margin:6px 0"><input type="checkbox" id="sAutoBk" ${s.autoBackup ? 'checked' : ''}> <span>Automatically download a <b>full backup</b> every time I start a New Shift</span></label>
 <h5>Automatic backups</h5>
@@ -5565,6 +5566,7 @@ function settings(){
         s.autoBackup = $('#sAutoBk').checked;
         ABK.on = $('#sAbkOn').checked; ABK.mins = +$('#sAbkMins').value || 15; ABK.keep = Math.min(500, Math.max(3, Math.round(+$('#sAbkKeep').value || 24))); abkSave();
         s.backupWarnHours = Math.max(1, +$('#sBkHrs').value || 12);
+        try{ if($('#sHrBk')) localStorage.setItem(HRBK_KEY, $('#sHrBk').value); }catch(e){}
       });
       toast('Settings saved');
     }]], m => {
@@ -8641,7 +8643,36 @@ function shiftEndNudge(){
     <p class="muted">Tap <b>Back up now</b> → <b>Save to Files</b> → your <b>NYU OneDrive</b> (or <b>On My iPad</b>) → <b>Save</b>. Not iCloud Drive.</p>`,
     [['Later'], ['⬆ Back up now', 'primary', () => { filesBackup(); }]]);
 }
-setInterval(shiftEndNudge, 60e3); document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(shiftEndNudge, 1500); });
+setInterval(shiftEndNudge, 60e3);
+/* v325: ⏰ hourly backup prompt while on shift — iPad: share sheet → Files; computer: a Save dialog (pick OneDrive once; Chrome remembers the folder) */
+const HRBK_KEY = `${KEY_PREFIX}.hourlyBk`, HRBK_ASK = `${KEY_PREFIX}.hourlyBkAsked`;
+const hrbkMins = () => { try{ const v = localStorage.getItem(HRBK_KEY); return v === null ? 60 : +v || 0; }catch(e){ return 60; } };
+const lastAnyBackup = () => [filesBackupAt(), lastBackup(), BKF.status === 'ok' ? BKF.lastAt : ''].filter(Boolean).sort().pop() || '';
+function onShiftNow(){ try{ if(boardHours().off) return false; const a = shiftStartDate().getTime(), b = shiftEndDate().getTime(), n = Date.now(); return n >= a && n <= b; }catch(e){ return false; } }
+async function backupSavePick(){
+  const name = fullBackupName(), t = new Date(), pkg = collectAll(); pkg.backupKind = 'full';
+  try{ const fh = await window.showSaveFilePicker({suggestedName:name, id:'plexusBackup', types:[{description:'Plexus backup', accept:{'application/json':['.json']}}]});
+    const w = await fh.createWritable(); await w.write(JSON.stringify(pkg)); await w.close();
+    try{ localStorage.setItem(backupKeyFor(activeType), t.toISOString()); localStorage.setItem(FILESBAK_KEY, t.toISOString()); }catch(e){}
+    logAdd([{cat:'system', msg:`Saved full backup ${fh.name || name}`}]); renderBackupInd(); try{ touchSync(); renderChrome(); }catch(e){} toast(`💾 Backed up: ${fh.name || name}`);
+  }catch(e){ if(e && e.name === 'AbortError'){ toast('Backup cancelled — nothing was saved'); return; } backupNow(); } }
+function backupFullNow(){ if(isTouch()) filesBackup(); else if(window.showSaveFilePicker) backupSavePick(); else backupNow(); }
+function hourlyNudge(force){
+  const mins = hrbkMins(); if(!force && (!mins || !state || modalEl || launching || tabLocked || document.hidden || !onShiftNow())) return;
+  if(!force && !state.patients.length && !(state.todos || []).length) return;
+  const last = lastAnyBackup(), asked = (() => { try{ return +localStorage.getItem(HRBK_ASK) || 0; }catch(e){ return 0; } })(), due = mins * 60e3;
+  if(!force && ((last && Date.now() - Date.parse(last) < due) || Date.now() - asked < due)) return;
+  if(!force && BKF.status === 'ok' && ABK.on && BKF.lastAt && Date.now() - Date.parse(BKF.lastAt) < due) return;   // the backup folder is already catching it
+  try{ localStorage.setItem(HRBK_ASK, String(Date.now())); }catch(e){}
+  const pc = !isTouch();
+  modal(`<h3>⏰ Hourly backup</h3><p>${last ? `Last backup <b>${esc(agoText(last))}</b>.` : 'No backup yet this shift.'} One tap saves <b>everything</b> — every board, tasks and your rotation — so a reboot or reset mid-shift costs you at most an hour.</p>
+    <p class="muted">${pc ? 'Save it to your <b>NYU OneDrive</b> (or a network drive) — <b>not</b> Downloads or the Desktop, which a remote-desktop reset wipes. After the first time the Save box opens in the same folder.' : 'Tap <b>Back up now</b> → <b>Save to Files</b> → your <b>NYU OneDrive</b> (or <b>On My iPad</b>) → <b>Save</b>. Not iCloud Drive.'}</p>
+    <p class="muted small">Every ${mins} min while you’re on shift · change or turn off in ⚙ Settings → Backups.</p>`,
+    [['In 15 min', '', () => { try{ localStorage.setItem(HRBK_ASK, String(Date.now() - due + 15 * 60e3)); }catch(e){} }], ['Later'], ['⬆ Back up now', 'primary', () => { backupFullNow(); }]]);
+}
+document.addEventListener('change', e => { if(e.target && e.target.id === 'sHrBk'){ try{ localStorage.setItem(HRBK_KEY, e.target.value); }catch(err){} toast(+e.target.value ? 'Backup prompt: ' + e.target.selectedOptions[0].textContent + ' on shift' : 'Hourly backup prompt off'); } });
+document.addEventListener('click', e => { if(e.target && e.target.id === 'sHrBkTry'){ e.preventDefault(); closeModal(); setTimeout(() => hourlyNudge(true), 50); } });
+setInterval(() => hourlyNudge(), 60e3); document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(() => hourlyNudge(), 2500); }); document.addEventListener('visibilitychange', () => { if(!document.hidden) setTimeout(shiftEndNudge, 1500); });
 
 function keptInfo(){ storageKept().then(k => modal(`<h3>🔒 ${k ? 'Your data is protected on this iPad' : 'This iPad may clear Plexus data'}</h3>
   ${k ? '<p>iPadOS has agreed to keep Plexus\'s saved data — it won\'t be cleared to free up space. Deleting the Home Screen app, or erasing the iPad, still removes it, so keep backing up.</p>'
@@ -9125,6 +9156,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:325, d:'2026-11-27', items:['<b>⏰ Hourly backup</b>: while you’re on shift, Plexus asks every hour to save a <b>full backup</b> (one tap; <b>In 15 min</b> or <b>Later</b> to put it off). Skipped if you backed up in the last hour. On a computer it opens a <b>Save</b> box — pick your NYU OneDrive once and it remembers the folder; on the iPad it’s the usual Save to Files.', 'Change it (30 min / 1 h / 2 h / never) or try it in ⚙ Settings → Backups → Reminders.']},
   {v:324, d:'2026-11-26', items:['Patients whose diet is <b>NPO</b> get an <b>NPO</b> flag beside the bed (like T&amp;S expired) — on the census, in Rounds, on the Overview’s Needs attention and in the Flagged filter.']},
   {v:323, d:'2026-11-26', items:['Rounds: the <b>🗣 Present</b> button is gone.', 'Rounds · Split: <b>At a glance</b> can be collapsed — tap its title (▾). It’s open by default and stays the way you left it on this device.']},
   {v:322, d:'2026-11-26', items:['<b>✓ Work done</b> — see at a glance when AM rounds, PM rounds and Dispo are all accounted for.', '<b>Rounds</b>: AM · PM · Dispo pills at the top (patients done / total — orange when 1–2 are left, green when done; tap one to focus on it) turn into a green <b>✓ All work done</b> when everything is accounted for. Each patient shows the same: what’s left in AM / PM / Dispo, or <b>✓ All done</b>.', '<b>Overview</b>: a <b>Work done today</b> panel with a progress bar for each, plus the beds still open (tap one to jump to it in Rounds).']},
