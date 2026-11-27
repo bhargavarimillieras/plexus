@@ -1991,7 +1991,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '327';
+const APP_VERSION = '328';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7601,8 +7601,11 @@ const entSub = e => [e.a ? (isHold(e.a) ? 'Moonlighter hold ' + aTag(e.a) : 'Adm
 // find the bed at the start of the words: exact match first (one or two words joined), then unique prefix
 function cmdBed(words, ents){
   for(const n of [2, 1]){ if(words.length < n) continue; const k = nb(words.slice(0, n).join('')); const hit = ents.find(e => e.key === k); if(hit) return {ent:hit, used:n}; }
+  // v328: leading zeros don't matter — 10E5 = 10E05, 14E1/1 = 14E01/01
+  const nz = x => String(x).replace(/(^|\D)0+(?=\d)/g, '$1');
+  for(const n of [2, 1]){ if(words.length < n) continue; const k = nz(nb(words.slice(0, n).join(''))); if(!k) continue; const hits = ents.filter(e => nz(e.key) === k); if(hits.length === 1) return {ent:hits[0], used:n}; }
   const k = nb(words[0] || ''); if(!k) return {cands:[]};
-  const pre = ents.filter(e => e.key.startsWith(k)), inc = pre.length ? pre : ents.filter(e => e.key.includes(k));
+  let pre = ents.filter(e => e.key.startsWith(k)); if(!pre.length){ const kz = nz(k); pre = ents.filter(e => nz(e.key).startsWith(kz)); } const inc = pre.length ? pre : ents.filter(e => e.key.includes(k));
   if(inc.length === 1) return {ent:inc[0], used:1, guessed:true};
   return {cands:inc};
 }
@@ -9194,6 +9197,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:328, d:'2026-11-27', items:['Command bar: leading zeros in bed numbers are optional — <b>10E5</b> finds 10E05, <b>14E1/1</b> finds 14E01/01.']},
   {v:327, d:'2026-11-27', items:['<b>🌙 Night rounds</b> (ICU boards — Bellevue MICU, Bellevue CCU, Tisch MICU, VA ICU): on a night shift, Rounds is one <b>Night rounds</b> pass over every column except Note, Attest, Lab Ord, Handoff and Ord Rev — instead of AM / PM / Dispo. On a 24-hour shift it switches to Night rounds from 19:00 to 07:00 (or pick <b>🌙 Night</b> in Focus any time).', 'The Work done pills in Rounds and the Overview panel follow it: <b>Night</b> done / total, then <b>✓ All work done</b>.', 'Fix: the Order and Layout switches at the top of Split Rounds’ patient list were squashed into empty bars.']},
   {v:326, d:'2026-11-27', items:['<b>🌙 Night display</b>: a dimmer, low-glare dark screen — deeper blacks, softer text, toned-down status colors and bigger buttons. Turns on by itself while you’re on a night shift and off when the shift ends. ⚙ Settings → Look → Night display (automatic / always / off); the command bar’s <b>night</b> flips it on or off.']},
   {v:325, d:'2026-11-27', items:['<b>⏰ Hourly backup</b>: while you’re on shift, Plexus asks every hour to save a <b>full backup</b> (one tap; <b>In 15 min</b> or <b>Later</b> to put it off). Skipped if you backed up in the last hour. On a computer it opens a <b>Save</b> box — pick your NYU OneDrive once and it remembers the folder; on the iPad it’s the usual Save to Files.', 'Change it (30 min / 1 h / 2 h / never) or try it in ⚙ Settings → Backups → Reminders.']},
