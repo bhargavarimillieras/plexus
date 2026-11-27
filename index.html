@@ -1991,7 +1991,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '328';
+const APP_VERSION = '329';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -7772,6 +7772,9 @@ const CMD_VERBS = [
 function cmdParse(input){
   const s = input.trim(); if(!s) return {sugg:cmdHist.slice(0, 6).map(h => ({label:`<span class="muted">↺</span> ${esc(h)}`, fill:h})), html:'<span class="muted">Type a bed then a column — <b>ED15L visit complete</b> — or a command. <b>help</b> lists them all.</span>'};
   const words = s.split(/\s+/), v = words[0].toLowerCase(), rest = words.slice(1), ents = cmdEntities();
+  // v329: "todo …" = "task …", and the bed can come first: "10E05 task 3pm BMP"
+  if(/^(todo|td)$/.test(v) && rest.length) return cmdParse('task ' + rest.join(' '));
+  { const TW = /^(task|tasks|todo|td)$/i; for(const n of [1, 2]){ if(words.length > n && TW.test(words[n]) && !TW.test(words[0])){ const b = cmdBed(words.slice(0, n), ents); if(b.ent && b.used === n) return cmdParse(['task', ...words.slice(0, n), ...words.slice(n + 1)].join(' ')); } } }
   if(v === '?' || v === 'help' || v === 'commands') return {html:'Show every command', run:() => { cmdHelp(); return ''; }, nav:true};
   if(v === 'undo') return {html:'Undo the last change', run:() => { undo(); return ''; }};
   if(v === 'redo') return {html:'Redo', run:() => { redo(); return ''; }};
@@ -9197,6 +9200,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:329, d:'2026-11-27', items:['Command bar: tasks can start with the bed like everything else — <b>10E05 task 3pm repeat BMP</b> (same as <b>task 10E05 3pm repeat BMP</b>); <b>todo</b> works as well as <b>task</b>.']},
   {v:328, d:'2026-11-27', items:['Command bar: leading zeros in bed numbers are optional — <b>10E5</b> finds 10E05, <b>14E1/1</b> finds 14E01/01.']},
   {v:327, d:'2026-11-27', items:['<b>🌙 Night rounds</b> (ICU boards — Bellevue MICU, Bellevue CCU, Tisch MICU, VA ICU): on a night shift, Rounds is one <b>Night rounds</b> pass over every column except Note, Attest, Lab Ord, Handoff and Ord Rev — instead of AM / PM / Dispo. On a 24-hour shift it switches to Night rounds from 19:00 to 07:00 (or pick <b>🌙 Night</b> in Focus any time).', 'The Work done pills in Rounds and the Overview panel follow it: <b>Night</b> done / total, then <b>✓ All work done</b>.', 'Fix: the Order and Layout switches at the top of Split Rounds’ patient list were squashed into empty bars.']},
   {v:326, d:'2026-11-27', items:['<b>🌙 Night display</b>: a dimmer, low-glare dark screen — deeper blacks, softer text, toned-down status colors and bigger buttons. Turns on by itself while you’re on a night shift and off when the shift ends. ⚙ Settings → Look → Night display (automatic / always / off); the command bar’s <b>night</b> flips it on or off.']},
