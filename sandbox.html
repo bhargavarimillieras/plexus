@@ -1998,7 +1998,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'sandbox';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '331';
+const APP_VERSION = '332';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -5806,14 +5806,16 @@ function jumpToAdmit(id, col){
 }
 /* Outstanding: what's still open for each patient (AM / PM / Dispo — Services and Dispo notes are optional) */
 function outstanding(ck, onlyId){
+  if(!ck && nightRoundsNow()) ck = 'night';   // v332: ICU nights — only what's left on Night rounds
   const cks = ck ? [ck] : CHUNKS.map(c => c.k);
   return censusOrder().filter(p => !onlyId || p.id === onlyId).map(p => ({p, by:cks.map(c => ({c, keys:openKeys(p, c)})).filter(x => x.keys.length)})).filter(x => x.by.length);
 }
 const censusOrder = () => state.patients.slice();   // the census is kept in the order you've arranged it
 function showOutstanding(ck, onlyId){
+  if(!ck && nightRoundsNow()) ck = 'night';
   const list = outstanding(ck, onlyId), total = list.reduce((n, x) => n + x.by.reduce((m, b) => m + b.keys.length, 0), 0);
   const scope = (ck ? CHUNK[ck].label + ' ' : '') + 'boxes';
-  const h = `<h3>Outstanding${onlyId && list[0] ? ' · ' + esc(list[0].p.bed || '') : ''}</h3>
+  const h = `<h3>${ck === 'night' ? '🌙 Night rounds — outstanding' : 'Outstanding'}${onlyId && list[0] ? ' · ' + esc(list[0].p.bed || '') : ''}</h3>
     <p class="muted" style="margin-top:-4px">${total ? `<b>${total}</b> open ${esc(scope)} across <b>${list.length}</b> patient${list.length === 1 ? '' : 's'}. Tap one to jump to it.` : `✓ Nothing outstanding — every ${esc(scope.replace(/boxes$/, 'box'))} is done.`} <span class="small">Services and Dispo notes are optional.</span></p>
     ${list.map(({p, by}) => `<div class="vsec"><div class="vhead">${esc(p.bed || '—')} <span class="muted" style="font-weight:500">${esc(p.intern || '')}${p.problem ? ' · ' + esc(p.problem) : ''}</span></div>
       <div class="osrow">${by.map(b => `<span class="osck">${esc(CHUNK[b.c].label)}</span>${b.keys.map(k => `<button class="oschip ${(b.c === 'pm' && isFollow(p, k)) || k === '_npo' ? 'rv' : ''}" data-jump="${p.id}" data-col="${keyCol(k)}">${esc(keyLabel(p, k, b.c))}</button>`).join('')}`).join('<span class="ossep"></span>')}</div></div>`).join('')}`;
@@ -7793,7 +7795,7 @@ const CMD_VERBS = [
   ['validate', 'validate', 'Run Validation for this tab'], ['signback', 'signback', 'Copy the night-task sign-back'],
   ['signout', 'signout', 'Copy the morning sign-out list (admitting nights)'], ['full', 'full', 'Tasks timeline full screen on / off'],
   ['rounds', 'rounds', 'Start Rounds'], ['print', 'print', 'Print the sign-out sheet'], ['take', 'take', 'Take with me — copy to carry to the next computer'], ['hide', 'hide', 'Hide the screen (privacy)'], ['whatsnew', 'whatsnew', 'What’s new in this version'], ['tidy', 'tidy', 'Move shifts older than 2 weeks out of the data file'], ['backup', 'backup', 'Back up now'], ['newshift', 'newshift', 'Start a new shift'], ['endshift', 'endshift', 'End this shift'],
-  ['outstanding', 'outstanding', 'What’s left to check off — add am / pm / dispo or a bed (also: left, view outstanding)'],
+  ['outstanding', 'outstanding', 'What’s left to check off — add am / pm / dispo or a bed (also: left, view outstanding). ICU nights: just Night rounds'],
   ['help', 'help', 'Show every command'],
 ];
 function cmdParse(input){
@@ -7846,7 +7848,7 @@ function cmdParse(input){
         cmdPulse('a', id); return `${hold ? 'Moonlighter hold' : 'Admission'} added — ${bed}`; }};
   }
   if(['outstanding', 'out', 'left', 'remaining', 'open'].includes(v) || (v === 'view' && /^(out|left|rem|open)/.test((rest[0] || '').toLowerCase()))){
-    const args = (v === 'view' ? rest.slice(1) : rest).map(w => w.toLowerCase()), ck = args.find(w => CHUNK[w]), bw = (v === 'view' ? rest.slice(1) : rest).filter(w => !CHUNK[w.toLowerCase()]);
+    const args = (v === 'view' ? rest.slice(1) : rest).map(w => w.toLowerCase()), ck = args.find(w => CHUNK[w]) || (nightRoundsNow() ? 'night' : undefined), bw = (v === 'view' ? rest.slice(1) : rest).filter(w => !CHUNK[w.toLowerCase()]);
     let one = null; if(bw.length){ const b = cmdBed(bw, ents); one = b.ent && b.ent.p; if(!one) return {err:'outstanding [am / pm / dispo] [bed]', sugg:(b.cands || []).filter(e => e.p).slice(0, 8).map(e => ({label:esc(e.bed), fill:`outstanding ${ck ? ck + ' ' : ''}${e.bed}`}))}; }
     const list = outstanding(ck, one && one.id), n = list.reduce((x, o) => x + o.by.reduce((m, b) => m + b.keys.length, 0), 0);
     return {nav:true, html:n ? `Show <b>${n}</b> outstanding ${ck ? CHUNK[ck].label + ' ' : ''}box${n === 1 ? '' : 'es'}${one ? ` for <b>${esc(one.bed)}</b>` : ` · ${list.length} patient${list.length === 1 ? '' : 's'}`}` : `✓ Nothing outstanding${one ? ' for ' + esc(one.bed) : ''}`,
@@ -9227,6 +9229,7 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:332, d:'2026-11-27', items:['Command bar: on an ICU night (or the night half of a 24-hour shift), <b>outstanding</b> shows just what’s left on <b>🌙 Night rounds</b> — Note, Attest, Lab Ord, Handoff and Ord Rev aren’t counted. <b>outstanding am</b> / <b>pm</b> / <b>dispo</b> still work.']},
   {v:331, d:'2026-11-27', items:['<b>I/O log</b>: each time you change the I/O numbers it’s saved as a timestamped check (stamped now — or set the time at the top of the pop-up). The cell shows the latest net with its time (and how many checks); the pop-up lists every check this shift with ✕ to remove one; Rounds shows the trail, e.g. <b>22:00 +200 → 02:00 −400 → 05:00 −900</b>.', 'Fixing a typo within 15 minutes updates that check instead of adding another.']},
   {v:330, d:'2026-11-27', items:['Rounds has one layout now — the <b>Split</b> view (patient list on the left, the patient on the right). The Classic layout and the Classic / Split switch are gone.']},
   {v:329, d:'2026-11-27', items:['Command bar: tasks can start with the bed like everything else — <b>10E05 task 3pm repeat BMP</b> (same as <b>task 10E05 3pm repeat BMP</b>); <b>todo</b> works as well as <b>task</b>.']},

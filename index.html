@@ -626,6 +626,13 @@ body.tkfull #hclocks{margin-right:4px}
 .setmodal .actions{margin:0;padding:12px 20px;border-top:1px solid var(--line)}
 body.touch .setnavb{padding:11px 10px}
 @media (max-width:719px){.setwrap{grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr}.setnav{display:flex;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line);padding:6px}.setnavb{width:auto;flex:none;margin:0 4px 0 0}.setnavb .snt span{display:none}.modal.setmodal{height:92vh}}
+/* v331 I/O log */
+.t-io .iotime{position:absolute;left:4px;bottom:1px;font:600 9.5px ui-monospace,Menlo,monospace;font-style:normal;opacity:.7}
+.ioat{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;margin-bottom:8px;font-size:12.5px;font-weight:600}.ioat .muted{flex-basis:100%;font-weight:500}.ioat input{font:inherit;padding:3px 6px;border:1px solid var(--line2);border-radius:7px;background:var(--panel);color:var(--ink)}
+.iolog{margin-top:10px;border-top:1px solid var(--line);padding-top:8px;max-height:180px;overflow:auto}.iolh{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.iolr{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto;gap:6px;align-items:center;font-size:12px;padding:3px 0;white-space:nowrap}.iolr>span:nth-child(2){overflow:hidden;text-overflow:ellipsis}.iolr b{font:700 12px ui-monospace,Menlo,monospace}.iolr.cur{font-weight:700}
+.iolr .ioln{font-weight:700}.iolr .ioln.neg{color:#1565C0}.iolr .ioln.pos{color:#B26A00}.iolr .ib{opacity:.5}.iolr:hover .ib{opacity:1}
+.rs-iotrail{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;font-size:12px;color:var(--muted);margin-top:3px}.rs-iotrail b{font:700 11.5px ui-monospace,Menlo,monospace;color:var(--ink)}.rs-iotrail i{font-style:normal;opacity:.6}
 /* v327 night rounds */
 .rs-nightlbl{display:inline-flex;align-items:center;gap:4px;background:#283593;color:#e8eaf6;border-radius:999px;padding:3px 11px;font-weight:800;font-size:12.5px;white-space:nowrap}
 .rs-focus .rs-nightlbl+.muted{margin-left:8px}.rs-night .rs-cardh span:first-child{color:#3949AB}
@@ -1991,7 +1998,7 @@ body.touch .lrow{padding:14px 16px}
 const EDITION = 'portable';
 const SANDBOX = EDITION === 'sandbox';
 const KEY_PREFIX = SANDBOX ? 'wardsMatrixSandbox' : 'wardsMatrix';   // separate storage so the two files never overwrite each other
-const APP_VERSION = '330';
+const APP_VERSION = '332';
 const APP_UPDATED = '2026-11-17';
 const STORE_KEY = `${KEY_PREFIX}.v1`;
 const UI_KEY = `${KEY_PREFIX}.ui.v1`;
@@ -2402,6 +2409,18 @@ const ioGoalTxt = (net, g) => { if(!ioNum(g)) return ''; if(net === null) return
 const ioVol = n => Math.abs(n) >= 1000 ? `${(Math.round(Math.abs(n) / 10) / 100).toFixed(2).replace(/\.?0+$/, '')} L` : `${Math.abs(n)} mL`;
 const ioSigned = n => (n > 0 ? '+' : n < 0 ? '−' : '±') + ioVol(n);
 const ioNet = c => c && ioNum(c.in) && ioNum(c.out) ? c.in - c.out : null;
+/* v331: I/O log — each update is a timestamped snapshot {id, at:'YYYY-MM-DDTHH:MM', in, out}; the cell shows the latest. Edits within 15 min of the last update replace it. */
+const ioLog = c => (c && Array.isArray(c.log) ? c.log : []).slice().sort((x, y) => String(x.at || '').localeCompare(String(y.at || '')));
+const ioLast = c => { const L = ioLog(c); return L.length ? L[L.length - 1] : null; };
+function ioLogPatch(c, a, b, at){ let L = ioLog(c);
+  if(!L.length && (ioNum(c.in) || ioNum(c.out)) && (a !== (ioNum(c.in) ? c.in : null) || b !== (ioNum(c.out) ? c.out : null))) L.push({id:uid(), at:'', in:ioNum(c.in) ? c.in : null, out:ioNum(c.out) ? c.out : null});   // the earlier, untimed numbers
+  const last = L[L.length - 1];
+  if(last && last.at && at && Math.abs(new Date(at) - new Date(last.at)) < 15 * 60e3) L[L.length - 1] = {...last, at, in:a, out:b};
+  else if(a !== null || b !== null) L.push({id:uid(), at, in:a, out:b});
+  L = L.filter(e => e.in !== null || e.out !== null).sort((x, y) => String(x.at || '').localeCompare(String(y.at || '')));
+  const top = L[L.length - 1] || {}; return {log:L, in:ioNum(top.in) ? top.in : undefined, out:ioNum(top.out) ? top.out : undefined}; }
+const ioEntryTxt = e => [ioNum(e.in) && `In ${ioVol(e.in)}`, ioNum(e.out) && `Out ${ioVol(e.out)}`].filter(Boolean).join(' · ');
+const ioNetTxt = e => ioNum(e.in) && ioNum(e.out) ? ioSigned(e.in - e.out) : '';
 function ioText(c){ if(!c) return ''; const n = ioNet(c), g = ioNum(c.goal) ? ' · ' + ioGoalTxt(n, c.goal) : '';
   if(n !== null) return `In ${ioVol(c.in)} · Out ${ioVol(c.out)} · Net ${ioSigned(n)}${g}`;
   if(!ioNum(c.in) && !ioNum(c.out)) return g.replace(/^ · /, '');
@@ -3566,7 +3585,7 @@ function cellHTML0(cell, col, kind, id, ri, ci, ro){
     const g = ioNum(cell.goal) ? cell.goal : null;
     const st = n === null ? (txt ? 'part' : 'none') : g !== null ? (ioGoalMet(n, g) ? 'met' : 'miss') : n < 0 ? 'neg' : n > 0 ? 'pos' : 'even';
     const title = `${col.h}: ${ioText(cell) || (legacy ? legacy.label + ' (old status)' : 'not entered')}${cell.t && cell.t !== 'N/A' ? ' — ' + cell.t : ''}`;
-    return `<div class="tc t-io io-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}"><span class="txt">${esc(txt)}</span>${g !== null ? `<i class="iogoal">◎${esc(g === 0 ? 'even' : ioSigned(g).replace(' ', ''))}</i>` : ''}</div>`;
+    return `<div class="tc t-io io-${st} ${col.size||''}" ${ro ? '' : 'tabindex="0"'} data-kind="${kind}" data-id="${id}" data-col="${col.k}" data-ri="${ri}" data-ci="${ci}" title="${esc(title)}${ioLog(cell).length > 1 ? ' · ' + ioLog(cell).length + ' updates' : ''}"><span class="txt">${esc(txt)}</span>${ioLast(cell) && ioLast(cell).at ? `<i class="iotime">${esc(hhmmOf(ioLast(cell).at))}${ioLog(cell).length > 1 ? ' ·' + ioLog(cell).length : ''}</i>` : ''}${g !== null ? `<i class="iogoal">◎${esc(g === 0 ? 'even' : ioSigned(g).replace(' ', ''))}</i>` : ''}</div>`;
   }
   if(col.type === 'gtt'){
     const pr = kind === 'p' ? rowOf('p', id) : null, hep = hepOn(pr);
@@ -4549,7 +4568,9 @@ function closePop(commit=true){
     if(ioIn && r){ const a = ioParse(ioIn.value), b = ioParse(p.el.querySelector('[data-ioout]').value), g = ioParseGoal(p.el.querySelector('[data-iogoal]').value), t = p.el.querySelector('[data-ionote]').value.trim(), c = r.cells[p.k];
       if(Number.isNaN(a) || Number.isNaN(b) || Number.isNaN(g)) toast('I/O not saved — use numbers like 1200, 1.2L, 800+450 (goal: −1L, +500, even)');
       else if(a !== (ioNum(c.in) ? c.in : null) || b !== (ioNum(c.out) ? c.out : null) || g !== (ioNum(c.goal) ? c.goal : null) || t !== (c.t === 'N/A' ? '' : c.t || '')){
-        const patch = {t, s:''}; patch.in = a === null ? undefined : a; patch.out = b === null ? undefined : b; patch.goal = g === null ? undefined : g; setCell(p.kind, p.id, p.k, patch); } }
+        const patch = {t, s:''}; patch.goal = g === null ? undefined : g;
+        if(a !== (ioNum(c.in) ? c.in : null) || b !== (ioNum(c.out) ? c.out : null)){ const tv = (p.el.querySelector('[data-ioat]') || {}).value, d = tv ? parseTimeInput(tv) : null; Object.assign(patch, ioLogPatch(c, a, b, localISO(d || new Date()))); }
+        setCell(p.kind, p.id, p.k, patch); } }
     else if(gl && r) commitGtt(p, r, p.el);
     else if(cl && r) commitCons(p, r, p.el);
     else if(lw && r) commitLdt(p, r, p.el);
@@ -4601,13 +4622,16 @@ function openPop(cellEl, focusEditor=false){
     if(PTOT.has(col.k)) body += `<div class="ed ptseen"><label>Last seen</label><input type="date" data-ptd value="${esc(isISO(cell.d) ? cell.d : '')}" max="${state.boardDate}"><button class="btn sm" data-ptdtoday>Today</button></div>`;
     body += OPTADD_HTML;
   } else if(col.type === 'io'){
-    body += `<div class="iogrid"><label>Intake<input type="text" inputmode="decimal" data-ioin value="${ioNum(cell.in) ? cell.in : ''}" placeholder="mL" autocomplete="off"></label>
+    const iol = ioLog(cell).slice().reverse();
+    body += `<div class="ioat"><span>${ioLast(cell) ? 'Update' : 'Totals'} as of</span><input type="time" data-ioat value="${esc(hhmmOf(localISO(new Date())))}">${ioLast(cell) ? '<span class="muted small">Change the numbers to log a new check.</span>' : ''}</div>
+      <div class="iogrid"><label>Intake<input type="text" inputmode="decimal" data-ioin value="${ioNum(cell.in) ? cell.in : ''}" placeholder="mL" autocomplete="off"></label>
       <label>Output<input type="text" inputmode="decimal" data-ioout value="${ioNum(cell.out) ? cell.out : ''}" placeholder="mL" autocomplete="off"></label>
       <div class="ionet"><span>Net</span><b data-ionet>—</b></div>
       <label class="iogl"><span>Goal net <i>optional</i></span><input type="text" data-iogoal value="${ioNum(cell.goal) ? (cell.goal === 0 ? 'even' : (cell.goal > 0 ? '+' : '') + cell.goal) : ''}" placeholder="e.g. −1L, −500, even" autocomplete="off"></label>
       <div class="iogs" data-iogs></div></div>
       <div class="ed"><input type="text" data-ionote value="${esc(cell.t === 'N/A' ? '' : cell.t || '')}" placeholder="Note (optional)"></div>
-      <div class="muted" style="font-size:11px;margin-top:5px">mL, or litres with “L” (1.2L). Add amounts with + (800+450).</div>`;
+      <div class="muted" style="font-size:11px;margin-top:5px">mL, or litres with “L” (1.2L). Add amounts with + (800+450). Running totals so far this shift.</div>
+      ${iol.length ? `<div class="iolog"><div class="iolh">I/O log · ${iol.length} check${iol.length === 1 ? '' : 's'}</div>${iol.map((e, i) => `<div class="iolr ${i ? '' : 'cur'}"><b>${e.at ? esc(hhmmOf(e.at)) : 'earlier'}</b><span>${esc(ioEntryTxt(e))}</span><span class="ioln ${ioNum(e.in) && ioNum(e.out) ? (e.in - e.out < 0 ? 'neg' : e.in - e.out > 0 ? 'pos' : '') : ''}">${esc(ioNetTxt(e))}</span><button type="button" class="ib" data-iodel="${e.id}" title="Remove this check">✕</button></div>`).join('')}</div>` : ''}`;
   } else if(col.type === 'gtt'){
     body += gttPopHTML(cell, kind === 'p' ? rowOf('p', id) : null);
   } else if(col.type === 'cons'){
@@ -4683,7 +4707,8 @@ function openPop(cellEl, focusEditor=false){
     if(b.dataset.pday !== undefined) return;
     if(b.hasAttribute('data-clearval')){ finish(col.type === 'ldt' || col.type === 'gtt' || col.type === 'cons' ? {t:'', s:'', items:[]} : col.type === 'proc' ? {t:'', s:'', d:'', items:[]} : col.type === 'io' ? {t:'', s:'', in:undefined, out:undefined} : {t:'', s:''}); return; }
     if(b.hasAttribute('data-today')){ finish({t:state.boardDate}); return; }
-    if(b.hasAttribute('data-iona')){ finish({t:'N/A', s:'', in:undefined, out:undefined, goal:undefined}); return; }
+    if(b.dataset.iodel){ const rr = rowOf(kind, id), c = rr ? rr.cells[k] : null; if(c){ const L = ioLog(c).filter(e => e.id !== b.dataset.iodel), top = L[L.length - 1] || {}; finish({log:L, in:ioNum(top.in) ? top.in : undefined, out:ioNum(top.out) ? top.out : undefined}); toast('I/O check removed'); } return; }
+    if(b.hasAttribute('data-iona')){ finish({t:'N/A', s:'', in:undefined, out:undefined, goal:undefined, log:[]}); return; }
     const labRe = edit => { const box = el.querySelector('.labchips'); if(!box) return; const tmp = document.createElement('div'); tmp.innerHTML = labChipsHTML(edEl.value, edit);
       const row = el.querySelector('.labaddrow'); if(row) row.remove(); box.replaceWith(...tmp.childNodes); const ni = el.querySelector('[data-labnew]'); if(ni){ ni.focus(); ni.addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); ev.stopPropagation(); el.querySelector('[data-labaddgo]').click(); } }); } };
     if(b.hasAttribute('data-labadd')){ labRe(!el.querySelector('.labaddrow')); return; }
@@ -5097,7 +5122,9 @@ function renderRoundsSplit(){
   const p = list[i], fl = flagsFor(p), n = hospDay(p), cm = p.comments || {};
   const tile = k => { const cfg = colCfg(k); return cellHTML(p.cells[k], cfg, 'p', p.id, 0, 0, false) + (cm[k] ? `<div class="rcmt">${esc(cm[k])}</div>` : ''); };
   const ioDet = c => { if(!c) return ''; const parts = [ioNum(c.in) && `<i class="iosym" title="Intake" aria-label="Intake">+</i><b>${esc(ioVol(c.in))}</b>`, ioNum(c.out) && `<i class="iosym" title="Output" aria-label="Output">−</i><b>${esc(ioVol(c.out))}</b>`].filter(Boolean);
-    const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : ''; return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}</div>` : ''; };
+    const g = ioNum(c.goal) ? esc(ioGoalTxt(ioNet(c), c.goal)) : '', L = ioLog(c), lt = ioLast(c);
+    const trail = L.length > 1 ? `<div class="rs-iotrail">${L.map(e => `<span><b>${e.at ? esc(hhmmOf(e.at)) : 'earlier'}</b> ${esc(ioNetTxt(e) || ioEntryTxt(e))}</span>`).join('<i>→</i>')}</div>` : '';
+    return parts.length || g ? `<div class="rs-iodet">${parts.join('<span style="display:inline-block;width:14px"></span>')}${parts.length && g ? ' · ' : ''}${g ? `<span class="${ioNet(c) !== null && ioGoalMet(ioNet(c), c.goal) ? 'met' : 'miss'}">${g}</span>` : ''}${lt && lt.at ? ` <span class="muted small">as of ${esc(hhmmOf(lt.at))}</span>` : ''}</div>${trail}` : ''; };
   const glance = RS_GLANCE.filter(k => COLMAP[k] && !colHidden(k)).map(k => `<span class="rs-gl">${esc(colCfg(k).h)}</span><div class="rs-gv ${k === 'io' ? 'rs-io' : ''} ${k === 'gtt' || k === 'cons' ? 'rs-gtt' : ''}">${k === 'cons' && consItems(p.cells.cons).length ? `<div class="tc t-cons rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="cons" data-ri="0" data-ci="0" title="Edit consults">${consPills(p.cells.cons)}</div>` : k === 'gtt' && gttShown(p.cells.gtt, p).length ? `<div class="tc t-gtt rs-gttdet" tabindex="0" data-kind="p" data-id="${p.id}" data-col="gtt" data-ri="0" data-ci="0" title="Edit drips">${gttPills(p.cells.gtt, p)}</div>${cm.gtt ? `<div class="rcmt">${esc(cm.gtt)}</div>` : ''}` : tile(k)}${k === 'io' ? ioDet(p.cells.io) : ''}</div>`).join('');
   const ckCard = c => { const all = chunkKeys(c.k), show = all.filter(k => !RS_GLANCE.includes(k)); if(!show.length) return '';
     const fk = c.k === 'pm' ? followKeys(p) : [], doneK = k => isDone(colCfg(k), p.cells[k] || {}) || (c.k === 'am' && isFollow(p, k)) || (c.k === 'night' && newCovers(p, k));
@@ -5779,14 +5806,16 @@ function jumpToAdmit(id, col){
 }
 /* Outstanding: what's still open for each patient (AM / PM / Dispo — Services and Dispo notes are optional) */
 function outstanding(ck, onlyId){
+  if(!ck && nightRoundsNow()) ck = 'night';   // v332: ICU nights — only what's left on Night rounds
   const cks = ck ? [ck] : CHUNKS.map(c => c.k);
   return censusOrder().filter(p => !onlyId || p.id === onlyId).map(p => ({p, by:cks.map(c => ({c, keys:openKeys(p, c)})).filter(x => x.keys.length)})).filter(x => x.by.length);
 }
 const censusOrder = () => state.patients.slice();   // the census is kept in the order you've arranged it
 function showOutstanding(ck, onlyId){
+  if(!ck && nightRoundsNow()) ck = 'night';
   const list = outstanding(ck, onlyId), total = list.reduce((n, x) => n + x.by.reduce((m, b) => m + b.keys.length, 0), 0);
   const scope = (ck ? CHUNK[ck].label + ' ' : '') + 'boxes';
-  const h = `<h3>Outstanding${onlyId && list[0] ? ' · ' + esc(list[0].p.bed || '') : ''}</h3>
+  const h = `<h3>${ck === 'night' ? '🌙 Night rounds — outstanding' : 'Outstanding'}${onlyId && list[0] ? ' · ' + esc(list[0].p.bed || '') : ''}</h3>
     <p class="muted" style="margin-top:-4px">${total ? `<b>${total}</b> open ${esc(scope)} across <b>${list.length}</b> patient${list.length === 1 ? '' : 's'}. Tap one to jump to it.` : `✓ Nothing outstanding — every ${esc(scope.replace(/boxes$/, 'box'))} is done.`} <span class="small">Services and Dispo notes are optional.</span></p>
     ${list.map(({p, by}) => `<div class="vsec"><div class="vhead">${esc(p.bed || '—')} <span class="muted" style="font-weight:500">${esc(p.intern || '')}${p.problem ? ' · ' + esc(p.problem) : ''}</span></div>
       <div class="osrow">${by.map(b => `<span class="osck">${esc(CHUNK[b.c].label)}</span>${b.keys.map(k => `<button class="oschip ${(b.c === 'pm' && isFollow(p, k)) || k === '_npo' ? 'rv' : ''}" data-jump="${p.id}" data-col="${keyCol(k)}">${esc(keyLabel(p, k, b.c))}</button>`).join('')}`).join('<span class="ossep"></span>')}</div></div>`).join('')}`;
@@ -7766,7 +7795,7 @@ const CMD_VERBS = [
   ['validate', 'validate', 'Run Validation for this tab'], ['signback', 'signback', 'Copy the night-task sign-back'],
   ['signout', 'signout', 'Copy the morning sign-out list (admitting nights)'], ['full', 'full', 'Tasks timeline full screen on / off'],
   ['rounds', 'rounds', 'Start Rounds'], ['print', 'print', 'Print the sign-out sheet'], ['take', 'take', 'Take with me — copy to carry to the next computer'], ['hide', 'hide', 'Hide the screen (privacy)'], ['whatsnew', 'whatsnew', 'What’s new in this version'], ['tidy', 'tidy', 'Move shifts older than 2 weeks out of the data file'], ['backup', 'backup', 'Back up now'], ['newshift', 'newshift', 'Start a new shift'], ['endshift', 'endshift', 'End this shift'],
-  ['outstanding', 'outstanding', 'What’s left to check off — add am / pm / dispo or a bed (also: left, view outstanding)'],
+  ['outstanding', 'outstanding', 'What’s left to check off — add am / pm / dispo or a bed (also: left, view outstanding). ICU nights: just Night rounds'],
   ['help', 'help', 'Show every command'],
 ];
 function cmdParse(input){
@@ -7819,7 +7848,7 @@ function cmdParse(input){
         cmdPulse('a', id); return `${hold ? 'Moonlighter hold' : 'Admission'} added — ${bed}`; }};
   }
   if(['outstanding', 'out', 'left', 'remaining', 'open'].includes(v) || (v === 'view' && /^(out|left|rem|open)/.test((rest[0] || '').toLowerCase()))){
-    const args = (v === 'view' ? rest.slice(1) : rest).map(w => w.toLowerCase()), ck = args.find(w => CHUNK[w]), bw = (v === 'view' ? rest.slice(1) : rest).filter(w => !CHUNK[w.toLowerCase()]);
+    const args = (v === 'view' ? rest.slice(1) : rest).map(w => w.toLowerCase()), ck = args.find(w => CHUNK[w]) || (nightRoundsNow() ? 'night' : undefined), bw = (v === 'view' ? rest.slice(1) : rest).filter(w => !CHUNK[w.toLowerCase()]);
     let one = null; if(bw.length){ const b = cmdBed(bw, ents); one = b.ent && b.ent.p; if(!one) return {err:'outstanding [am / pm / dispo] [bed]', sugg:(b.cands || []).filter(e => e.p).slice(0, 8).map(e => ({label:esc(e.bed), fill:`outstanding ${ck ? ck + ' ' : ''}${e.bed}`}))}; }
     const list = outstanding(ck, one && one.id), n = list.reduce((x, o) => x + o.by.reduce((m, b) => m + b.keys.length, 0), 0);
     return {nav:true, html:n ? `Show <b>${n}</b> outstanding ${ck ? CHUNK[ck].label + ' ' : ''}box${n === 1 ? '' : 'es'}${one ? ` for <b>${esc(one.bed)}</b>` : ` · ${list.length} patient${list.length === 1 ? '' : 's'}`}` : `✓ Nothing outstanding${one ? ' for ' + esc(one.bed) : ''}`,
@@ -9200,6 +9229,8 @@ function rotExport(){
 }
 
 const CHANGELOG = [
+  {v:332, d:'2026-11-27', items:['Command bar: on an ICU night (or the night half of a 24-hour shift), <b>outstanding</b> shows just what’s left on <b>🌙 Night rounds</b> — Note, Attest, Lab Ord, Handoff and Ord Rev aren’t counted. <b>outstanding am</b> / <b>pm</b> / <b>dispo</b> still work.']},
+  {v:331, d:'2026-11-27', items:['<b>I/O log</b>: each time you change the I/O numbers it’s saved as a timestamped check (stamped now — or set the time at the top of the pop-up). The cell shows the latest net with its time (and how many checks); the pop-up lists every check this shift with ✕ to remove one; Rounds shows the trail, e.g. <b>22:00 +200 → 02:00 −400 → 05:00 −900</b>.', 'Fixing a typo within 15 minutes updates that check instead of adding another.']},
   {v:330, d:'2026-11-27', items:['Rounds has one layout now — the <b>Split</b> view (patient list on the left, the patient on the right). The Classic layout and the Classic / Split switch are gone.']},
   {v:329, d:'2026-11-27', items:['Command bar: tasks can start with the bed like everything else — <b>10E05 task 3pm repeat BMP</b> (same as <b>task 10E05 3pm repeat BMP</b>); <b>todo</b> works as well as <b>task</b>.']},
   {v:328, d:'2026-11-27', items:['Command bar: leading zeros in bed numbers are optional — <b>10E5</b> finds 10E05, <b>14E1/1</b> finds 14E01/01.']},
